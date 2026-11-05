@@ -15,7 +15,7 @@ import type { Change } from '@cm/core/types';
 import type { AgeCut } from './compute/ageDistribution.ts';
 import { medianAge } from './compute/ageDistribution.ts';
 import { backcast, fitSurvival, type ClosingDay, type SurvivalFit } from './compute/backcast.ts';
-import { chainIndex, rebase, shareAdjustedIndex, type IndexPoint, type PanelDay } from './compute/chainIndex.ts';
+import { chainIndex, rebase, shareAdjustedIndex, type IndexPoint } from './compute/chainIndex.ts';
 import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
 import type { KrillApi } from './krill/api.ts';
@@ -178,7 +178,7 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
   const openT = todayRow.open;
 
   // 1. Chain-linked index on matched boards, rebased onto today's boards.
-  const panel = new Map<IsoDay, PanelDay>(p.panel.map((x) => [x.date, x]));
+  const panel = new Map(p.panel.map((x) => [x.date, x] as const));
   const index = chainIndex(market.map((m) => m.date), panel);
   const indexByDate = new Map(index.map((i) => [i.date, i]));
   const rebased = rebase(index, openT);
