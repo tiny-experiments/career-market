@@ -1,4 +1,4 @@
-import { familyInfo } from '@cm/core/codes';
+import { familyInfo, rankFamilies } from '@cm/core/codes';
 import type { Config } from '@cm/core/config';
 import {
   addDays,
@@ -27,8 +27,6 @@ export const BACKCAST_DAYS = 183;
 const CLOSING_WINDOW_DAYS = 28;
 /** Skills whose daily change is kept (largest by open roles). */
 const TRACKED_SKILLS = 120;
-/** Families need this many open roles to rank in "Professions gaining". */
-export const MIN_FAMILY_OPEN = 1000;
 
 export interface BuildDeps {
   sql: Sql;
@@ -181,7 +179,6 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
 
   // 1. Chain-linked index on matched boards, rebased onto today's boards.
   const panel = new Map<IsoDay, PanelDay>(p.panel.map((x) => [x.date, x]));
-  const panelFull = new Map(p.panel.map((x) => [x.date, x]));
   const index = chainIndex(market.map((m) => m.date), panel);
   const indexByDate = new Map(index.map((i) => [i.date, i]));
   const rebased = rebase(index, openT);
@@ -195,7 +192,7 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
   const facetTotal = p.failedFamilies.length === 0 ? sum([...p.familySkills.values()].map((f) => f.total)) : openT;
   const median = medianAge(openedCuts, facetTotal);
   for (const m of market) {
-    const pn = panelFull.get(m.date);
+    const pn = panel.get(m.date);
     const ix = indexByDate.get(m.date) as IndexPoint;
     const newKnown = pn?.newOnKnownBoards ?? null;
     const row = {
@@ -447,13 +444,6 @@ function pushChanges(rows: Record<string, unknown>[], T: IsoDay, subject: string
       estimated: c.estimated,
     });
   }
-}
-
-/** Families with enough open roles, best 1W change first. */
-export function rankFamilies<F extends { open: number; change: Change | null }>(families: F[]): F[] {
-  return families
-    .filter((f) => f.open >= MIN_FAMILY_OPEN && f.change !== null)
-    .sort((a, b) => (b.change as Change).value - (a.change as Change).value);
 }
 
 async function pingRevalidate(config: Config, log: Logger): Promise<void> {

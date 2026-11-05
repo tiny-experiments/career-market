@@ -1,11 +1,10 @@
-import { companyTicker, countryName, familyInfo, isTileSkill, skillLabel, TICKER_FAMILIES } from '@cm/core/codes';
+import { companyTicker, countryName, familyInfo, isTileSkill, rankFamilies, skillLabel, TICKER_FAMILIES } from '@cm/core/codes';
 import { addDays, FIRST_OBSERVED_DAY, isBootstrapDay, type IsoDay, type Range } from '@cm/core/dates';
 import type { Sql } from '@cm/core/db';
 import type { Change, ChromePayload, MarketOverview, ProfessionMover, SkillTile, TickerItem } from '@cm/core/types';
 
 /** Read-only queries over the read model. Nothing here calls krill. */
 
-const MIN_FAMILY_OPEN = 1000;
 const SPARK_DAYS = 30;
 
 interface ChangeRow {
@@ -110,7 +109,7 @@ export async function marketOverview(sql: Sql): Promise<MarketOverview> {
   const sparkFrom = addDays(asOf, -(SPARK_DAYS - 1));
   const famSpark = await sql<{ family: string; date: IsoDay; index_value: number }[]>`
     select family, date, index_value from family_daily where date >= ${sparkFrom} and date <= ${asOf} order by date`;
-  const professionsGaining: ProfessionMover[] = famToday
+  const professionsGaining: ProfessionMover[] = rankFamilies(famToday
     .map((f) => {
       const info = familyInfo(f.family);
       return {
@@ -121,9 +120,7 @@ export async function marketOverview(sql: Sql): Promise<MarketOverview> {
         change: famChanges.get(`family:${f.family}`) ?? null,
         spark: famSpark.filter((s) => s.family === f.family).map((s) => Math.round((f.open * s.index_value) / f.index_value)),
       };
-    })
-    .filter((f) => f.open >= MIN_FAMILY_OPEN && f.change !== null)
-    .sort((a, b) => (b.change as Change).value - (a.change as Change).value)
+    }))
     .slice(0, 3);
 
   // Hottest skills: the largest tool-like skills today, with change once history exists.

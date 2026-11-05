@@ -1,3 +1,4 @@
+import type { Change } from './types.ts';
 /**
  * Display data Career Market owns (krill does not): ticker codes and names for
  * krill families, readable skill labels, short country names and company
@@ -174,4 +175,14 @@ export function titleCase(slug: string): string {
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+/** Families need this many open roles to rank in "Professions gaining". */
+export const MIN_FAMILY_OPEN = 1000;
+
+/** Families with enough open roles, best 1W change first. */
+export function rankFamilies<F extends { open: number; change: Change | null }>(families: F[]): F[] {
+  return families
+    .filter((f) => f.open >= MIN_FAMILY_OPEN && f.change !== null)
+    .sort((a, b) => (b.change as Change).value - (a.change as Change).value);
 }
