@@ -21,8 +21,9 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
 - **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
   needs `Authorization: Bearer $READ_API_TOKEN`.
 - **web app** (`apps/web`, Next.js App Router) renders pages on the server from the read API only. It
-  never connects to Postgres, and the token never reaches the browser. Pages are cached (ISR, 1 hour)
-  and the builder expires them right after a build through `POST /api/revalidate`.
+  never connects to Postgres, and the token never reaches the browser. Pages render per request; the read
+  API responses they use are cached for 1 hour, and the builder expires that cache right after a build
+  through `POST /api/revalidate`.
 - **packages/core**: the one config module that reads the environment, logging (pino), the Postgres
   client (postgres.js), migrations, display codes and the shared payload types.
 
