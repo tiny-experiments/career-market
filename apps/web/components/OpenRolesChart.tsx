@@ -73,10 +73,10 @@ export function OpenRolesChart({ series, firstObservedDay }: { series: SeriesPoi
   const height = 150;
   const plotW = width - PAD.left - PAD.right;
   const plotH = height - PAD.top - PAD.bottom;
-  const totals = useMemo(
-    () => ({ new: points.reduce((n, p) => n + p.new, 0), closed: points.reduce((n, p) => n + p.closed, 0) }),
-    [points],
-  );
+  const totals = useMemo(() => {
+    const counted = points.filter((p) => !p.bootstrap);
+    return { new: counted.reduce((n, p) => n + p.new, 0), closed: counted.reduce((n, p) => n + p.closed, 0) };
+  }, [points]);
 
   if (points.length === 0) return <p className="muted">No data yet.</p>;
 
@@ -111,7 +111,7 @@ export function OpenRolesChart({ series, firstObservedDay }: { series: SeriesPoi
     });
   }
 
-  const barMax = Math.max(1, ...points.map((p) => Math.max(p.new, p.closed)));
+  const barMax = Math.max(1, ...points.filter((p) => !p.bootstrap).map((p) => Math.max(p.new, p.closed)));
   const slot = points.length > 1 ? plotW / (points.length - 1) : plotW;
   const barW = Math.max(1, Math.min(8, slot * 0.36));
   const boundaryX = est.length && obs.length ? xs(firstObservedDay) : null;
@@ -194,10 +194,10 @@ export function OpenRolesChart({ series, firstObservedDay }: { series: SeriesPoi
             <g transform={`translate(0, ${height + BARS_GAP})`} className="bars">
               {points.map((p) => {
                 const cx = xs(p.date);
-                const hn = (p.new / barMax) * BARS_H;
-                const hc = (p.closed / barMax) * BARS_H;
+                const hn = Math.min(1, p.new / barMax) * BARS_H;
+                const hc = Math.min(1, p.closed / barMax) * BARS_H;
                 return (
-                  <g key={p.date} opacity={p.estimated ? 0.45 : 1}>
+                  <g key={p.date} opacity={p.estimated || p.bootstrap ? 0.45 : 1}>
                     <rect x={cx - barW} y={BARS_H - hn} width={barW} height={Math.max(0.5, hn)} className="bar-new" />
                     <rect x={cx} y={BARS_H - hc} width={barW} height={Math.max(0.5, hc)} className="bar-closed" />
                   </g>
