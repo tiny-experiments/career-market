@@ -1,0 +1,19 @@
+# Local Postgres for the Career Market read model. Development only.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cm
+      POSTGRES_PASSWORD: cm
+      POSTGRES_DB: career_market
+    ports:
+      - "${CM_PG_PORT:-55432}:5432"
+    volumes:
+      - cm-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cm -d career_market"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  cm-pgdata:

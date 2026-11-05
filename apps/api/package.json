@@ -1,0 +1,19 @@
+{
+  "name": "@cm/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=../../.env --import tsx src/server.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cm/core": "workspace:*",
+    "@hono/node-server": "^2.1.6",
+    "hono": "^4.13.16",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "pino": "^10.4.0"
+  }
+}

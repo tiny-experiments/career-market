@@ -1,0 +1,23 @@
+{
+  "name": "@cm/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./config": "./src/config.ts",
+    "./logger": "./src/logger.ts",
+    "./db": "./src/db.ts",
+    "./migrate": "./src/migrate.ts",
+    "./codes": "./src/codes.ts",
+    "./dates": "./src/dates.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "pino": "^10.4.0",
+    "postgres": "^3.4.7",
+    "zod": "^4.1.12"
+  }
+}

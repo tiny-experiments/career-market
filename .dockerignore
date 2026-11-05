@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/.cache
+.git
+.env
+.env.*
+apps/web
+**/test
+coverage

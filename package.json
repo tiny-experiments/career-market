@@ -1,0 +1,35 @@
+{
+  "name": "career-market",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "migrate": "pnpm --filter @cm/builder run migrate",
+    "builder": "pnpm --filter @cm/builder run build-once",
+    "builder:watch": "pnpm --filter @cm/builder run watch",
+    "api": "pnpm --filter @cm/api run start",
+    "web:dev": "pnpm --filter @cm/web run dev",
+    "web:build": "pnpm --filter @cm/web run build",
+    "web:start": "pnpm --filter @cm/web run start",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "vitest run",
+    "lint": "pnpm -r run lint"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "^5.1.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}
