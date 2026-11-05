@@ -3,11 +3,14 @@ import { Inter } from 'next/font/google';
 import { Footer } from '@/components/Footer';
 import { TickerTape } from '@/components/TickerTape';
 import { TopNav } from '@/components/TopNav';
-import { connection } from 'next/server';
 import { getChrome } from '@/lib/readApi';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-sans' });
+
+// Render per request: the read API's responses are cached (and tag-revalidated) in
+// Next's data cache, so an outage page is never frozen into the route cache.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: { default: 'Career Market — Tech Hiring Intelligence', template: '%s — Career Market' },
@@ -26,8 +29,6 @@ const THEME_SCRIPT = `try{var t=localStorage.getItem('cm-theme');if(t==='light'|
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const chrome = await getChrome();
-  // Never cache a page rendered while the read API is down.
-  if (!chrome.ok) await connection();
   const data = chrome.ok ? chrome.data : null;
   return (
     <html lang="en" data-theme="dark" className={inter.variable} suppressHydrationWarning>

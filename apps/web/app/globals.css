@@ -289,7 +289,8 @@ p {
 }
 .search {
   position: relative;
-  width: 320px;
+  flex: 0 1 320px;
+  min-width: 140px;
 }
 .search input {
   width: 100%;
@@ -1034,7 +1035,7 @@ p {
     margin-right: 8px;
   }
   .search {
-    width: 220px;
+    flex-basis: 220px;
   }
 }
 @media (max-width: 1100px) {

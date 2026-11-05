@@ -2,7 +2,6 @@ import { formatDayShort } from '@cm/core/dates';
 import type { Change, MarketOverview } from '@cm/core/types';
 import { BarChart3, Building2, CalendarDays, Info, MinusCircle, Plus, Snowflake, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
-import { connection } from 'next/server';
 import { ChangePill, ChangeText } from '@/components/ChangePill';
 import { Flag } from '@/components/Flag';
 import { OpenRolesChart } from '@/components/OpenRolesChart';
@@ -11,15 +10,9 @@ import { WorldMap } from '@/components/WorldMap';
 import { fmtInt, fmtPct } from '@/lib/format';
 import { getMarketOverview } from '@/lib/readApi';
 
-// The read model changes once a day: serve a cached page, refreshed hourly at most
-// and immediately after a nightly build (POST /api/revalidate).
-export const revalidate = 3600;
-
 export default async function MarketPage() {
   const res = await getMarketOverview();
   if (!res.ok) {
-    // Never cache an outage page: render on request until the read API answers.
-    await connection();
     return <ReadModelUnavailable status={res.status} />;
   }
   return <MarketOverviewView data={res.data} />;
