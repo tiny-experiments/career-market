@@ -1,0 +1,46 @@
+# VPS side of Career Market: the read-only API and the nightly builder.
+# Both join the shared external 'infra' network, where the shared Postgres
+# (DATABASE_URL) and the reverse proxy live. No port is published: the
+# reverse proxy routes https://api.careers.market to read-api:4100.
+#
+#   cp deploy/.env.example deploy/.env   # fill in DATABASE_URL, READ_API_TOKEN, ...
+#   docker compose -f deploy/docker-compose.yml up -d --build
+name: career-market
+
+x-server: &server
+  build:
+    context: ..
+    dockerfile: Dockerfile
+  image: career-market-server:latest
+  env_file: .env
+  restart: unless-stopped
+  networks: [infra]
+
+services:
+  read-api:
+    <<: *server
+    environment:
+      READ_API_HOST: 0.0.0.0
+      READ_API_PORT: "4100"
+    expose: ["4100"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  builder:
+    <<: *server
+    # Applies migrations, then polls krill /v1/meta every BUILDER_POLL_MINUTES and
+    # builds each new snapshot day.
+    working_dir: /app/apps/builder
+    command: ["node", "--import", "tsx", "src/cli.ts", "watch"]
+    volumes:
+      - krill-cache:/var/cache/krill
+
+volumes:
+  krill-cache:
+
+networks:
+  infra:
+    external: true
