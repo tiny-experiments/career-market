@@ -1,15 +1,11 @@
-import { loadConfig } from '@cm/core/config';
 import type { Sql } from '@cm/core/db';
-import type { Logger } from '@cm/core/logger';
 import type { Hono } from 'hono';
 import { companyDirectory, companyIdOf, companyPage } from './companyModel.ts';
-import { COUNTRY_RE, createCompanyJobs, FAMILY_RE } from './companyJobs.ts';
+import { companyJobs, COUNTRY_RE, FAMILY_RE } from './companyJobs.ts';
+import type { KrillLive } from './krillLive.ts';
 
 /** Company routes: the directory, one company's page and its live role list. */
-export function registerCompanyRoutes(app: Hono, deps: { sql: Sql; log: Logger }): void {
-  const { krill } = loadConfig();
-  const jobs = createCompanyJobs({ baseUrl: krill.baseUrl, apiKey: krill.apiKey, log: deps.log });
-
+export function registerCompanyRoutes(app: Hono, deps: { sql: Sql; live: KrillLive }): void {
   app.get('/v1/companies', async (c) => c.json(await companyDirectory(deps.sql, 100)));
 
   app.get('/v1/companies/:slug', async (c) => {
@@ -26,6 +22,6 @@ export function registerCompanyRoutes(app: Hono, deps: { sql: Sql; log: Logger }
       return c.json({ code: 'BAD_REQUEST', message: 'unknown profession or country filter' }, 400);
     }
     const limit = Math.min(25, Math.max(1, Number(c.req.query('limit') ?? 8) || 8));
-    return c.json(await jobs(id, { profession, country, remote: c.req.query('remote') === '1', limit }));
+    return c.json(await companyJobs(deps.live, id, { profession, country, remote: c.req.query('remote') === '1', limit }));
   });
 }

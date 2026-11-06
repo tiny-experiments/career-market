@@ -52,13 +52,18 @@ async function changesFor(sql: Sql, asOf: IsoDay, subjects: string[], range: Ran
   );
 }
 
+/** First day of a sparkline: 30 days back, never before the 3 Nov base day. */
+function sparkStart(asOf: IsoDay): IsoDay {
+  const windowStart = addDays(asOf, -(SPARK_DAYS - 1));
+  return windowStart < FIRST_COMPARABLE_BASE ? FIRST_COMPARABLE_BASE : windowStart;
+}
+
 /** Open roles per day for each company over the sparkline window (quiet days are 0). */
 async function sparks(sql: Sql, asOf: IsoDay, companyIds: string[]): Promise<Map<string, number[]>> {
   const out = new Map<string, number[]>();
   if (companyIds.length === 0) return out;
   // Bootstrap days (2-3 Nov) are left out of sparklines like they are out of every change; 3 Nov is the base day.
-  const windowStart = addDays(asOf, -(SPARK_DAYS - 1));
-  const from = windowStart < FIRST_COMPARABLE_BASE ? FIRST_COMPARABLE_BASE : windowStart;
+  const from = sparkStart(asOf);
   const rows = await sql<{ company_id: string; date: IsoDay; open: number }[]>`
     select company_id, date, open from company_daily
     where family = '*' and new is not null and date >= ${from} and date <= ${asOf} and company_id in ${sql(companyIds)}
@@ -213,18 +218,18 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
     select family, sum(open)::int as open from company_slice_daily
     where company_id = ${id} and date = ${asOf} group by family having sum(open) > 0 order by sum(open) desc`;
   const famChanges = await changesFor(sql, asOf, famToday.map((f) => `cfam:${id}:${f.family}`), '1M');
+  const sparkFrom = sparkStart(asOf);
   const famSpark = famToday.length
     ? await sql<{ family: string; date: IsoDay; open: number }[]>`
         select family, date, sum(open)::int as open from company_slice_daily
-        where company_id = ${id} and date >= ${FIRST_COMPARABLE_BASE} and date <= ${asOf} group by family, date order by date`
+        where company_id = ${id} and date >= ${sparkFrom} and date <= ${asOf} group by family, date`
     : [];
-  const teams: CompanyTeam[] = famToday.slice(0, 6).map((f) => ({
-    family: f.family,
-    name: familyInfo(f.family).name,
-    open: f.open,
-    change: famChanges.get(`cfam:${id}:${f.family}`) ?? null,
-    spark: famSpark.filter((s) => s.family === f.family).map((s) => s.open),
-  }));
+  const teams: CompanyTeam[] = famToday.slice(0, 6).map((f) => {
+    const days = new Map(famSpark.filter((s) => s.family === f.family).map((s) => [s.date, s.open]));
+    const spark: number[] = [];
+    for (let d = sparkFrom; d <= asOf; d = addDays(d, 1)) spark.push(days.get(d) ?? 0);
+    return { family: f.family, name: familyInfo(f.family).name, open: f.open, change: famChanges.get(`cfam:${id}:${f.family}`) ?? null, spark };
+  });
 
   const [prof] = await sql<
     {

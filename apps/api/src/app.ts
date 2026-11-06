@@ -41,7 +41,7 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: K
 
   app.get('/v1/chrome', async (c) => c.json(await chrome(deps.sql)));
   app.get('/v1/market', async (c) => c.json(await marketOverview(deps.sql)));
-  registerCompanyRoutes(app, deps);
+  registerCompanyRoutes(app, { sql: deps.sql, live });
 
   // Screener: the read model, plus krill live for filtered counts and the matching roles (cached 1 h).
   app.get('/v1/screener', async (c) => c.json(await screener(deps.sql, live, parseScreenerQuery(new URL(c.req.url).searchParams))));
