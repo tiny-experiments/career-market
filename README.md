@@ -13,8 +13,9 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
 
 - **krill** collects every board each day and captures the facts that exist only on their day.
 - **builder** (`apps/builder`) polls krill `/v1/meta`; on a new snapshot day it pulls
-  `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies` and a sample of the
-  day's closings, then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
+  `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies`, a sample of the
+  day's closings and, per profession, the newest open US roles that list pay (the Job page's pay bands),
+  then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
   changes, profession ticker codes, rule-written market notes and the survival-corrected back-cast
   (estimated history before 2026-11-02). Every krill response is parsed with zod. Every table can be
   rebuilt from krill.
@@ -67,7 +68,8 @@ pnpm web:build && PORT=3000 pnpm web:start
 ```
 
 The web app needs only `READ_API_URL` and `READ_API_TOKEN` (and `REVALIDATE_TOKEN` to accept the
-builder's refresh call).
+builder's refresh call), and optionally
+`CONTEXT_DEV_PUBLIC_CLIENT_ID` for company logos on the Job page).
 
 ### Screener and search
 
