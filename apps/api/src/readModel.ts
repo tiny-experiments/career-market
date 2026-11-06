@@ -68,9 +68,9 @@ export async function chrome(sql: Sql): Promise<ChromePayload> {
   const companies = await sql<{ company_id: string; slug: string; name: string; open: number }[]>`
     select company_id, slug, name, open from company where updated_on = ${asOf} order by rank limit 50`;
   const picked = companies.filter((x) => companyTicker(x.name)).slice(0, 2).reverse();
-  const companyChanges = await changes(sql, asOf, picked.map((c) => `company:${c.company_id}`), '1W');
+  const companyChanges = await changes(sql, asOf, picked.map((c) => `cpage:${c.company_id}`), '1W');
   for (const c of picked) {
-    const change = companyChanges.get(`company:${c.company_id}`) ?? null;
+    const change = companyChanges.get(`cpage:${c.company_id}`) ?? null;
     ticker.push({
       code: companyTicker(c.name) as string,
       name: c.name,

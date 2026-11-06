@@ -101,7 +101,7 @@ interface CompanyRow {
 export async function companiesRamping(sql: Sql, asOf: IsoDay, limit = 3): Promise<CompanyMover[]> {
   const rows = await sql<(CompanyRow & { change: number; base_date: IsoDay; partial: boolean; estimated: boolean })[]>`
     select c.*, m.change, m.base_date, m.partial, m.estimated
-    from company c join market_change m on m.subject = 'company:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
+    from company c join market_change m on m.subject = 'cpage:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
     where c.updated_on = ${asOf} and c.open >= ${MIN_RAMPING_OPEN} and m.change > 0
       and (c.open - c.open / (1 + m.change)) >= ${MIN_RAMPING_DELTA}
     order by m.change desc limit ${limit}`;
@@ -123,7 +123,7 @@ export async function companyDirectory(sql: Sql, limit = 50): Promise<CompanyDir
   const rows = await sql<CompanyRow[]>`
     select * from company where updated_on = ${build.asOf} order by rank limit ${limit}`;
   const ids = rows.map((r) => r.company_id);
-  const changes = await changesFor(sql, build.asOf, ids.map((id) => `company:${id}`), '1W');
+  const changes = await changesFor(sql, build.asOf, ids.map((id) => `cpage:${id}`), '1W');
   const spark = await sparks(sql, build.asOf, ids);
   const signals = ids.length
     ? await sql<{ company_id: string; state: CompanySignalState }[]>`
@@ -136,7 +136,7 @@ export async function companyDirectory(sql: Sql, limit = 50): Promise<CompanyDir
     domain: r.domain,
     open: r.open,
     rank: r.rank,
-    change: changes.get(`company:${r.company_id}`) ?? null,
+    change: changes.get(`cpage:${r.company_id}`) ?? null,
     spark: spark.get(r.company_id) ?? [],
     state: state.get(r.company_id) ?? null,
   }));
@@ -199,7 +199,7 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
     { state: CompanySignalState; window_from: IsoDay; window_days: number; opened: number; closed: number; open_base: number; partial: boolean; explainer: string }[]
   >`select state, window_from, window_days, opened, closed, open_base, partial, explainer from company_signal
     where as_of = ${asOf} and company_id = ${id}`;
-  const changes = await changesFor(sql, asOf, [`company:${id}`], '1M');
+  const changes = await changesFor(sql, asOf, [`cpage:${id}`], '1M');
   const signal: CompanySignal | null = signalRow
     ? {
         state: signalRow.state,
@@ -209,7 +209,7 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
         opened: signalRow.opened,
         closed: signalRow.closed,
         ratio: signalRow.closed > 0 ? signalRow.opened / signalRow.closed : null,
-        change: changes.get(`company:${id}`) ?? null,
+        change: changes.get(`cpage:${id}`) ?? null,
       }
     : null;
 

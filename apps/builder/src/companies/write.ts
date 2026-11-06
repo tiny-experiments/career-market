@@ -168,7 +168,7 @@ export async function computeCompanyTables(tx: Sql, T: IsoDay, log: Logger): Pro
   for (const id of ids) {
     const rows = byCompany.get(id) ?? [];
     const { subject, series } = changesOf(rows, T);
-    pushChanges(`company:${id}`, subject);
+    pushChanges(`cpage:${id}`, subject);
     const signal = companySignal(series, T);
     if (signal) {
       signalRows.push({
@@ -211,7 +211,7 @@ export async function computeCompanyTables(tx: Sql, T: IsoDay, log: Logger): Pro
     pushChanges(`cfam:${id}:${family}`, subject);
   }
 
-  await tx`delete from market_change where as_of = ${T} and (subject like 'company:%' or subject like 'cfam:%')`;
+  await tx`delete from market_change where as_of = ${T} and (subject like 'cpage:%' or subject like 'cfam:%')`;
   await insertRows(tx, 'market_change', changeRows, ['as_of', 'subject', 'range', 'base_date', 'change', 'partial', 'estimated']);
   await tx`delete from company_signal where as_of = ${T}`;
   await insertRows(tx, 'company_signal', signalRows, ['as_of', 'company_id', 'state', 'window_from', 'window_days', 'opened', 'closed', 'open_base', 'partial', 'explainer']);
