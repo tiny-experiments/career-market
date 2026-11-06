@@ -8,8 +8,14 @@ import { KrillLive } from './krillLive.ts';
 const config = loadConfig();
 const log = createLogger('read-api');
 const sql = createSql(config.databaseUrl, { max: 10 });
-const live = new KrillLive({ baseUrl: config.krill.baseUrl, apiKey: config.krill.apiKey, log });
-const app = createApp({ sql, token: requireReadApiToken(config), log, live });
+const live = new KrillLive({
+  baseUrl: config.krill.baseUrl,
+  apiKey: config.krill.apiKey,
+  ratePerMinute: config.krill.ratePerMinute,
+  timeoutMs: config.krill.timeoutMs,
+  log,
+});
+const app = createApp({ sql, token: requireReadApiToken(config), log, live, withLogos: Boolean(config.web.contextDevClientId) });
 
 const server = serve({ fetch: app.fetch, hostname: config.readApi.host, port: config.readApi.port }, (info) => {
   log.info({ host: info.address, port: info.port }, 'read api listening');

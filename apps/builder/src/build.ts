@@ -22,6 +22,7 @@ import { planCompanyDays, pullCompanies, type CompanyPlan, type CompanyPull } fr
 import { computeCompanyTables, writeCompanyInputs } from './companies/write.ts';
 import type { KrillApi } from './krill/api.ts';
 import { KrillCompanyApi } from './krill/companyApi.ts';
+import { payBandRows, pullPayBands } from './payBands.ts';
 import { observedDays, pull, type Pulled } from './pull.ts';
 import { pullScreener } from './screener/pull.ts';
 import { writeScreener } from './screener/write.ts';
@@ -73,13 +74,15 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
     const plan = await planPull(sql, T, config, options);
     const pulled = await pull(api, { ...meta, lastSnapshotDate: T }, plan, log);
     const screener = await pullScreener(api, T, pulled.families, log);
+    const pay = await pullPayBands(api, pulled.families, log);
     const companyPlan = await planCompanies(sql, T, config, options);
     const companies = await pullCompanies(new KrillCompanyApi(api.client), T, companyPlan, log);
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
+      await writePayBands(tx as unknown as Sql, T, pay.bands);
       const derived = await computeAndWrite(tx as unknown as Sql, pulled, log);
       const company = await writeAndComputeCompanies(tx as unknown as Sql, companies, T, log);
-      return { ...derived, ...company, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
+      return { ...derived, ...company, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
     });
     const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`
@@ -191,6 +194,12 @@ async function writeInputs(tx: Sql, p: Pulled): Promise<void> {
       values (${s.jobId}, ${s.detectedOn}, ${s.closedOn}, ${s.openedOn}, ${s.openedSource}, ${s.family})
       on conflict (job_id) do nothing`;
   }
+}
+
+/** Pay bands for the Job page: one set per snapshot day. */
+async function writePayBands(tx: Sql, T: IsoDay, bands: Parameters<typeof payBandRows>[1]): Promise<void> {
+  await tx`delete from pay_band where date = ${T}`;
+  await insertRows(tx, 'pay_band', payBandRows(T, bands), ['date', 'family', 'specialty', 'level', 'country', 'currency', 'n', 'p25', 'p50', 'p75']);
 }
 
 /** Every derived number, recomputed from the stored inputs. */

@@ -13,13 +13,19 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
 
 - **krill** collects every board each day and captures the facts that exist only on their day.
 - **builder** (`apps/builder`) polls krill `/v1/meta`; on a new snapshot day it pulls
-  `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies` and a sample of the
-  day's closings, then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
+  `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies`, a sample of the
+  day's closings and, per profession, the newest open US roles that list pay (the Job page's pay bands),
+  then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
   changes, profession ticker codes, rule-written market notes and the survival-corrected back-cast
   (estimated history before 2026-11-02). Every krill response is parsed with zod. Every table can be
   rebuilt from krill.
 - **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
-  needs `Authorization: Bearer $READ_API_TOKEN`.
+  needs `Authorization: Bearer $READ_API_TOKEN`. `GET /v1/jobs/{krill id}` (the Job page) is the one route
+  that also reads krill live: the posting, the employer's company history and similar roles, cached for 1 hour
+  and paced under krill's rate limit, joined with the read model's profession trend, pay band and typical
+  posting window. A panel krill could not answer shows as unavailable and marks the payload `degraded`;
+  the web app then caches that page for 60 seconds instead of an hour. A closed role answers 410 with its
+  tombstone.
 - **web app** (`apps/web`, Next.js App Router) renders pages on the server from the read API only. It
   never connects to Postgres, and the token never reaches the browser. Pages render per request; the read
   API responses they use are cached for 1 hour, and the builder expires that cache right after a build
@@ -64,7 +70,7 @@ pnpm web:build && PORT=3000 pnpm web:start
 ```
 
 The web app needs only `READ_API_URL` and `READ_API_TOKEN` (and `REVALIDATE_TOKEN` to accept the
-builder's refresh call).
+builder's refresh call). `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
 
 ### Screener and search
 

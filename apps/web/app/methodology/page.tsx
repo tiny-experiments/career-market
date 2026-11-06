@@ -45,6 +45,23 @@ export default function Page() {
       </p>
       <h2>Median days open</h2>
       <p>The median age of open tech roles, counted from their opened day.</p>
+      <h2>Job pages</h2>
+      <p>
+        A job page shows one posting as krill read it from the employer&apos;s career board, and always sends you to the
+        employer&apos;s site to apply. <strong>Days open</strong> counts from the opened day; the gauge follows krill&apos;s
+        stale score (age up to 60 days, plus reposts). <strong>Posting health</strong> reads &ldquo;Possible ghost job&rdquo;
+        when a role has been open 120 days or more, or was reposted twice or more; otherwise &ldquo;Looks active&rdquo;. When
+        enough closings were sampled, it also says how long similar roles stayed open before they closed.
+      </p>
+      <p>
+        <strong>Salary vs. band</strong> compares the role&apos;s pay midpoint with the middle half (25th to 75th percentile) of
+        listed pay for the same profession, seniority and, when the sample is large enough, specialty. The band comes from the
+        newest open US roles that list pay in USD (up to 500 per profession) and needs at least 30 of them. Other markets list
+        pay too rarely for a fair band, and many postings list none. <strong>Company trend</strong> shows open roles from
+        krill&apos;s company history; its signal (ramping, steady, cooling or freezing) appears after 30 days of history.
+        <strong> Similar roles</strong> are open roles with the same specialty, seniority and country that name the same
+        top skills; there is no similarity model.
+      </p>
       <h2>Market notes</h2>
       <p>The notes under &ldquo;State of tech hiring&rdquo; are written by fixed rules from the day&apos;s numbers. No language model writes them.</p>
     </article>
