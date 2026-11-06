@@ -7,20 +7,6 @@ import type { Change, Unavailable } from './types.ts';
 
 export type CompanySignalState = 'RAMPING' | 'STEADY' | 'COOLING' | 'FREEZING';
 
-/** "NVIDIA Corp." -> "nvidia-corp"; never empty. */
-export function slugify(name: string): string {
-  const slug = name
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
-    .replace(/-+$/g, '');
-  return slug || 'company';
-}
-
 /** Skill groups of the Tech stack profile, by krill skill namespace. */
 export const STACK_GROUPS = [
   { id: 'languages', label: 'Languages', namespaces: ['lang'], max: 4 },

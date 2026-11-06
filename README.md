@@ -66,6 +66,18 @@ pnpm web:build && PORT=3000 pnpm web:start
 The web app needs only `READ_API_URL` and `READ_API_TOKEN` (and `REVALIDATE_TOKEN` to accept the
 builder's refresh call).
 
+### Screener and search
+
+- The builder also reads the 150 largest companies (`/v1/companies`, with domain), their daily statistics
+  (`/v1/stats/companies/daily`), and krill facets per company, profession and skill. It writes
+  `screener_company`, `screener_company_day`, `screener_subject`, `screener_facet` and `search_entry`.
+- The read API serves `/v1/screener` and `/v1/search`. With no filter the Screener comes from the read
+  model; with filters the read API asks krill for the counts (`/v1/facets`, company facet) and for the
+  matching roles (`/v1/jobs`), caches each answer in memory for an hour and shares requests in flight.
+  It needs `KRILL_API_KEY` for a comfortable rate (600 calls a minute; 60 without a key).
+- The web app calls `/api/search` (its own route) for the typeahead; the browser never sees the read API
+  token. Company logos use `CONTEXT_DEV_PUBLIC_CLIENT_ID`; without it each company shows its initial.
+
 ### Company page
 
 `/companies/<slug>` shows one company. The builder keeps a `company` directory (every company with at

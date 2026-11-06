@@ -1,0 +1,127 @@
+/* Global search: room for the whole placeholder, then the dropdown. */
+.topnav .search {
+  min-width: 310px;
+}
+
+/* Global search dropdown. */
+.search-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(460px, 92vw);
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  z-index: 60;
+}
+:root[data-theme='light'] .search-panel {
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16);
+}
+.search-group + .search-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.search-group-title {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.search-hit {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 13px;
+}
+.search-hit:hover,
+.search-hit.is-active {
+  background: var(--blue-soft);
+  text-decoration: none;
+}
+.search-hit.is-active {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+.search-hit-icon {
+  display: inline-flex;
+  color: var(--text-2);
+}
+.search-hit-label {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-hit-sub {
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.search-hit-count {
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.search-empty {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.search-all {
+  display: block;
+  margin-top: 6px;
+  padding: 9px 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Full results page */
+.search-page {
+  margin-top: 24px;
+  display: grid;
+  gap: 16px;
+  max-width: 860px;
+}
+.search-page h1 {
+  font-size: 26px;
+}
+.result-group {
+  padding: 14px 18px 8px;
+}
+.result-group h2 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+.result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.result-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.result-list li:first-child {
+  border-top: 0;
+}
+.result-list .result-meta {
+  margin-left: auto;
+  color: var(--text-2);
+  font-size: 13px;
+}

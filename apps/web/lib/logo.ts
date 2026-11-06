@@ -2,15 +2,12 @@ import 'server-only';
 import { loadConfig } from '@cm/core/config';
 
 /**
- * Context.dev Logo Link, as Kurso builds it. The client id is public by design
- * (it ships in the page); without one, or without a company domain, the page
- * draws a monogram tile instead.
+ * Company logo through Context.dev Logo Link (public client id), as Kurso does.
+ * null when no domain is known or no client id is configured: the page then
+ * shows the company's initial instead.
  */
-export function logoUrl(domain: string | null): string | null {
-  const clientId = loadConfig().web.contextDevClientId;
-  if (!domain || !clientId) return null;
-  const url = new URL('https://logos.context.dev/');
-  url.searchParams.set('publicClientId', clientId);
-  url.searchParams.set('domain', domain);
-  return url.toString();
+export function logoUrl(domain: string | null | undefined): string | null {
+  const id = loadConfig().web.contextDevClientId;
+  if (!domain || !id) return null;
+  return `https://logos.context.dev/?publicClientId=${encodeURIComponent(id)}&domain=${encodeURIComponent(domain)}`;
 }

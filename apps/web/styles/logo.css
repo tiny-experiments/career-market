@@ -1,0 +1,35 @@
+/* Company logo tile, shared by every page that shows company logos. */
+:root,
+:root[data-theme='dark'] {
+  --co-tile: #243044;
+}
+:root[data-theme='light'] {
+  --co-tile: #e4e9f1;
+}
+
+/* ---------- Company logo tile ---------- */
+.co-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 6px;
+  background: var(--co-tile);
+  color: var(--text-2);
+  font-weight: 700;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.co-logo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+}
+.co-logo-initial {
+  line-height: 1;
+}

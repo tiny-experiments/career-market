@@ -10,7 +10,8 @@
     "./codes": "./src/codes.ts",
     "./dates": "./src/dates.ts",
     "./types": "./src/types.ts",
-    "./company": "./src/company.ts"
+    "./company": "./src/company.ts",
+    "./screener": "./src/screener.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

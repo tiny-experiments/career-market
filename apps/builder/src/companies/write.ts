@@ -1,4 +1,5 @@
-import { companySeries, slugify, type DayRow } from '@cm/core/company';
+import { companySeries, type DayRow } from '@cm/core/company';
+import { slugify } from '@cm/core/screener';
 import { addDays, RANGES, type IsoDay } from '@cm/core/dates';
 import type { Sql } from '@cm/core/db';
 import type { Logger } from '@cm/core/logger';
@@ -32,8 +33,9 @@ export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void>
   for (const [i, c] of p.directory.entries()) {
     let slug = slugOf.get(c.id);
     if (!slug) {
-      const base = slugify(c.name);
-      slug = [base, `${base}-${c.id.slice(3, 7)}`, `${base}-${c.id.slice(3)}`].find((s) => !taken.has(s)) as string;
+      // The same rule as the Screener's company slugs: the name, then the name and the id tail on a clash.
+      const base = slugify(c.name) || 'company';
+      slug = [base, `${base}-${c.id.slice(-4)}`, `${base}-${c.id.slice(3)}`].find((s) => !taken.has(s)) as string;
       taken.add(slug);
       slugOf.set(c.id, slug);
     }

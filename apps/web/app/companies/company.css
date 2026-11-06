@@ -14,7 +14,6 @@
   --co-explain-bg: linear-gradient(160deg, rgba(25, 150, 90, 0.34), rgba(14, 60, 45, 0.55) 70%);
   --co-explain-border: rgba(52, 210, 127, 0.4);
   --co-gap: rgba(139, 149, 166, 0.1);
-  --co-mono: #1b2635;
 }
 :root[data-theme='light'] {
   --lv-executive: #b324c9;
@@ -29,7 +28,6 @@
   --co-explain-bg: linear-gradient(160deg, rgba(13, 128, 72, 0.12), rgba(13, 128, 72, 0.04) 70%);
   --co-explain-border: rgba(13, 128, 72, 0.4);
   --co-gap: rgba(86, 97, 118, 0.1);
-  --co-mono: #e6ebf3;
 }
 
 .co {
@@ -162,22 +160,10 @@
   font-weight: 500;
 }
 
-/* Logos */
-.logo-tile {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  object-fit: contain;
-  background: #fff;
-  flex: none;
-}
-.logo-mono {
-  background: var(--co-mono);
-  color: var(--text-2);
-  font-weight: 700;
-  border: 1px solid var(--border);
-  letter-spacing: 0;
+/* The header logo is the shared CompanyLogo tile, enlarged. */
+.co-logo-card .co-logo,
+.co-logo-card .co-logo img {
+  border-radius: 12px;
 }
 
 /* ---------- Hiring trend ---------- */

@@ -1,6 +1,7 @@
 import 'server-only';
 import { loadConfig, requireReadApiToken } from '@cm/core/config';
 import type { CompanyDirectoryRow, CompanyJobsPayload, CompanyPage } from '@cm/core/company';
+import type { ScreenerPayload, SearchResults, RoleHit } from '@cm/core/screener';
 import type { ChromePayload, MarketOverview } from '@cm/core/types';
 
 /**
@@ -13,13 +14,13 @@ const REVALIDATE_SECONDS = 3600;
 
 export type ReadResult<T> = { ok: true; data: T } | { ok: false; status: number | null; reason: string };
 
-async function get<T>(path: string): Promise<ReadResult<T>> {
+async function get<T>(path: string, options: { revalidate?: number } = {}): Promise<ReadResult<T>> {
   const config = loadConfig();
   let res: Response;
   try {
     res = await fetch(`${config.readApi.url}${path}`, {
       headers: { authorization: `Bearer ${requireReadApiToken(config)}`, accept: 'application/json' },
-      next: { revalidate: REVALIDATE_SECONDS, tags: [READ_MODEL_TAG] },
+      next: { revalidate: options.revalidate ?? REVALIDATE_SECONDS, tags: [READ_MODEL_TAG] },
     });
   } catch (err) {
     return { ok: false, status: null, reason: `read API unreachable: ${String(err)}` };
@@ -43,3 +44,11 @@ export const getCompanyJobs = (slug: string, filter: { profession?: string; coun
   if (filter.remote) q.set('remote', '1');
   return get<CompanyJobsPayload>(`/v1/companies/${encodeURIComponent(slug)}/jobs?${q}`);
 };
+/** The Screener for a URL query string (filters, mode, sort); live counts under filters are cached by the read API. */
+export const getScreener = (search: string) => get<ScreenerPayload>(`/v1/screener${search ? `?${search}` : ''}`);
+
+export type SearchPayload = SearchResults & { roles: RoleHit[]; rolesUnavailable?: boolean };
+
+/** Typeahead and full-page search. Short cache: queries are open-ended, the read API caches krill calls. */
+export const getSearch = (q: string, opts: { limit?: number; roles?: boolean } = {}) =>
+  get<SearchPayload>(`/v1/search?q=${encodeURIComponent(q)}&limit=${opts.limit ?? 5}${opts.roles ? '&roles=1' : ''}`, { revalidate: 300 });
