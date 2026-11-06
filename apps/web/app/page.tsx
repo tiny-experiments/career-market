@@ -1,6 +1,7 @@
 import { formatDayShort } from '@cm/core/dates';
 import type { Change, MarketOverview } from '@cm/core/types';
 import { BarChart3, Building2, CalendarDays, Info, MinusCircle, Plus, Snowflake, TrendingUp } from 'lucide-react';
+import { professionHref } from '@cm/core/professions';
 import Link from 'next/link';
 import { ChangePill, ChangeText } from '@/components/ChangePill';
 import { CompanyLogo } from '@/components/CompanyLogo';
@@ -111,7 +112,9 @@ function MarketOverviewView({ data }: { data: MarketOverview }) {
                   {data.professionsGaining.map((p) => (
                     <tr key={p.family}>
                       <th scope="row" title={p.code}>
-                        {p.name}
+                        <Link href={professionHref(p.family)} className="row-link">
+                          {p.name}
+                        </Link>
                       </th>
                       <td className="r num">{fmtInt(p.open)}</td>
                       <td className="r">

@@ -116,3 +116,67 @@ export type KrillTombstone = z.infer<typeof tombstoneSchema>;
 
 /** An open job (a closed job that reopened before we sampled it); only status matters. */
 export const openJobStatusSchema = z.object({ id: z.string(), status: z.literal('open') });
+
+/** /v1/stats/companies/daily (krill K2): one row per day, company and optional family. */
+export const companyDailySchema = z.object({
+  items: z.array(
+    z.object({
+      date: day,
+      companyId: z.string(),
+      family: z.string().optional(),
+      open: count,
+      new: count,
+      closed: count,
+    }),
+  ),
+  pageSize: z.number().int(),
+  nextCursor: z.string().nullable(),
+});
+export type KrillCompanyDailyPage = z.infer<typeof companyDailySchema>;
+export type KrillCompanyDailyItem = KrillCompanyDailyPage['items'][number];
+
+/** /v1/companies/{id} (krill K7 adds the domain). */
+export const companyDetailSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  domain: z.string().nullable().optional(),
+  openJobs: count,
+});
+export type KrillCompanyDetail = z.infer<typeof companyDetailSchema>;
+
+/** The part of an open job the Profession page reads. */
+export const jobListSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      company: z.object({ id: z.string(), name: z.string() }),
+      workMode: z.string().nullable().optional(),
+      places: z
+        .array(
+          z.object({
+            label: z.string().nullable().optional(),
+            countryCode: z.string().nullable().optional(),
+            admin1Code: z.string().nullable().optional(),
+            city: z.string().nullable().optional(),
+          }),
+        )
+        .default([]),
+      locations: z.array(z.string()).default([]),
+      salary: z
+        .object({
+          currency: z.string().nullable().optional(),
+          annualMin: z.number().nullable().optional(),
+          annualMax: z.number().nullable().optional(),
+        })
+        .nullable()
+        .optional(),
+      openedAt: day,
+      postedAt: z.string().nullable().optional(),
+    }),
+  ),
+  pageSize: z.number().int(),
+  nextCursor: z.string().nullable(),
+});
+export type KrillJobList = z.infer<typeof jobListSchema>;
+export type KrillJobItem = KrillJobList['items'][number];

@@ -3,12 +3,12 @@ import Link from 'next/link';
 import { ChangeText } from './ChangePill';
 import { fmtInt } from '@/lib/format';
 
-function Item({ item, decorative = false }: { item: TickerItem; decorative?: boolean }) {
+function Item({ item, hidden = false }: { item: TickerItem; hidden?: boolean }) {
   return (
     <li className="ticker-item" title={item.note ? `${item.name}. ${item.note}` : item.name}>
       {item.href ? (
-        <Link href={item.href} className="ticker-code" tabIndex={decorative ? -1 : undefined}>
-          {item.code}
+        <Link href={item.href} className="ticker-link" aria-label={`${item.code} ${item.name}: open its page`} tabIndex={hidden ? -1 : undefined}>
+          <span className="ticker-code">{item.code}</span>
         </Link>
       ) : (
         <span className="ticker-code">{item.code}</span>
@@ -33,7 +33,7 @@ export function TickerTape({ items }: { items: TickerItem[] }) {
         {/* Second copy makes the scroll seamless; hidden from assistive tech. */}
         <ul className="ticker-list" aria-hidden="true">
           {items.map((item) => (
-            <Item key={`dup-${item.code}`} item={item} decorative />
+            <Item key={`dup-${item.code}`} item={item} hidden />
           ))}
         </ul>
       </div>

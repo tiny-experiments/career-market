@@ -35,6 +35,10 @@ async function get<T>(path: string, options: { revalidate?: number } = {}): Prom
 export const getChrome = () => get<ChromePayload>('/v1/chrome');
 export const getMarketOverview = () => get<MarketOverview>('/v1/market');
 
+export const getProfessionPage = (code: string) =>
+  get<import('@cm/core/professions').ProfessionPage>(`/v1/professions/${encodeURIComponent(code)}`);
+export const getProfessionIndex = () => get<import('@cm/core/professions').ProfessionIndex>('/v1/professions');
+
 export const getCompanies = () => get<CompanyDirectoryRow[]>('/v1/companies');
 export const getCompany = (slug: string) => get<CompanyPage>(`/v1/companies/${encodeURIComponent(slug)}`);
 export const getCompanyJobs = (slug: string, filter: { profession?: string; country?: string; remote?: boolean }) => {

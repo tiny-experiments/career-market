@@ -17,8 +17,10 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   day's closings and, per profession, the newest open US roles that list pay (the Job page's pay bands),
   then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
   changes, profession ticker codes, rule-written market notes and the survival-corrected back-cast
-  (estimated history before 2026-11-02). Every krill response is parsed with zod. Every table can be
-  rebuilt from krill.
+  (estimated history before 2026-11-02). For the Profession page it also pulls `/v1/stats/companies/daily`,
+  `/v1/companies/{id}`, per-family facets and job lists, and writes a back-cast, work mode, pay band, top
+  companies with signals and the latest roles per profession. Every krill response is parsed with zod.
+  Every table can be rebuilt from krill.
 - **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
   needs `Authorization: Bearer $READ_API_TOKEN`. `GET /v1/jobs/{krill id}` (the Job page) is the one route
   that also reads krill live: the posting, the employer's company history and similar roles, cached for 1 hour

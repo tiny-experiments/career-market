@@ -34,3 +34,10 @@ export function changeWindow(change: Change, full: string): string {
 export function changeSentence(change: Change, full: string): string {
   return `${isUp(change) ? 'up' : 'down'} ${fmtPct(change.value)} ${changeWindow(change, full)}`;
 }
+
+/** Axis label with one decimal from 1K up: 10000 -> "10.0K", 9500 -> "9.5K". */
+export function fmtAxis(n: number): string {
+  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(n) >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(Math.round(n));
+}
