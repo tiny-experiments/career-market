@@ -58,4 +58,16 @@ describe('shareAdjustedIndex', () => {
     const expected = 100 * (219_725 / 218_194) * (0.04 / 0.05) * (210_645 / 209_587) * (0.044 / 0.04);
     expect(fam.at(-1)?.value).toBeCloseTo(expected, 10);
   });
+
+  it('carries the market links of days without a share row to the next share day', () => {
+    const idx = chainIndex(days, panel);
+    const share = new Map([
+      ['2026-11-02', 0.04],
+      ['2026-11-05', 0.044],
+    ]);
+    const fam = shareAdjustedIndex(idx, share);
+    const expected = 100 * (219_725 / 218_194) * (210_645 / 209_587) * (0.044 / 0.04);
+    expect(fam).toHaveLength(2);
+    expect(fam.at(-1)?.value).toBeCloseTo(expected, 10);
+  });
 });

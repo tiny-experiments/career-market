@@ -45,11 +45,16 @@ export function shareAdjustedIndex(
   const out: { date: IsoDay; value: number; linkUsed: boolean }[] = [];
   let value = 100;
   let prevShare: number | undefined;
+  let gapLink = 1;
   for (const point of market) {
     const s = share.get(point.date);
-    if (s === undefined) continue;
+    if (s === undefined) {
+      if (point.linkUsed) gapLink *= point.link;
+      continue;
+    }
     const usable = point.linkUsed && prevShare !== undefined && prevShare > 0 && s > 0;
-    if (usable) value *= point.link * (s / (prevShare as number));
+    if (usable) value *= gapLink * point.link * (s / (prevShare as number));
+    gapLink = 1;
     out.push({ date: point.date, value, linkUsed: usable });
     prevShare = s;
   }
