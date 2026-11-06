@@ -2,8 +2,10 @@ import { timingSafeEqual } from 'node:crypto';
 import type { Sql } from '@cm/core/db';
 import type { Logger } from '@cm/core/logger';
 import { Hono } from 'hono';
+import { isJobId } from '@cm/core/job';
 import { parseScreenerQuery } from '@cm/core/screener';
-import { KrillLive } from './krillLive.ts';
+import { jobPage } from './job.ts';
+import { KrillLive, KrillLiveError } from './krillLive.ts';
 import { chrome, marketOverview, NotReadyError } from './readModel.ts';
 import { screener } from './screener.ts';
 import { MAX_QUERY_LENGTH, search, searchRoles } from './search.ts';
@@ -13,7 +15,7 @@ import { MAX_QUERY_LENGTH, search, searchRoles } from './search.ts';
  * /v1 route needs `Authorization: Bearer <READ_API_TOKEN>`. The web app calls
  * it from server components; browsers never do.
  */
-export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: KrillLive }): Hono {
+export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: KrillLive; withLogos?: boolean }): Hono {
   const live = deps.live ?? new KrillLive({ baseUrl: 'https://krill.kurso.sh', log: deps.log });
   const app = new Hono();
   const expected = Buffer.from(deps.token);
@@ -52,9 +54,23 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: K
     return c.json({ ...results, roles: roles ?? [], rolesUnavailable: roles === null });
   });
 
+  // One posting: krill live (cached 1 h) joined with the read model. 410 = the role closed.
+  app.get('/v1/jobs/:id', async (c) => {
+    const id = c.req.param('id');
+    if (!isJobId(id)) return c.json({ code: 'NOT_FOUND', message: 'no such job' }, 404);
+    const result = await jobPage({ sql: deps.sql, krill: live, withLogos: deps.withLogos ?? false }, id);
+    if (result.kind === 'missing') return c.json({ code: 'NOT_FOUND', message: 'no such job' }, 404);
+    if (result.kind === 'closed') return c.json(result.payload, 410);
+    return c.json(result.payload);
+  });
+
   app.notFound((c) => c.json({ code: 'NOT_FOUND', message: 'no such route' }, 404));
   app.onError((err, c) => {
     if (err instanceof NotReadyError) return c.json({ code: 'NOT_READY', message: err.message }, 503);
+    if (err instanceof KrillLiveError) {
+      deps.log.warn({ err: err.message, path: c.req.path }, 'krill unavailable');
+      return c.json({ code: 'KRILL_UNAVAILABLE', message: 'krill did not answer' }, 502);
+    }
     deps.log.error({ err: String(err), path: c.req.path }, 'read api error');
     return c.json({ code: 'INTERNAL', message: 'internal error' }, 500);
   });
