@@ -35,6 +35,9 @@ importers:
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
+      zod:
+        specifier: ^4.1.12
+        version: 4.6.7
     devDependencies:
       pino:
         specifier: ^10.4.0

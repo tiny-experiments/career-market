@@ -1,0 +1,668 @@
+/* Screener page. Tokens come from globals.css; the few extra colors have a value per theme. */
+
+:root,
+:root[data-theme='dark'] {
+  --amber-soft: rgba(245, 165, 36, 0.14);
+  --amber-border: rgba(245, 165, 36, 0.4);
+  --blue-border: rgba(74, 134, 255, 0.45);
+  --purple: #b79cff;
+  --purple-soft: rgba(150, 110, 255, 0.2);
+  --co-tile: #243044;
+}
+:root[data-theme='light'] {
+  --amber-soft: rgba(161, 92, 0, 0.1);
+  --amber-border: rgba(161, 92, 0, 0.4);
+  --blue-border: rgba(31, 95, 224, 0.4);
+  --purple: #5b3fc4;
+  --purple-soft: rgba(91, 63, 196, 0.1);
+  --co-tile: #e4e9f1;
+}
+
+.screener {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Header: title, filter pills, presets ---------- */
+.scr-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'title filters'
+    'sub sub';
+  align-items: center;
+  column-gap: 40px;
+  row-gap: 14px;
+  margin: 0 -24px;
+  padding: 18px 24px 4px;
+  background: var(--hero-glow);
+}
+.scr-title-block {
+  grid-area: title;
+}
+.scr-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+}
+.scr-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+.scr-subrow {
+  grid-area: sub;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.mode-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+}
+.mode-toggle a {
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 5px;
+  color: var(--text-2);
+}
+.mode-toggle a:hover {
+  background: var(--card-2);
+  text-decoration: none;
+}
+.mode-toggle a.is-active {
+  background: var(--blue-strong);
+  color: #fff;
+}
+
+.filter-bar {
+  grid-area: filters;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.pill-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.pill-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 32px;
+  padding: 0 30px 0 14px;
+  text-overflow: ellipsis;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pill-select.is-set select {
+  border-color: var(--blue-border);
+  background: var(--blue-soft);
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.pill-select select:hover {
+  border-color: var(--muted);
+}
+.pill-select svg {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--text-2);
+}
+.pill-select select option,
+.pill-select select optgroup {
+  background: var(--card-2);
+  color: var(--text);
+}
+.filter-reset {
+  margin-left: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.filter-apply {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--blue);
+  background: var(--blue-strong);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.presets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 32px;
+  padding: 0 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+.preset:hover {
+  background: var(--tile);
+  text-decoration: none;
+  border-color: var(--muted);
+}
+.preset.is-active {
+  background: linear-gradient(180deg, #3b72f0, #2c5ad1);
+  border-color: #5a8cff;
+  color: #fff;
+}
+.preset svg {
+  flex: none;
+}
+
+/* ---------- Results table ---------- */
+.scr-card {
+  padding: 4px 6px 8px;
+}
+.scr-scroll {
+  position: relative; /* keeps visually hidden text of far rows inside the scroller */
+  overflow: auto;
+}
+/* The table scrolls inside its card (about fifteen rows show), so the summary and the matching roles stay in view. */
+.scr-card .scr-scroll {
+  max-height: 468px;
+}
+.jobs-card .scr-scroll {
+  max-height: 330px;
+}
+.scr-card thead th,
+.jobs-card thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+}
+.scr-scroll:focus-visible {
+  outline-offset: -2px;
+}
+.scr-table {
+  min-width: 1080px;
+  font-size: 13px;
+}
+.scr-table thead th,
+.jobs-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 12px 8px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.scr-table tbody td,
+.scr-table tbody th {
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+.scr-table tbody tr + tr {
+  border-top: 0;
+}
+.scr-table tbody tr:hover {
+  background: var(--card-2);
+}
+.sort-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+}
+.sort-link svg {
+  color: var(--muted);
+}
+.sort-link:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+th[aria-sort] .sort-link {
+  color: var(--text);
+  font-weight: 600;
+}
+th[aria-sort] .sort-link svg {
+  color: var(--blue-text);
+}
+.scr-table th .info {
+  margin-left: 6px;
+  vertical-align: middle;
+  border: 0;
+}
+.name-cell a {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.name-cell a:hover {
+  color: var(--blue-text);
+}
+.ticker-cell {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.strong {
+  font-weight: 600;
+}
+.pct {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.pct-up {
+  color: var(--green);
+}
+.pct-down {
+  color: var(--red);
+}
+.pct-flat {
+  color: var(--muted);
+}
+.trend-cell {
+  text-align: right;
+  width: 124px;
+}
+.signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.signal-ramping {
+  background: var(--green-soft);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+.signal-steady {
+  background: var(--blue-soft);
+  border-color: var(--blue-border);
+  color: var(--blue-text);
+}
+.signal-cooling {
+  background: var(--amber-soft);
+  border-color: var(--amber-border);
+  color: var(--amber);
+}
+.signal-freezing {
+  background: var(--red-soft);
+  border-color: rgba(255, 95, 95, 0.4);
+  color: var(--red);
+}
+.flat-icon {
+  transform: rotate(35deg);
+}
+.chips {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chips li {
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-2);
+  font-size: 11.5px;
+  color: var(--text);
+}
+.remote-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.remote-share .num {
+  min-width: 34px;
+}
+.remote-share .share-bar {
+  width: 100px;
+}
+.scr-notes {
+  padding: 4px 10px 0;
+}
+.scr-note {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.scr-note-warn {
+  margin: 8px 8px 0;
+  border: 1px solid var(--amber-border);
+  background: var(--amber-soft);
+  border-radius: 8px;
+  color: var(--text);
+}
+.scr-empty {
+  text-align: center;
+  padding: 28px 8px !important;
+  color: var(--muted);
+  white-space: normal !important;
+}
+
+/* ---------- Company logo tile ---------- */
+.co-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 6px;
+  background: var(--co-tile);
+  color: var(--text-2);
+  font-weight: 700;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.co-logo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+}
+.co-logo-initial {
+  line-height: 1;
+}
+
+/* ---------- Summary strip ---------- */
+.scr-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.sum-card {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.42fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 22px;
+  padding: 14px 20px;
+  min-height: 108px;
+}
+.sum-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.sum-head svg {
+  color: var(--text-2);
+}
+.sum-head h2 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.sum-head p {
+  font-size: 12.5px;
+}
+.sum-foot {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.mix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.mix th,
+.mix td {
+  padding: 3px 6px 3px 0;
+  text-align: left;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.mix .r {
+  text-align: right;
+}
+.mix-bar {
+  width: 42%;
+}
+.mix .share-bar {
+  height: 9px;
+}
+
+/* ---------- Matching roles ---------- */
+.jobs-card {
+  padding: 0 0 6px;
+}
+.jobs-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.jobs-head > svg {
+  color: var(--text-2);
+}
+.jobs-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.jobs-sort {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.jobs-sort-group {
+  display: inline-flex;
+  gap: 10px;
+}
+.jobs-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-2);
+  color: var(--text);
+  font-size: 13px;
+}
+.jobs-sort-btn:hover {
+  text-decoration: none;
+  border-color: var(--muted);
+}
+.jobs-sort-btn.is-active {
+  background: var(--blue-strong);
+  border-color: #5a8cff;
+  color: #fff;
+  font-weight: 600;
+}
+.jobs-toggle {
+  display: inline-flex;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.jobs-toggle svg {
+  transition: transform 0.15s ease;
+  transform: rotate(-90deg);
+}
+.jobs-toggle svg.is-open {
+  transform: rotate(0deg);
+}
+.jobs-table {
+  min-width: 920px;
+  font-size: 13px;
+}
+.jobs-table thead th {
+  padding-left: 12px;
+}
+.jobs-table tbody th,
+.jobs-table tbody td {
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.jobs-table tbody tr:hover {
+  background: var(--card-2);
+}
+.jobs-table tbody tr + tr {
+  border-top: 1px solid var(--border);
+}
+.job-ext a {
+  display: inline-flex;
+  color: var(--blue-text);
+  padding: 4px;
+  border-radius: 5px;
+}
+.job-title a {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.job-title a:hover {
+  color: var(--blue-text);
+}
+.job-company {
+  display: table-cell;
+}
+.job-company .co-logo {
+  margin-right: 10px;
+}
+.job-company span:last-child {
+  font-weight: 600;
+}
+.job-loc svg {
+  vertical-align: -2px;
+  color: var(--text-2);
+}
+.tag {
+  display: inline-block;
+  min-width: 70px;
+  text-align: center;
+  padding: 2px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 12px;
+  font-weight: 600;
+}
+.wm-remote {
+  background: var(--green-soft);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+.wm-hybrid {
+  background: var(--blue-soft);
+  border-color: var(--blue-border);
+  color: var(--blue-text);
+}
+.wm-onsite {
+  background: var(--card-2);
+  border-color: var(--border-strong);
+  color: var(--text-2);
+}
+.lvl-entry,
+.lvl-intern,
+.lvl-junior,
+.lvl-mid,
+.lvl-senior {
+  background: var(--blue-soft);
+  border-color: var(--blue-border);
+  color: var(--blue-text);
+}
+.lvl-staff {
+  background: var(--purple-soft);
+  border-color: rgba(150, 110, 255, 0.45);
+  color: var(--purple);
+}
+.lvl-manager,
+.lvl-director,
+.lvl-executive {
+  background: var(--amber-soft);
+  border-color: var(--amber-border);
+  color: var(--amber);
+}
+.jobs-pager {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 18px 4px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1280px) {
+  .scr-head {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'title' 'filters' 'sub';
+  }
+  .filter-bar {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 1100px) {
+  .scr-summary {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .scr-head {
+    margin: 0 -16px;
+    padding: 16px 16px 4px;
+  }
+  .jobs-head {
+    flex-wrap: wrap;
+  }
+  .jobs-sort {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+  .sum-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pill-select select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.jobs-growth-note {
+  align-self: center;
+}
+.scr-growth-note {
+  grid-column: 1 / -1;
+}
