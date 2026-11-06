@@ -25,6 +25,8 @@ import { pullProfessions } from './professions/pull.ts';
 import { observedDays, pull, type Pulled } from './pull.ts';
 import { pullScreener } from './screener/pull.ts';
 import { writeScreener } from './screener/write.ts';
+import { pullSkillPages, type SkillPulled } from './skills/pull.ts';
+import { computeSkillPages, writeSkillInputs } from './skills/write.ts';
 
 /** How far the back-cast reaches before today (report: reliable to about 6 months). */
 export const BACKCAST_DAYS = 183;
@@ -76,14 +78,26 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
     const professions = await pullProfessions(api, T, pulled.families, atsList, log);
     const screener = await pullScreener(api, T, pulled.families, log);
     const pay = await pullPayBands(api, pulled.families, log);
+    // The Skill pages must not take the market build down with them: when krill
+    // fails them, today's skill rows are skipped and the pages keep yesterday's.
+    let skillsPulled: SkillPulled | null = null;
+    if (config.builder.skillPages > 0) {
+      try {
+        skillsPulled = await pullSkillPages({ api, sql, log, limit: config.builder.skillPages }, T, pulled.familySkills);
+      } catch (err) {
+        log.error({ err: String(err) }, 'skill page pull failed; skill pages keep the previous day');
+      }
+    }
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
       await writeProfessionInputs(tx as unknown as Sql, T, professions);
       await writePayBands(tx as unknown as Sql, T, pay.bands);
+      if (skillsPulled) await writeSkillInputs(tx as unknown as Sql, T, skillsPulled);
       const market = await computeAndWrite(tx as unknown as Sql, pulled, log);
       const fit = await fitFromSamples(tx as unknown as Sql, pulled, T, new Map(pulled.market.map((m) => [m.date, m])));
       const profession = await computeProfessions(tx as unknown as Sql, professions, { T, fit: fit?.fit ?? null, log });
-      return { ...market, ...profession, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
+      const skills = skillsPulled ? { ...(await computeSkillPages(tx as unknown as Sql, T, log)), skillsFailed: skillsPulled.failed } : {};
+      return { ...market, ...profession, ...skills, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
     });
     const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`

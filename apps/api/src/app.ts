@@ -10,6 +10,7 @@ import { NotFoundError, professionIndex, professionPage } from './professions.ts
 import { chrome, marketOverview, NotReadyError } from './readModel.ts';
 import { screener } from './screener.ts';
 import { MAX_QUERY_LENGTH, search, searchRoles } from './search.ts';
+import { skillIndex, skillPage } from './skillPage.ts';
 
 /**
  * Read-only HTTP API in front of the read model. Server-to-server only: every
@@ -65,6 +66,12 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: K
     if (result.kind === 'missing') return c.json({ code: 'NOT_FOUND', message: 'no such job' }, 404);
     if (result.kind === 'closed') return c.json(result.payload, 410);
     return c.json(result.payload);
+  });
+  app.get('/v1/skills', async (c) => c.json(await skillIndex(deps.sql)));
+  app.get('/v1/skills/:slug', async (c) => {
+    const slug = c.req.param('slug').toLowerCase();
+    const page = /^[a-z0-9][a-z0-9.+_-]{0,63}$/.test(slug) ? await skillPage(deps.sql, slug) : null;
+    return page ? c.json(page) : c.json({ code: 'NOT_FOUND', message: 'no such skill page' }, 404);
   });
 
   app.notFound((c) => c.json({ code: 'NOT_FOUND', message: 'no such route' }, 404));

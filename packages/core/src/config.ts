@@ -27,6 +27,7 @@ const schema = z.object({
   BUILDER_POLL_MINUTES: z.coerce.number().int().positive().default(60),
   BUILDER_CLOSING_SAMPLE_PER_DAY: z.coerce.number().int().min(0).default(60),
   BUILDER_GROUPED_REFRESH_DAYS: z.coerce.number().int().min(1).default(7),
+  BUILDER_SKILL_PAGES: z.coerce.number().int().min(0).default(60),
 
   READ_API_HOST: z.string().default('127.0.0.1'),
   READ_API_PORT: z.coerce.number().int().positive().default(4100),
@@ -57,6 +58,8 @@ export interface Config {
     pollMinutes: number;
     closingSamplePerDay: number;
     groupedRefreshDays: number;
+    /** How many of the largest skills get a Skill page (history, companies, pairs, latest roles). */
+    skillPages: number;
   };
   readApi: {
     host: string;
@@ -92,6 +95,7 @@ export function parseConfig(env: Record<string, string | undefined>, cwd = proce
       pollMinutes: raw.BUILDER_POLL_MINUTES,
       closingSamplePerDay: raw.BUILDER_CLOSING_SAMPLE_PER_DAY,
       groupedRefreshDays: raw.BUILDER_GROUPED_REFRESH_DAYS,
+      skillPages: raw.BUILDER_SKILL_PAGES,
     },
     readApi: {
       host: raw.READ_API_HOST,

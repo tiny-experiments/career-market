@@ -1,6 +1,7 @@
 import 'server-only';
 import { loadConfig, requireReadApiToken } from '@cm/core/config';
 import type { ScreenerPayload, SearchResults, RoleHit } from '@cm/core/screener';
+import type { SkillIndexPayload, SkillPagePayload } from '@cm/core/skills';
 import type { ChromePayload, MarketOverview } from '@cm/core/types';
 
 /**
@@ -46,3 +47,5 @@ export type SearchPayload = SearchResults & { roles: RoleHit[]; rolesUnavailable
 /** Typeahead and full-page search. Short cache: queries are open-ended, the read API caches krill calls. */
 export const getSearch = (q: string, opts: { limit?: number; roles?: boolean } = {}) =>
   get<SearchPayload>(`/v1/search?q=${encodeURIComponent(q)}&limit=${opts.limit ?? 5}${opts.roles ? '&roles=1' : ''}`, { revalidate: 300 });
+export const getSkillIndex = () => get<SkillIndexPayload>('/v1/skills');
+export const getSkillPage = (slug: string) => get<SkillPagePayload>(`/v1/skills/${encodeURIComponent(slug)}`);

@@ -1,4 +1,5 @@
 import { formatDayShort } from '@cm/core/dates';
+import { bareSkillName } from '@cm/core/skills';
 import type { Change, MarketOverview } from '@cm/core/types';
 import { BarChart3, Building2, CalendarDays, Info, MinusCircle, Plus, Snowflake, TrendingUp } from 'lucide-react';
 import { professionHref } from '@cm/core/professions';
@@ -158,7 +159,9 @@ function MarketOverviewView({ data }: { data: MarketOverview }) {
           <ul className="skill-grid">
             {data.hottestSkills.map((s) => (
               <li key={s.id} className="skill-tile">
-                <span className="skill-name">{s.label}</span>
+                <Link href={`/skills/${bareSkillName(s.id)}`} className="skill-name">
+                  {s.label}
+                </Link>
                 <span className="skill-count num">{fmtInt(s.open)}</span>
                 <ChangePill change={s.change} window="7D" emptyTitle="Change appears after a week of daily skill counts" />
               </li>
