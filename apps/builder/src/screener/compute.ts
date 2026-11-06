@@ -1,4 +1,5 @@
 import { isTileSkill } from '@cm/core/codes';
+import { FIRST_COMPARABLE_BASE } from '@cm/core/dates';
 import { companySignal, skillSlug, slugify, type GrowthState } from '@cm/core/screener';
 
 /** How many companies the Screener lists, and how many skills get their own work-mode and profession counts. */
@@ -61,13 +62,16 @@ export interface DayValue {
 }
 
 /**
- * Signal of a company from its daily open roles. Needs enough comparable days;
- * the window is the whole history held (at most COMPANY_HISTORY_DAYS).
+ * Signal of a company from its daily open roles. krill's bootstrap days (2-3
+ * Nov) never count: the window starts at the first comparable base day, and
+ * `days` is the number of comparable days after it. Needs MIN_SIGNAL_DAYS of
+ * them; the window is all history held (at most COMPANY_HISTORY_DAYS).
  */
 export function signalFor(series: readonly DayValue[]): { signal: GrowthState | null; days: number } {
-  const days = series.length;
-  const first = series[0];
-  const last = series[days - 1];
-  if (!first || !last || first.open <= 0) return { signal: null, days };
+  const window = series.filter((s) => s.date >= FIRST_COMPARABLE_BASE);
+  const days = Math.max(0, window.length - 1);
+  const first = window[0];
+  const last = window[window.length - 1];
+  if (!first || !last || first.open <= 0 || days === 0) return { signal: null, days };
   return { signal: companySignal(last.open / first.open - 1, days), days };
 }

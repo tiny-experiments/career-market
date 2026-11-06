@@ -1,5 +1,5 @@
 import { countryName, familyInfo, FAMILIES, isTileSkill, skillLabel, companyTicker } from '@cm/core/codes';
-import { addDays, daysBetween, type IsoDay, type Range } from '@cm/core/dates';
+import { addDays, daysBetween, FIRST_COMPARABLE_BASE, type IsoDay, type Range } from '@cm/core/dates';
 import type { Sql } from '@cm/core/db';
 import {
   companyHref,
@@ -471,7 +471,8 @@ export async function screener(sql: Sql, live: KrillLive, q: ScreenerQuery): Pro
   if (f.growth) {
     const anyGrowth = rows.some((r) => rowGrowth(r) !== null);
     if (!anyGrowth && q.mode === 'companies') {
-      growthUnavailable = `Signals need ${MIN_SIGNAL_DAYS} days of company history from krill, which starts on 6 Nov 2026.`;
+      const [h] = await sql<{ days: number }[]>`select greatest(count(distinct date) - 1, 0)::int as days from screener_company_day where date >= ${FIRST_COMPARABLE_BASE} and date <= ${asOf}`;
+      growthUnavailable = `Signals need ${MIN_SIGNAL_DAYS} days of company history; krill's company statistics hold ${h?.days ?? 0} comparable day${h?.days === 1 ? '' : 's'} so far (2–3 Nov were bootstrap days).`;
     } else if (!anyGrowth) {
       growthUnavailable = `Growth needs ${MIN_SIGNAL_DAYS} comparable days of history.`;
     }
@@ -482,7 +483,6 @@ export async function screener(sql: Sql, live: KrillLive, q: ScreenerQuery): Pro
   const rowTotal = sorted.length;
   const shown = sorted.slice(0, MAX_ROWS);
 
-  if (liveError) notes.push(`krill could not count the roles for these filters (${liveError}). Try again in a minute.`);
   if (krillFiltered && facets) {
     notes.push('Open roles follow your filters. Change, signal, top profession, top skills, remote share and trend describe each row overall, not only the filtered roles.');
     if (q.mode === 'companies' && unlisted > 0) {
@@ -501,7 +501,7 @@ export async function screener(sql: Sql, live: KrillLive, q: ScreenerQuery): Pro
       summary = summaryFrom(facets.total, facets.facets.level, facets.facets.workMode, facets.facets.country);
     } else {
       matches = 0;
-      summary = { available: false, reason: liveError ? `krill could not count the roles for these filters (${liveError}).` : 'No count available.' };
+      summary = { available: false, reason: 'The summary needs krill to count the roles for these filters.' };
     }
   } else {
     const rowsF = await sql<{ kind: string; value: string; count: number }[]>`
@@ -526,6 +526,7 @@ export async function screener(sql: Sql, live: KrillLive, q: ScreenerQuery): Pro
     rowTotal,
     notes,
     growthUnavailable,
+    liveError: liveError ? `krill could not count the roles for these filters (${liveError}). Try again in a minute.` : null,
     summary,
     jobs,
     options: await options(sql, asOf),

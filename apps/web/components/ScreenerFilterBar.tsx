@@ -130,7 +130,7 @@ export function ScreenerFilterBar({
           </option>
         ))}
       </Pill>
-      <Pill width={92} name="growth" label="Growth" value={filters.growth ?? ''}>
+      <Pill width={106} name="growth" label="Growth" value={filters.growth ?? ''}>
         {GROWTH_STATES.map((g) => (
           <option key={g} value={g}>
             {GROWTH_LABEL[g]}

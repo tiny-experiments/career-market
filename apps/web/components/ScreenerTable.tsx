@@ -219,11 +219,6 @@ export function ScreenerTable({ data, logos, jobSort }: { data: ScreenerPayload;
       <h2 id="scr-table-title" className="sr-only">
         Screener results: {nameOf}
       </h2>
-      {data.growthUnavailable && (
-        <p className="scr-note scr-note-warn" role="status">
-          {data.growthUnavailable}
-        </p>
-      )}
       <div className="scr-scroll" tabIndex={0} role="region" aria-label={`Screener table, ${data.rowTotal} ${nameOf}`}>
         <table className="table scr-table">
           <caption className="sr-only">
@@ -276,7 +271,7 @@ export function ScreenerTable({ data, logos, jobSort }: { data: ScreenerPayload;
             {data.rows.length === 0 && (
               <tr>
                 <td colSpan={cols.length} className="scr-empty">
-                  {data.growthUnavailable ?? 'Nothing matches these filters.'}
+                  {data.liveError ?? data.growthUnavailable ?? 'Nothing matches these filters.'}
                 </td>
               </tr>
             )}

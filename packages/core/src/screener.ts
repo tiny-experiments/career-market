@@ -322,6 +322,8 @@ export interface ScreenerPayload {
   notes: string[];
   /** Companies mode: the filter hides the signal because no company has one yet. */
   growthUnavailable: string | null;
+  /** krill could not count the roles for the filters (busy or down); the table and summary then say so. */
+  liveError: string | null;
   summary: ScreenerSummary | { available: false; reason: string };
   jobs: JobsPanel;
   options: ScreenerOptions;

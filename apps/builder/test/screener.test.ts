@@ -19,10 +19,14 @@ describe('screener compute', () => {
     expect(topSkillIds(list)).toEqual(['lang:python', 'cloud:aws', 'lang:java']);
   });
 
-  it('gives a signal only with enough comparable days', () => {
-    const days = (n: number, last: number) => Array.from({ length: n }, (_, i) => ({ date: `2026-11-${String(i + 1).padStart(2, '0')}`, open: i === n - 1 ? last : 100 }));
-    expect(signalFor(days(1, 100))).toEqual({ signal: null, days: 1 });
-    expect(signalFor(days(6, 150)).signal).toBeNull();
+  it('gives a signal only with enough comparable days, never counting bootstrap days', () => {
+    // n comparable days after the 3 Nov base day; the last day holds `last`.
+    const days = (n: number, last: number) => [
+      { date: '2026-11-02', open: 5 }, // bootstrap day: ignored
+      ...Array.from({ length: n + 1 }, (_, i) => ({ date: `2026-11-${String(i + 3).padStart(2, '0')}`, open: i === n ? last : 100 })),
+    ];
+    expect(signalFor(days(0, 100))).toEqual({ signal: null, days: 0 });
+    expect(signalFor(days(6, 150))).toEqual({ signal: null, days: 6 });
     expect(signalFor(days(7, 106))).toEqual({ signal: 'ramping', days: 7 });
     expect(signalFor(days(10, 85)).signal).toBe('freezing');
     expect(signalFor(days(10, 100)).signal).toBe('steady');

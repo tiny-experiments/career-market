@@ -18,6 +18,17 @@ const TITLES: Record<SearchKind, string> = { profession: 'Professions', company:
 const KIND_ORDER: SearchKind[] = ['profession', 'company', 'skill'];
 
 export const MAX_QUERY_LENGTH = 80;
+/** Longest the typeahead waits for krill's company name search. */
+const LIVE_WAIT_MS = 1_200;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timeout')), ms);
+  });
+  p.catch(() => undefined); // a late failure of the abandoned call is not an unhandled rejection
+  return Promise.race([p, timeout]).finally(() => clearTimeout(timer));
+}
 
 /** Escapes LIKE wildcards so user text always matches literally. */
 export function likeEscape(text: string): string {
@@ -96,7 +107,8 @@ export async function search(sql: Sql, live: KrillLive, rawQuery: string, perGro
   const companyHits = hits.get('company') as SearchHit[];
   if (companyHits.length < perGroup && q.length >= 2) {
     try {
-      const page = await live.get('/v1/companies', { q: query, sort: 'openJobs', pageSize: perGroup }, liveCompaniesSchema);
+      // The typeahead never waits on krill for long: the read-model hits answer first.
+      const page = await withTimeout(live.get('/v1/companies', { q: query, sort: 'openJobs', pageSize: perGroup }, liveCompaniesSchema), LIVE_WAIT_MS);
       const have = new Set(companyHits.map((h) => h.id));
       for (const c of page.items) {
         if (have.has(c.id) || companyHits.length >= perGroup || c.openJobs <= 0) continue;
