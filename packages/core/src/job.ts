@@ -134,6 +134,8 @@ export interface JobContext {
 export interface JobPagePayload {
   status: 'open';
   asOf: IsoDay | null;
+  /** True when a side panel fell back because a krill call failed or was refused; the page is worth retrying soon. */
+  degraded: boolean;
   job: JobPosting;
   context: JobContext;
 }

@@ -104,6 +104,25 @@ function appWith(krill: KrillLive, rows = readModel) {
   return createApp({ sql: fakeSql(rows), token, log: pino({ level: 'silent' }), live: krill });
 }
 
+describe('GET /v1/jobs/:id degraded flag', () => {
+  it.each([
+    ['company lookup', { company: new KrillLiveError(null, 'refused') }],
+    ['company history', { companyDaily: new KrillLiveError(null, 'refused') }],
+    ['similar roles', { jobs: new KrillLiveError(null, 'refused') }],
+  ] as const)('is true when the %s call fails', async (_name, overrides) => {
+    const res = await appWith(fakeKrill(overrides).krill).request(`/v1/jobs/${job.id}`, { headers });
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as any).degraded).toBe(true);
+  });
+
+  it('is false when krill answers every call, even with nothing similar to show', async () => {
+    const res = await appWith(fakeKrill({ jobs: [] }).krill).request(`/v1/jobs/${job.id}`, { headers });
+    const body = (await res.json()) as any;
+    expect(body.context.similar.available).toBe(false);
+    expect(body.degraded).toBe(false);
+  });
+});
+
 describe('GET /v1/jobs/:id', () => {
   it('composes the posting with the read model', async () => {
     const { krill } = fakeKrill();
@@ -111,6 +130,7 @@ describe('GET /v1/jobs/:id', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as any;
     expect(body.status).toBe('open');
+    expect(body.degraded).toBe(false);
     expect(body.asOf).toBe('2026-11-06');
     expect(body.job.location).toBe('Cupertino, California, US');
     expect(body.job.employmentType).toBe('Full-time');
@@ -133,6 +153,7 @@ describe('GET /v1/jobs/:id', () => {
     const res = await appWith(krill, { ...readModel, 'from pay_band': [] } as typeof readModel).request(`/v1/jobs/${job.id}`, { headers });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any;
+    expect(body.degraded).toBe(true);
     expect(body.context.companyTrend.available).toBe(false);
     expect(body.context.similar.available).toBe(false);
     expect(body.context.salaryBand).toEqual({ available: false, reason: 'Pay bands appear after the next nightly build.' });

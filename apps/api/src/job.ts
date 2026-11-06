@@ -41,6 +41,18 @@ const SPARK_DAYS = 30;
 const SIMILAR_COUNT = 4;
 const TYPICAL_WINDOW_DAYS = 28;
 
+/** Collects whether any side panel fell back because a krill call failed or was refused. */
+interface Fallbacks {
+  degraded: boolean;
+}
+
+function orNull<T>(fallbacks: Fallbacks, call: Promise<T>): Promise<T | null> {
+  return call.catch(() => {
+    fallbacks.degraded = true;
+    return null;
+  });
+}
+
 export interface JobDeps {
   sql: Sql;
   krill: KrillLive;
@@ -75,12 +87,13 @@ export async function jobPage(deps: JobDeps, id: string): Promise<JobResult> {
   const job = lookup.job;
   const build = await latestBuild(deps.sql);
   const asOf = build?.asOf ?? null;
+  const fallbacks: Fallbacks = { degraded: false };
   const [company, band, window, profession, similar] = await Promise.all([
-    companyFor(deps, job, asOf),
+    companyFor(deps, fallbacks, job, asOf),
     salaryBandFor(deps.sql, job),
     typicalWindow(deps.sql, job.family, asOf),
     professionTrendFor(deps.sql, job.family, asOf),
-    similarRoles(deps, job),
+    similarRoles(deps, fallbacks, job),
   ]);
 
   const posting = toPosting(job, company.domain);
@@ -91,7 +104,7 @@ export async function jobPage(deps: JobDeps, id: string): Promise<JobResult> {
     professionTrend: profession,
     similar,
   };
-  return { kind: 'open', payload: { status: 'open', asOf, job: posting, context } };
+  return { kind: 'open', payload: { status: 'open', asOf, degraded: fallbacks.degraded, job: posting, context } };
 }
 
 function httpUrl(value: string | null): string | null {
@@ -277,13 +290,14 @@ async function professionTrendFor(sql: Sql, family: string | null, asOf: IsoDay 
 /** The employer's domain (for the logo) and its trend: today's count from /v1/companies, history from krill K2. */
 async function companyFor(
   deps: JobDeps,
+  fallbacks: Fallbacks,
   job: KrillJobDetail,
   asOf: IsoDay | null,
 ): Promise<{ domain: string | null; trend: CompanyTrend | Unavailable }> {
   const to = asOf ?? job.lastSeenAt;
   const [company, items] = await Promise.all([
-    deps.krill.company(job.company.id).catch(() => null),
-    deps.krill.companyDaily(job.company.id, addDays(to, -(SPARK_DAYS + 5)), to).catch(() => null),
+    orNull(fallbacks, deps.krill.company(job.company.id)),
+    orNull(fallbacks, deps.krill.companyDaily(job.company.id, addDays(to, -(SPARK_DAYS + 5)), to)),
   ]);
   const domain = company?.domain ?? null;
   if (items === null) {
@@ -311,7 +325,7 @@ async function companyFor(
 
 // ---------- Similar roles ----------
 
-async function similarRoles(deps: JobDeps, job: KrillJobDetail): Promise<JobContext['similar']> {
+async function similarRoles(deps: JobDeps, fallbacks: Fallbacks, job: KrillJobDetail): Promise<JobContext['similar']> {
   if (!job.family) return { available: false, reason: 'This posting has no profession yet, so there is nothing to compare it with.' };
   const country = job.places[0]?.countryCode ?? undefined;
   const topSkills = (job.tools.length > 0 ? job.tools : job.languages.length > 0 ? job.languages : job.skills).slice(0, 3);
@@ -329,7 +343,7 @@ async function similarRoles(deps: JobDeps, job: KrillJobDetail): Promise<JobCont
     const companies = new Map<string, JobCompany>();
     await Promise.all(
       picked.map(async (j) => {
-        const domain = deps.withLogos ? ((await deps.krill.company(j.company.id).catch(() => null))?.domain ?? null) : null;
+        const domain = deps.withLogos ? ((await orNull(fallbacks, deps.krill.company(j.company.id)))?.domain ?? null) : null;
         companies.set(j.company.id, { id: j.company.id, name: j.company.name, domain });
       }),
     );
@@ -346,6 +360,7 @@ async function similarRoles(deps: JobDeps, job: KrillJobDetail): Promise<JobCont
     if (roles.length === 0) return { available: false, reason: 'krill holds no other open role with the same specialty, seniority and country.' };
     return { available: true, roles };
   } catch {
+    fallbacks.degraded = true;
     return { available: false, reason: 'krill did not answer for similar roles. Try again in a few minutes.' };
   }
 }

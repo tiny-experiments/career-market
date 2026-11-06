@@ -15,15 +15,23 @@ export type JobResult =
   | { kind: 'error'; status: number | null };
 
 const JOB_FETCH_TIMEOUT_MS = 20_000;
+const DEGRADED_REVALIDATE_SECONDS = 60;
 
 export async function getJob(id: string): Promise<JobResult> {
+  const result = await fetchJob(id, 3600, '');
+  if (result.kind !== 'open' || !result.payload.degraded) return result;
+  const retry = await fetchJob(id, DEGRADED_REVALIDATE_SECONDS, `?retry=${Math.floor(Date.now() / (DEGRADED_REVALIDATE_SECONDS * 1000))}`);
+  return retry.kind === 'open' ? retry : result;
+}
+
+async function fetchJob(id: string, revalidate: number, query: string): Promise<JobResult> {
   const config = loadConfig();
   let res: Response;
   try {
-    res = await fetch(`${config.readApi.url}/v1/jobs/${encodeURIComponent(id)}`, {
+    res = await fetch(`${config.readApi.url}/v1/jobs/${encodeURIComponent(id)}${query}`, {
       headers: { authorization: `Bearer ${requireReadApiToken(config)}`, accept: 'application/json' },
       signal: AbortSignal.timeout(JOB_FETCH_TIMEOUT_MS),
-      next: { revalidate: 3600, tags: [READ_MODEL_TAG] },
+      next: { revalidate, tags: [READ_MODEL_TAG] },
     });
   } catch {
     return { kind: 'error', status: null };
