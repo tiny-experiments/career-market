@@ -20,6 +20,8 @@ import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
 import type { KrillApi } from './krill/api.ts';
 import { observedDays, pull, type Pulled } from './pull.ts';
+import { pullScreener } from './screener/pull.ts';
+import { writeScreener } from './screener/write.ts';
 
 /** How far the back-cast reaches before today (report: reliable to about 6 months). */
 export const BACKCAST_DAYS = 183;
@@ -67,9 +69,11 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
   try {
     const plan = await planPull(sql, T, config, options);
     const pulled = await pull(api, { ...meta, lastSnapshotDate: T }, plan, log);
+    const screener = await pullScreener(api, T, pulled.families, log);
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
-      return computeAndWrite(tx as unknown as Sql, pulled, log);
+      const derived = await computeAndWrite(tx as unknown as Sql, pulled, log);
+      return { ...derived, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
     });
     const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`

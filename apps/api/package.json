@@ -11,7 +11,8 @@
     "@cm/core": "workspace:*",
     "@hono/node-server": "^2.1.6",
     "hono": "^4.13.16",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "pino": "^10.4.0"
