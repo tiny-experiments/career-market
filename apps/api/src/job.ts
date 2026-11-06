@@ -303,7 +303,7 @@ async function companyFor(
       signal,
       signalNote:
         signal === null
-          ? `Needs ${SIGNAL_HISTORY_DAYS} days of company history; ${usable.length} so far (krill's company history starts on ${usable[0]?.date ?? 'its first day'}).`
+          ? `Needs ${SIGNAL_HISTORY_DAYS} days of company history; ${usable.length} so far (comparable history starts on ${usable[0]?.date ?? 'its first day'}).`
           : null,
     },
   };
