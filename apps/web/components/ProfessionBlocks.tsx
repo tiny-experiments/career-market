@@ -7,8 +7,8 @@ import { ChangeText } from '@/components/ChangePill';
 import { CompanyLogo } from '@/components/CompanyLogo';
 import { Flag } from '@/components/Flag';
 import { fmtInt, fmtPct } from '@/lib/format';
+import { jobHref } from '@/lib/links';
 import { logoUrl } from '@/lib/logo';
-import { slugify } from '@cm/core/screener';
 
 /** Compact money: 185000 -> "$185K". */
 function money(n: number, currency: string): string {
@@ -335,7 +335,7 @@ export function LatestRoles({ page }: { page: ProfessionPage }) {
                   {ageText(r.ageDays)}
                 </td>
                 <td className="r">
-                  <Link prefetch={false} href={`/job/${encodeURIComponent(r.id)}/${slugify(r.title) || 'role'}`} className="btn-view" aria-label={`View ${r.title} at ${r.company}`}>
+                  <Link prefetch={false} href={jobHref(r.id, r.title)} className="btn-view" aria-label={`View ${r.title} at ${r.company}`}>
                     View
                   </Link>
                 </td>
