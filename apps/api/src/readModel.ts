@@ -3,6 +3,7 @@ import { addDays, FIRST_OBSERVED_DAY, isBootstrapDay, type IsoDay, type Range } 
 import type { Sql } from '@cm/core/db';
 import { professionHref } from '@cm/core/professions';
 import type { Change, ChromePayload, MarketOverview, ProfessionMover, SkillTile, TickerItem } from '@cm/core/types';
+import { companiesRamping } from './companyModel.ts';
 
 /** Read-only queries over the read model. Nothing here calls krill. */
 
@@ -64,16 +65,19 @@ export async function chrome(sql: Sql): Promise<ChromePayload> {
     };
   });
 
-  const companies = await sql<{ name: string; open: number }[]>`
-    select name, open from company_daily where date = ${asOf} and family = '*' order by open desc limit 50`;
-  for (const c of companies.filter((x) => companyTicker(x.name)).slice(0, 2).reverse()) {
+  const companies = await sql<{ company_id: string; slug: string; name: string; open: number }[]>`
+    select company_id, slug, name, open from company where updated_on = ${asOf} order by rank limit 50`;
+  const picked = companies.filter((x) => companyTicker(x.name)).slice(0, 2).reverse();
+  const companyChanges = await changes(sql, asOf, picked.map((c) => `cpage:${c.company_id}`), '1W');
+  for (const c of picked) {
+    const change = companyChanges.get(`cpage:${c.company_id}`) ?? null;
     ticker.push({
       code: companyTicker(c.name) as string,
       name: c.name,
-      href: null,
+      href: `/companies/${c.slug}`,
       open: c.open,
-      change: null,
-      note: 'Company change needs krill company history (K2)',
+      change,
+      ...(change ? {} : { note: 'Company change appears once a company has comparable days' }),
     });
   }
   return { asOf, builtAt: build.builtAt, boards: day?.boards ?? null, ticker };
@@ -180,10 +184,7 @@ export async function marketOverview(sql: Sql): Promise<MarketOverview> {
       medianDaysOpen: today.median_days_open,
     },
     professionsGaining,
-    companiesRamping: {
-      available: false,
-      reason: 'Needs daily company history from krill (K2), being built.',
-    },
+    companiesRamping: await rampingColumn(sql, asOf),
     biggestFreezes: {
       available: false,
       reason: 'Needs 90 days of company openings and closings (krill K2); expected from Feb 2027.',
@@ -192,5 +193,15 @@ export async function marketOverview(sql: Sql): Promise<MarketOverview> {
     countries,
     totalOpen,
     notes,
+  };
+}
+
+/** Companies ramping: real one-week changes from the company statistics, or an honest empty state. */
+async function rampingColumn(sql: Sql, asOf: IsoDay): Promise<MarketOverview['companiesRamping']> {
+  const rows = await companiesRamping(sql, asOf, 3);
+  if (rows.length > 0) return { available: true, rows };
+  return {
+    available: false,
+    reason: 'No company with at least 300 open roles has grown yet over the comparable days krill has company statistics for.',
   };
 }

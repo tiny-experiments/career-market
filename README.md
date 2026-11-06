@@ -86,6 +86,29 @@ builder's refresh call). `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company log
 - The web app calls `/api/search` (its own route) for the typeahead; the browser never sees the read API
   token. Company logos use `CONTEXT_DEV_PUBLIC_CLIENT_ID`; without it each company shows its initial.
 
+### Company page
+
+`/companies/<slug>` shows one company. The builder keeps a `company` directory (every company with at
+least 10 open tech roles), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
+and a full profile for the largest `BUILDER_COMPANY_PROFILES` (default 100): facets for skills, countries,
+levels and work modes, the careers-site url, a median age from six facet cuts and family-by-level history.
+Peers are not in v1 and show a coming-soon state.
+
+- Openings are krill's "new" for a company: roles first seen that day. krill's bootstrap days (2-3 Nov)
+  and board events (a day with at least 50 openings that are 10% of the previous day's open roles, or at
+  least 50 closings that are 25%: a board fetched for the first time, added or dropped) are left out of
+  every flow and change. A board event restarts the company's series, the chart marks each excluded day
+  as "board change excluded", and when the latest day is one the signal reads "Unclear: board change on
+  <date>" instead of STEADY. krill has no per-company board status yet, so a real mass layoff looks the same.
+- The signal (RAMPING, STEADY, COOLING, FREEZING) looks at the last 30 comparable days (fewer while history
+  is short, and the page says so): RAMPING needs open roles up 5% with openings at least 1.5x closings;
+  COOLING needs down 3% with closings at least 1.5x openings; FREEZING needs down 10% with closings at least
+  2.5x openings.
+- Current roles are read live from krill by the read API (`/v1/companies/:slug/jobs`) through the shared live
+  krill client, so it shares its pacing and hour cache with the Screener and Job page.
+- Logos come from Context.dev Logo Link when `CONTEXT_DEV_PUBLIC_CLIENT_ID` is set and krill knows the
+  company's domain; otherwise the page draws a monogram tile.
+
 ### Checks
 
 ```sh

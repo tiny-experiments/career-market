@@ -7,7 +7,6 @@
   --blue-border: rgba(74, 134, 255, 0.45);
   --purple: #b79cff;
   --purple-soft: rgba(150, 110, 255, 0.2);
-  --co-tile: #243044;
 }
 :root[data-theme='light'] {
   --amber-soft: rgba(161, 92, 0, 0.1);
@@ -15,7 +14,6 @@
   --blue-border: rgba(31, 95, 224, 0.4);
   --purple: #5b3fc4;
   --purple-soft: rgba(91, 63, 196, 0.1);
-  --co-tile: #e4e9f1;
 }
 
 .screener {
@@ -372,33 +370,6 @@ th[aria-sort] .sort-link svg {
   padding: 28px 8px !important;
   color: var(--muted);
   white-space: normal !important;
-}
-
-/* ---------- Company logo tile ---------- */
-.co-logo {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  border-radius: 6px;
-  background: var(--co-tile);
-  color: var(--text-2);
-  font-weight: 700;
-  overflow: hidden;
-  vertical-align: middle;
-}
-.co-logo img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 6px;
-}
-.co-logo-initial {
-  line-height: 1;
 }
 
 /* ---------- Summary strip ---------- */

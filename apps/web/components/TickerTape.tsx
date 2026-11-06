@@ -7,7 +7,7 @@ function Item({ item, hidden = false }: { item: TickerItem; hidden?: boolean }) 
   return (
     <li className="ticker-item" title={item.note ? `${item.name}. ${item.note}` : item.name}>
       {item.href ? (
-        <Link href={item.href} className="ticker-link" aria-label={`${item.code} ${item.name}: open the profession page`} tabIndex={hidden ? -1 : undefined}>
+        <Link href={item.href} className="ticker-link" aria-label={`${item.code} ${item.name}: open its page`} tabIndex={hidden ? -1 : undefined}>
           <span className="ticker-code">{item.code}</span>
         </Link>
       ) : (

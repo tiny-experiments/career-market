@@ -1,5 +1,6 @@
 import 'server-only';
 import { loadConfig, requireReadApiToken } from '@cm/core/config';
+import type { CompanyDirectoryRow, CompanyJobsPayload, CompanyPage } from '@cm/core/company';
 import type { ScreenerPayload, SearchResults, RoleHit } from '@cm/core/screener';
 import type { ChromePayload, MarketOverview } from '@cm/core/types';
 
@@ -38,6 +39,15 @@ export const getProfessionPage = (code: string) =>
   get<import('@cm/core/professions').ProfessionPage>(`/v1/professions/${encodeURIComponent(code)}`);
 export const getProfessionIndex = () => get<import('@cm/core/professions').ProfessionIndex>('/v1/professions');
 
+export const getCompanies = () => get<CompanyDirectoryRow[]>('/v1/companies');
+export const getCompany = (slug: string) => get<CompanyPage>(`/v1/companies/${encodeURIComponent(slug)}`);
+export const getCompanyJobs = (slug: string, filter: { profession?: string; country?: string; remote?: boolean }) => {
+  const q = new URLSearchParams({ limit: '8' });
+  if (filter.profession) q.set('profession', filter.profession);
+  if (filter.country) q.set('country', filter.country);
+  if (filter.remote) q.set('remote', '1');
+  return get<CompanyJobsPayload>(`/v1/companies/${encodeURIComponent(slug)}/jobs?${q}`);
+};
 /** The Screener for a URL query string (filters, mode, sort); live counts under filters are cached by the read API. */
 export const getScreener = (search: string) => get<ScreenerPayload>(`/v1/screener${search ? `?${search}` : ''}`);
 
