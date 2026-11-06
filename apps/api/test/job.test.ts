@@ -101,7 +101,7 @@ function fakeKrill(overrides: Partial<Record<'job' | 'company' | 'companyDaily' 
 }
 
 function appWith(krill: KrillLive, rows = readModel) {
-  return createApp({ sql: fakeSql(rows), token, log: pino({ level: 'silent' }), krill });
+  return createApp({ sql: fakeSql(rows), token, log: pino({ level: 'silent' }), live: krill });
 }
 
 describe('GET /v1/jobs/:id', () => {

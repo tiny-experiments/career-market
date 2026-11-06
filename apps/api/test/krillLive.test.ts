@@ -81,4 +81,27 @@ describe('KrillLive', () => {
     await live.company('co_b');
     expect(sleeps.some((ms) => ms > 0 && ms <= 1000)).toBe(true);
   });
+
+  it('refuses to queue a call more than 15 s behind the pacing, without reserving a slot for it', async () => {
+    const fetchImpl = vi.fn(async () => json(company));
+    const sleeps: number[] = [];
+    const { live, advance } = make(fetchImpl as unknown as typeof fetch, {
+      ratePerMinute: 60,
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+    const results = await Promise.allSettled(Array.from({ length: 20 }, (_, i) => live.company(`co_${i}`)));
+    const ok = results.filter((r) => r.status === 'fulfilled');
+    const refused = results.filter((r) => r.status === 'rejected');
+    expect(ok).toHaveLength(16);
+    expect(refused).toHaveLength(4);
+    for (const r of refused) expect((r as PromiseRejectedResult).reason).toBeInstanceOf(KrillLiveError);
+    expect(fetchImpl).toHaveBeenCalledTimes(16);
+    expect(Math.max(...sleeps)).toBeLessThanOrEqual(15_000);
+
+    advance(16_000);
+    await live.company('co_after');
+    expect(fetchImpl).toHaveBeenCalledTimes(17);
+  });
 });

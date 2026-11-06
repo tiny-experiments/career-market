@@ -14,12 +14,15 @@ export type JobResult =
   | { kind: 'missing' }
   | { kind: 'error'; status: number | null };
 
+const JOB_FETCH_TIMEOUT_MS = 20_000;
+
 export async function getJob(id: string): Promise<JobResult> {
   const config = loadConfig();
   let res: Response;
   try {
     res = await fetch(`${config.readApi.url}/v1/jobs/${encodeURIComponent(id)}`, {
       headers: { authorization: `Bearer ${requireReadApiToken(config)}`, accept: 'application/json' },
+      signal: AbortSignal.timeout(JOB_FETCH_TIMEOUT_MS),
       next: { revalidate: 3600, tags: [READ_MODEL_TAG] },
     });
   } catch {

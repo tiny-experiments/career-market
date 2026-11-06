@@ -53,6 +53,8 @@ export interface KrillLiveOptions {
 /** A page view waits at most this long for krill's rate limit to reopen. */
 const MAX_RETRY_WAIT_MS = 20_000;
 const MAX_TRIES = 3;
+/** A call whose pacing slot is further away than this is refused rather than queued. */
+const MAX_SLOT_WAIT_MS = 15_000;
 
 type Entry = { at: number; ttl: number } & ({ ok: true; data: unknown } | { ok: false; error: KrillLiveError });
 type Raw = { status: number; json: unknown };
@@ -180,12 +182,14 @@ export class KrillLive {
     return { status: res.status, json: await res.json() };
   }
 
-  /** Reserves the next slot under the per-minute limit and waits for it. */
+  /** Reserves the next slot under the per-minute limit and waits for it; refuses a slot too far away. */
   private async pace(): Promise<void> {
     if (!this.minIntervalMs) return;
-    const wait = this.nextSlot - this.now();
+    const slot = Math.max(this.nextSlot, this.now());
+    const wait = slot - this.now();
+    if (wait > MAX_SLOT_WAIT_MS) throw new KrillLiveError(null, `krill pacing queue is ${Math.round(wait / 1000)} s deep`);
+    this.nextSlot = slot + this.minIntervalMs;
     if (wait > 0) await this.sleep(wait);
-    this.nextSlot = Math.max(this.nextSlot, this.now()) + this.minIntervalMs;
   }
 
   private remember(url: string, entry: Entry): void {
