@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { Sql } from '@cm/core/db';
 import type { Logger } from '@cm/core/logger';
 import { Hono } from 'hono';
+import { registerCompanyRoutes } from './companyRoutes.ts';
 import { chrome, marketOverview, NotReadyError } from './readModel.ts';
 
 /**
@@ -33,6 +34,7 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger }): Hono 
 
   app.get('/v1/chrome', async (c) => c.json(await chrome(deps.sql)));
   app.get('/v1/market', async (c) => c.json(await marketOverview(deps.sql)));
+  registerCompanyRoutes(app, deps);
 
   app.notFound((c) => c.json({ code: 'NOT_FOUND', message: 'no such route' }, 404));
   app.onError((err, c) => {

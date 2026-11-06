@@ -1,5 +1,6 @@
 import 'server-only';
 import { loadConfig, requireReadApiToken } from '@cm/core/config';
+import type { CompanyDirectoryRow, CompanyJobsPayload, CompanyPage } from '@cm/core/company';
 import type { ChromePayload, MarketOverview } from '@cm/core/types';
 
 /**
@@ -32,3 +33,13 @@ async function get<T>(path: string): Promise<ReadResult<T>> {
 
 export const getChrome = () => get<ChromePayload>('/v1/chrome');
 export const getMarketOverview = () => get<MarketOverview>('/v1/market');
+
+export const getCompanies = () => get<CompanyDirectoryRow[]>('/v1/companies');
+export const getCompany = (slug: string) => get<CompanyPage>(`/v1/companies/${encodeURIComponent(slug)}`);
+export const getCompanyJobs = (slug: string, filter: { profession?: string; country?: string; remote?: boolean }) => {
+  const q = new URLSearchParams({ limit: '8' });
+  if (filter.profession) q.set('profession', filter.profession);
+  if (filter.country) q.set('country', filter.country);
+  if (filter.remote) q.set('remote', '1');
+  return get<CompanyJobsPayload>(`/v1/companies/${encodeURIComponent(slug)}/jobs?${q}`);
+};

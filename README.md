@@ -66,6 +66,25 @@ pnpm web:build && PORT=3000 pnpm web:start
 The web app needs only `READ_API_URL` and `READ_API_TOKEN` (and `REVALIDATE_TOKEN` to accept the
 builder's refresh call).
 
+### Company page
+
+`/companies/<slug>` shows one company. The builder keeps a `company` directory (every company with at
+least 10 open tech roles), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
+and a full profile for the largest `BUILDER_COMPANY_PROFILES` (default 100): facets for skills, countries,
+levels and work modes, the careers-site url, a median age from six facet cuts, family-by-level history
+and similar companies (cosine similarity of profession and skill shares).
+
+- Openings are krill's "new" for a company: roles first seen that day. krill's bootstrap days (2-3 Nov)
+  and the day a company's board is first fetched list every role as new, so both are left out of every
+  flow and change, and the chart draws them as gaps.
+- The signal (RAMPING, STEADY, COOLING, FREEZING) looks at the last 30 comparable days (fewer while history
+  is short, and the page says so): RAMPING needs open roles up 5% with openings at least 1.5x closings;
+  COOLING needs down 3% with closings at least 1.5x openings; FREEZING needs down 10% with closings at least
+  2.5x openings.
+- Current roles are read live from krill by the read API (`/v1/companies/:slug/jobs`) and cached for an hour.
+- Logos come from Context.dev Logo Link when `CONTEXT_DEV_PUBLIC_CLIENT_ID` is set and krill knows the
+  company's domain; otherwise the page draws a monogram tile.
+
 ### Checks
 
 ```sh

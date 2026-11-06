@@ -18,7 +18,10 @@ import { backcast, fitSurvival, type ClosingDay, type SurvivalFit } from './comp
 import { chainIndex, rebase, shareAdjustedIndex, type IndexPoint } from './compute/chainIndex.ts';
 import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
+import { planCompanyDays, pullCompanies, type CompanyPlan, type CompanyPull } from './companies/pull.ts';
+import { computeCompanyTables, writeCompanyInputs } from './companies/write.ts';
 import type { KrillApi } from './krill/api.ts';
+import { KrillCompanyApi } from './krill/companyApi.ts';
 import { observedDays, pull, type Pulled } from './pull.ts';
 
 /** How far the back-cast reaches before today (report: reliable to about 6 months). */
@@ -67,9 +70,13 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
   try {
     const plan = await planPull(sql, T, config, options);
     const pulled = await pull(api, { ...meta, lastSnapshotDate: T }, plan, log);
+    const companyPlan = await planCompanies(sql, T, config, options);
+    const companies = await pullCompanies(new KrillCompanyApi(api.client), T, companyPlan, log);
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
-      return computeAndWrite(tx as unknown as Sql, pulled, log);
+      const market = await computeAndWrite(tx as unknown as Sql, pulled, log);
+      const company = await writeAndComputeCompanies(tx as unknown as Sql, companies, T, log);
+      return { ...market, ...company };
     });
     const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`
@@ -107,6 +114,21 @@ async function planPull(sql: Sql, T: IsoDay, config: Config, options: BuildOptio
     topCompanies: 50,
     skillsPerFamily: 300,
   };
+}
+
+async function planCompanies(sql: Sql, T: IsoDay, config: Config, options: BuildOptions): Promise<CompanyPlan> {
+  const have = new Set(
+    (await sql<{ date: IsoDay }[]>`select distinct date from company_daily where family = '*' and new is not null`).map((r) => r.date),
+  );
+  return {
+    days: planCompanyDays(observedDays(T), have, T, config.builder.groupedRefreshDays, options.full === true),
+    profiles: config.builder.companyProfiles,
+  };
+}
+
+async function writeAndComputeCompanies(tx: Sql, companies: CompanyPull, T: IsoDay, log: Logger): Promise<Record<string, unknown>> {
+  await writeCompanyInputs(tx, companies);
+  return computeCompanyTables(tx, T, log);
 }
 
 async function insertRows(tx: Sql, table: string, rows: Record<string, unknown>[], columns: string[]): Promise<void> {
