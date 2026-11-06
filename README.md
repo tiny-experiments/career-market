@@ -97,6 +97,9 @@ pnpm typecheck
 pnpm test
 ```
 
+The skill-fallback test needs a scratch Postgres that may be wiped: set `TEST_DATABASE_URL` to run it
+(CI does); without it that test is skipped.
+
 ## Deploy shape (VPS)
 
 `Dockerfile` builds one server image for the read API and the builder.
