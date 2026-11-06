@@ -18,9 +18,11 @@ export function NavTabs() {
       <ul className="nav-tabs">
         {TABS.map((tab) => {
           const active = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
+          // A posting belongs to no single tab; the mockup keeps Market lit on the Job page.
+          const lit = active || (tab.href === '/' && pathname.startsWith('/job/'));
           return (
             <li key={tab.href}>
-              <Link href={tab.href} className={`nav-tab${active ? ' is-active' : ''}`} aria-current={active ? 'page' : undefined}>
+              <Link href={tab.href} className={`nav-tab${lit ? ' is-active' : ''}`} aria-current={active ? 'page' : undefined}>
                 {tab.label}
               </Link>
             </li>

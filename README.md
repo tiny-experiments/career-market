@@ -19,7 +19,10 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   (estimated history before 2026-11-02). Every krill response is parsed with zod. Every table can be
   rebuilt from krill.
 - **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
-  needs `Authorization: Bearer $READ_API_TOKEN`.
+  needs `Authorization: Bearer $READ_API_TOKEN`. `GET /v1/jobs/{krill id}` (the Job page) is the one route
+  that also reads krill live: the posting, the employer's company history and similar roles, cached for 1 hour
+  and paced under krill's rate limit, joined with the read model's profession trend, pay band and typical
+  posting window. A closed role answers 410 with its tombstone.
 - **web app** (`apps/web`, Next.js App Router) renders pages on the server from the read API only. It
   never connects to Postgres, and the token never reaches the browser. Pages render per request; the read
   API responses they use are cached for 1 hour, and the builder expires that cache right after a build
