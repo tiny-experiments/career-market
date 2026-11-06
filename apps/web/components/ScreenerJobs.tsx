@@ -22,6 +22,7 @@ export function ScreenerJobs({ data, logos }: { data: ScreenerPayload; logos: Re
   const jobs = data.jobs;
   const href = (over: Partial<{ jobSort: JobSort; cursor: string | null }>) =>
     screenerHref({ mode: data.mode, filters: data.filters, sort: data.sort, dir: data.dir, jobSort: over.jobSort ?? 'newest', cursor: over.cursor ?? null });
+  const growthOn = data.filters.growth !== null;
   const current = jobs.available ? jobs.sort : 'newest';
 
   return (
@@ -31,8 +32,9 @@ export function ScreenerJobs({ data, logos }: { data: ScreenerPayload; logos: Re
         <>
           <Briefcase size={24} aria-hidden="true" />
           <h2 className="jobs-title">
-            <span className="num">{fmtInt(data.matches)}</span> roles match
+            <span className="num">{fmtInt(data.matches)}</span> roles match{growthOn ? ' the other filters' : ''}
           </h2>
+          {growthOn && <span className="footnote jobs-growth-note">Growth applies to the company table only.</span>}
           <span className="jobs-sort">
             <span id="jobs-sort-label">Sort by:</span>
             <span role="group" aria-labelledby="jobs-sort-label" className="jobs-sort-group">
@@ -62,7 +64,7 @@ export function ScreenerJobs({ data, logos }: { data: ScreenerPayload; logos: Re
           <div className="scr-scroll" tabIndex={0} role="region" aria-label="Matching roles">
             <table className="table jobs-table">
               <caption className="sr-only">
-                Roles matching the filters, {SORTS.find((s) => s.key === jobs.sort)?.label.toLowerCase()} first
+                Roles matching {growthOn ? 'the filters other than Growth' : 'the filters'}, {SORTS.find((s) => s.key === jobs.sort)?.label.toLowerCase()} first
                 {jobs.sort === 'salary' ? ` (listed pay in ${jobs.salaryCurrency} only)` : ''}
               </caption>
               <thead>

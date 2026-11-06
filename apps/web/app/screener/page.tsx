@@ -71,7 +71,7 @@ export default async function ScreenerPage({ searchParams }: { searchParams: Pro
       </section>
 
       <ScreenerTable data={data} logos={logos} jobSort={query.jobSort} />
-      <ScreenerSummary summary={data.summary} />
+      <ScreenerSummary summary={data.summary} growthOn={data.filters.growth !== null} />
       <ScreenerJobs data={data} logos={logos} />
     </div>
   );

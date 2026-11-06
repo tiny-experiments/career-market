@@ -28,6 +28,7 @@ function Pill({
   label,
   value,
   width,
+  disabledReason,
   children,
 }: {
   name: string;
@@ -35,12 +36,20 @@ function Pill({
   value: string;
   /** Width in px, so the bar keeps one row whatever the longest option is. */
   width: number;
+  /** When set, the control is disabled and this explains why. */
+  disabledReason?: string;
   children: React.ReactNode;
 }) {
+  const hintId = disabledReason ? `${name}-hint` : undefined;
   return (
-    <label className={`pill-select${value ? ' is-set' : ''}`}>
+    <label className={`pill-select${value ? ' is-set' : ''}`} title={disabledReason}>
       <span className="sr-only">{label}</span>
-      <select name={name} defaultValue={value} aria-label={label} style={{ width }}>
+      {disabledReason && (
+        <span id={hintId} className="sr-only">
+          {disabledReason}
+        </span>
+      )}
+      <select name={name} defaultValue={value} aria-label={label} aria-describedby={hintId} disabled={disabledReason !== undefined} style={{ width }}>
         <option value="">{label}</option>
         {children}
       </select>
@@ -130,7 +139,13 @@ export function ScreenerFilterBar({
           </option>
         ))}
       </Pill>
-      <Pill width={106} name="growth" label="Growth" value={filters.growth ?? ''}>
+      <Pill
+        width={106}
+        name="growth"
+        label="Growth"
+        value={filters.growth ?? ''}
+        disabledReason={mode === 'companies' ? undefined : 'Growth signals exist for companies only. Switch to Companies to use this filter.'}
+      >
         {GROWTH_STATES.map((g) => (
           <option key={g} value={g}>
             {GROWTH_LABEL[g]}

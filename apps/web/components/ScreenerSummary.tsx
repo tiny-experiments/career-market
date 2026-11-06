@@ -26,7 +26,7 @@ function Mix({ rows, showCount }: { rows: MixRow[]; showCount: boolean }) {
 }
 
 /** Seniority mix, work-mode split and top countries for the current filters. */
-export function ScreenerSummary({ summary }: { summary: ScreenerPayload['summary'] }) {
+export function ScreenerSummary({ summary, growthOn = false }: { summary: ScreenerPayload['summary']; growthOn?: boolean }) {
   if ('available' in summary) {
     return (
       <section className="scr-summary" aria-label="Result summary">
@@ -76,6 +76,7 @@ export function ScreenerSummary({ summary }: { summary: ScreenerPayload['summary
           </tbody>
         </table>
       </div>
+      {growthOn && <p className="footnote scr-growth-note">The summary follows the filters other than Growth, which applies to the company table only.</p>}
     </section>
   );
 }

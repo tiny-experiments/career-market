@@ -655,3 +655,14 @@ th[aria-sort] .sort-link svg {
     grid-template-columns: 1fr;
   }
 }
+
+.pill-select select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.jobs-growth-note {
+  align-self: center;
+}
+.scr-growth-note {
+  grid-column: 1 / -1;
+}

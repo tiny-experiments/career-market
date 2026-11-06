@@ -3,7 +3,6 @@ import { addDays, daysBetween, FIRST_COMPARABLE_BASE, type IsoDay, type Range } 
 import type { Sql } from '@cm/core/db';
 import {
   companyHref,
-  companySignal,
   hasKrillFilter,
   isFiltered,
   LEVEL_GROUPS,
@@ -304,11 +303,6 @@ export function sortRows(rows: ScreenerRow[], key: SortKey, dir: 'asc' | 'desc')
   });
 }
 
-function rowGrowth(r: ScreenerRow): GrowthState | null {
-  if (r.kind === 'companies') return r.signal;
-  return r.change1w ? companySignal(r.change1w.value, MIN_SIGNAL_DAYS) : null;
-}
-
 // ---------- summary ----------
 
 function mixOf(items: { key: string; label: string; count: number }[]): MixRow[] {
@@ -469,14 +463,11 @@ export async function screener(sql: Sql, live: KrillLive, q: ScreenerQuery): Pro
 
   let growthUnavailable: string | null = null;
   if (f.growth) {
-    const anyGrowth = rows.some((r) => rowGrowth(r) !== null);
-    if (!anyGrowth && q.mode === 'companies') {
+    if (!rows.some((r) => r.signal !== null)) {
       const [h] = await sql<{ days: number }[]>`select greatest(count(distinct date) - 1, 0)::int as days from screener_company_day where date >= ${FIRST_COMPARABLE_BASE} and date <= ${asOf}`;
       growthUnavailable = `Signals need ${MIN_SIGNAL_DAYS} days of company history; krill's company statistics hold ${h?.days ?? 0} comparable day${h?.days === 1 ? '' : 's'} so far (2–3 Nov were bootstrap days).`;
-    } else if (!anyGrowth) {
-      growthUnavailable = `Growth needs ${MIN_SIGNAL_DAYS} comparable days of history.`;
     }
-    rows = rows.filter((r) => rowGrowth(r) === f.growth);
+    rows = rows.filter((r) => r.signal === f.growth);
   }
 
   const sorted = sortRows(rows, q.sort, q.dir);

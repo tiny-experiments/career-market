@@ -136,7 +136,7 @@ export function parseScreenerQuery(params: Params): ScreenerQuery {
       level: oneOf(pick(params, 'level'), LEVEL_GROUPS.map((g) => g.key)),
       family: family && /^[a-z0-9-]{1,40}$/.test(family) ? family : null,
       skill: skill && /^[a-z0-9:+#._-]{1,60}$/i.test(skill) ? skill : null,
-      growth: oneOf(pick(params, 'growth'), GROWTH_STATES),
+      growth: mode === 'companies' ? oneOf(pick(params, 'growth'), GROWTH_STATES) : null,
       salary,
       postedWithin: (POSTED_WITHIN_DAYS as readonly number[]).includes(posted) ? posted : null,
     },
@@ -171,7 +171,7 @@ export function screenerHref(q: Partial<Omit<ScreenerQuery, 'filters'>> & { filt
   if (f.level) p.set('level', f.level);
   if (f.family) p.set('family', f.family);
   if (f.skill) p.set('skill', f.skill);
-  if (f.growth) p.set('growth', f.growth);
+  if (f.growth && (q.mode ?? 'companies') === 'companies') p.set('growth', f.growth);
   if (f.salary) p.set('salary', `${f.salary.currency}:${f.salary.min}`);
   if (f.postedWithin) p.set('posted', String(f.postedWithin));
   if (q.sort && q.sort !== 'open') p.set('sort', q.sort);

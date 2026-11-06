@@ -28,7 +28,7 @@ describe('parseScreenerQuery', () => {
       level: 'staff',
       family: 'ai-ml',
       skill: 'ml:pytorch',
-      growth: 'freezing',
+      growth: null,
       salary: { currency: 'USD', min: 200000 },
       postedWithin: 7,
     });
@@ -53,6 +53,15 @@ describe('parseScreenerQuery', () => {
     expect(screenerHref(q)).toBe('/screener?mode=professions&workMode=hybrid&salary=EUR%3A100000&sort=remote&dir=asc&jobs=salary');
     expect(parseScreenerQuery(new URL(`http://x${screenerHref(q)}`).searchParams)).toEqual(q);
     expect(screenerHref({})).toBe('/screener');
+  });
+
+  it('applies growth in Companies mode only', () => {
+    expect(parseScreenerQuery(new URLSearchParams('growth=freezing')).filters.growth).toBe('freezing');
+    expect(parseScreenerQuery(new URLSearchParams('mode=professions&growth=freezing')).filters.growth).toBeNull();
+    expect(parseScreenerQuery(new URLSearchParams('mode=skills&growth=freezing')).filters.growth).toBeNull();
+    const href = screenerHref({ mode: 'skills', filters: { growth: 'freezing', workMode: 'remote' } });
+    expect(href).toBe('/screener?mode=skills&workMode=remote');
+    expect(screenerHref({ filters: { growth: 'freezing' } })).toBe('/screener?growth=freezing');
   });
 
   it('counts growth as a read-model filter, not a krill one', () => {
