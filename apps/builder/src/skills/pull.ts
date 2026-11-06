@@ -13,6 +13,8 @@ const COMPANIES_PER_SKILL = 8;
 /** Paired skills stored per skill (the page shows the first six). */
 const PAIRS_PER_SKILL = 16;
 const LATEST_ROLES = 5;
+/** Listed per skill before duplicates (the same title at the same company) are dropped. */
+const LATEST_FETCH = 10;
 /** A company's name and website are looked up again after this many days. */
 const COMPANY_REF_DAYS = 14;
 /** Salary sample: 10 pages x 100 priced US roles per profession, at most SALARY_PER_COMPANY from one company. */
@@ -129,7 +131,7 @@ export async function pullSkillPages(
       for (const f of res.facets.family) out.cuts.push({ skill: skill.id, family: f.value, cutDate, count: f.count });
     }
 
-    out.latest.set(skill.id, await krill.latestRoles(skill.id, LATEST_ROLES));
+    out.latest.set(skill.id, dedupeRoles(await krill.latestRoles(skill.id, LATEST_FETCH)).slice(0, LATEST_ROLES));
   }
 
   // Company names and websites, once per company (a lookup is a krill call).
@@ -174,8 +176,21 @@ export async function pullSkillPages(
 export function roleLocation(job: KrillJob): string | null {
   const place = job.places[0];
   if (place) {
-    if (place.city && place.admin1Code) return `${place.city}, ${place.admin1Code}`;
+    // admin1 codes are state letters (CA, WA) for some countries and numbers (11) for others: only show letters.
+    if (place.city && place.admin1Code && /^[A-Z]{2,3}$/.test(place.admin1Code)) return `${place.city}, ${place.admin1Code}`;
+    if (place.city && place.countryCode && place.label.length > 40) return place.city;
     if (place.label) return place.label;
   }
   return job.workMode === 'remote' ? 'Remote' : null;
+}
+
+/** The same title at the same company counts once (employers post one role per location). */
+export function dedupeRoles(jobs: readonly KrillJob[]): KrillJob[] {
+  const seen = new Set<string>();
+  return jobs.filter((j) => {
+    const key = `${j.company.id}\u0000${j.title.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

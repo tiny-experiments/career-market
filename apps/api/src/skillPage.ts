@@ -4,7 +4,6 @@ import type { Sql } from '@cm/core/db';
 import {
   skillCategory,
   skillDomain,
-  skillNamespace,
   type SkillCompanyRow,
   type SkillIndexPayload,
   type SkillPagePayload,
@@ -82,14 +81,16 @@ export async function skillPage(sql: Sql, slug: string): Promise<SkillPagePayloa
   const slugRows = await sql<{ skill: string; slug: string }[]>`select skill, slug from skill_summary where date = ${D}`;
   const slugOf = new Map(slugRows.map((r) => [r.skill, r.slug]));
 
-  const peerRows = await sql<{ skill: string; open: number }[]>`
+  // Peers: the largest other skills of the same kind (PyTorch: TensorFlow, JAX) in the same profession.
+  const peerCandidates = await sql<{ skill: string; open: number }[]>`
     select skill, open from skill_daily
-    where date = ${D} and family = ${family} and country = '*' and skill like ${`${skillNamespace(id)}:%`} and skill <> ${id}
-    order by open desc limit 12`;
+    where date = ${D} and family = ${family} and country = '*' and skill <> ${id}
+    order by open desc limit 400`;
+  const kind = skillCategory(id);
+  const peerRows = peerCandidates.filter((p) => skillCategory(p.skill) === kind && isTileSkill(p.skill));
   const peers: SkillPeer[] = [
     { id, slug: row.slug, label: skillLabel(id), domain: skillDomain(id), open: primaryOpen, self: true },
     ...peerRows
-      .filter((p) => isTileSkill(p.skill))
       .slice(0, 2)
       .map((p) => ({ id: p.skill, slug: slugOf.get(p.skill) ?? null, label: skillLabel(p.skill), domain: skillDomain(p.skill), open: p.open, self: false })),
   ].sort((a, b) => b.open - a.open);

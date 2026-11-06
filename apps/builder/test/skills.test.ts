@@ -11,7 +11,7 @@ import {
   POSTED_EVER,
   survivalFromBuckets,
 } from '../src/compute/skillSeries.ts';
-import { pickTrackedSkills, roleLocation } from '../src/skills/pull.ts';
+import { dedupeRoles, pickTrackedSkills, roleLocation } from '../src/skills/pull.ts';
 import type { KrillJob } from '../src/krill/skillApi.ts';
 
 describe('survivalFromBuckets', () => {
@@ -191,7 +191,16 @@ describe('roleLocation', () => {
   it('prefers city and state, then the place label, then Remote', () => {
     expect(roleLocation(job([{ label: 'Cupertino, CA, United States', city: 'Cupertino', admin1Code: 'CA', countryCode: 'US' }]))).toBe('Cupertino, CA');
     expect(roleLocation(job([{ label: 'United States', countryCode: 'US' }]))).toBe('United States');
+    expect(roleLocation(job([{ label: 'Seoul', city: 'Seoul', admin1Code: '11', countryCode: 'KR' }]))).toBe('Seoul');
     expect(roleLocation(job([], 'remote'))).toBe('Remote');
     expect(roleLocation(job([]))).toBeNull();
+  });
+});
+
+describe('dedupeRoles', () => {
+  it('keeps the first role of each company and title', () => {
+    const j = (id: string, company: string, title: string) => ({ id, company: { id: company, name: company }, title }) as KrillJob;
+    const kept = dedupeRoles([j('1', 'a', 'Data Engineer'), j('2', 'a', 'data engineer'), j('3', 'b', 'Data Engineer')]);
+    expect(kept.map((x) => x.id)).toEqual(['1', '3']);
   });
 });
