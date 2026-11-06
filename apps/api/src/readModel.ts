@@ -1,6 +1,7 @@
 import { companyTicker, countryName, familyInfo, isTileSkill, rankFamilies, skillLabel, TICKER_FAMILIES } from '@cm/core/codes';
 import { addDays, FIRST_OBSERVED_DAY, isBootstrapDay, type IsoDay, type Range } from '@cm/core/dates';
 import type { Sql } from '@cm/core/db';
+import { professionHref } from '@cm/core/professions';
 import type { Change, ChromePayload, MarketOverview, ProfessionMover, SkillTile, TickerItem } from '@cm/core/types';
 
 /** Read-only queries over the read model. Nothing here calls krill. */
@@ -29,7 +30,7 @@ export async function latestBuild(sql: Sql): Promise<{ asOf: IsoDay; builtAt: st
   return row ? { asOf: row.snapshot_date, builtAt: row.finished_at.toISOString() } : null;
 }
 
-async function changes(sql: Sql, asOf: IsoDay, subjects: string[], range: Range): Promise<Map<string, Change>> {
+export async function changes(sql: Sql, asOf: IsoDay, subjects: string[], range: Range): Promise<Map<string, Change>> {
   if (subjects.length === 0) return new Map();
   const rows = await sql<ChangeRow[]>`
     select subject, range, base_date, change, partial, estimated from market_change
@@ -57,7 +58,7 @@ export async function chrome(sql: Sql): Promise<ChromePayload> {
     return {
       code: info.code,
       name: info.name,
-      href: null,
+      href: professionHref(f),
       open: famOpen.get(f) as number,
       change: famChanges.get(`family:${f}`) ?? null,
     };

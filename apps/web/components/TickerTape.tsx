@@ -1,11 +1,18 @@
 import type { TickerItem } from '@cm/core/types';
+import Link from 'next/link';
 import { ChangeText } from './ChangePill';
 import { fmtInt } from '@/lib/format';
 
-function Item({ item }: { item: TickerItem }) {
+function Item({ item, hidden = false }: { item: TickerItem; hidden?: boolean }) {
   return (
     <li className="ticker-item" title={item.note ? `${item.name}. ${item.note}` : item.name}>
-      <span className="ticker-code">{item.code}</span>
+      {item.href ? (
+        <Link href={item.href} className="ticker-link" aria-label={`${item.code} ${item.name}: open the profession page`} tabIndex={hidden ? -1 : undefined}>
+          <span className="ticker-code">{item.code}</span>
+        </Link>
+      ) : (
+        <span className="ticker-code">{item.code}</span>
+      )}
       <span className="ticker-count num">{fmtInt(item.open)}</span>
       {item.change ? <ChangeText change={item.change} window="1W" /> : <span className="chg chg-flat" aria-hidden="true">—</span>}
     </li>
@@ -26,7 +33,7 @@ export function TickerTape({ items }: { items: TickerItem[] }) {
         {/* Second copy makes the scroll seamless; hidden from assistive tech. */}
         <ul className="ticker-list" aria-hidden="true">
           {items.map((item) => (
-            <Item key={`dup-${item.code}`} item={item} />
+            <Item key={`dup-${item.code}`} item={item} hidden />
           ))}
         </ul>
       </div>

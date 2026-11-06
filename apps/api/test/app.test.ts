@@ -31,3 +31,17 @@ describe('read API auth', () => {
     expect(await res.json()).toEqual({ code: 'INTERNAL', message: 'internal error' });
   });
 });
+
+describe('profession routes', () => {
+  const auth = { headers: { authorization: `Bearer ${token}` } };
+
+  it('answers 404 for a code that is not a profession, without touching the database', async () => {
+    const res = await app.request('/v1/professions/nope', auth);
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('needs the bearer token', async () => {
+    expect((await app.request('/v1/professions/aiml')).status).toBe(401);
+  });
+});

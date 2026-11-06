@@ -6,6 +6,7 @@ import { isJobId } from '@cm/core/job';
 import { parseScreenerQuery } from '@cm/core/screener';
 import { jobPage } from './job.ts';
 import { KrillLive, KrillLiveError } from './krillLive.ts';
+import { NotFoundError, professionIndex, professionPage } from './professions.ts';
 import { chrome, marketOverview, NotReadyError } from './readModel.ts';
 import { screener } from './screener.ts';
 import { MAX_QUERY_LENGTH, search, searchRoles } from './search.ts';
@@ -40,6 +41,8 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: K
 
   app.get('/v1/chrome', async (c) => c.json(await chrome(deps.sql)));
   app.get('/v1/market', async (c) => c.json(await marketOverview(deps.sql)));
+  app.get('/v1/professions', async (c) => c.json(await professionIndex(deps.sql)));
+  app.get('/v1/professions/:code', async (c) => c.json(await professionPage(deps.sql, c.req.param('code'))));
 
   // Screener: the read model, plus krill live for filtered counts and the matching roles (cached 1 h).
   app.get('/v1/screener', async (c) => c.json(await screener(deps.sql, live, parseScreenerQuery(new URL(c.req.url).searchParams))));
@@ -66,6 +69,7 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: K
 
   app.notFound((c) => c.json({ code: 'NOT_FOUND', message: 'no such route' }, 404));
   app.onError((err, c) => {
+    if (err instanceof NotFoundError) return c.json({ code: 'NOT_FOUND', message: err.message }, 404);
     if (err instanceof NotReadyError) return c.json({ code: 'NOT_READY', message: err.message }, 503);
     if (err instanceof KrillLiveError) {
       deps.log.warn({ err: err.message, path: c.req.path }, 'krill unavailable');
