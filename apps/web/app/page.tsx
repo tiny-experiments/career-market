@@ -5,12 +5,15 @@ import { BarChart3, Building2, CalendarDays, Info, MinusCircle, Plus, Snowflake,
 import { professionHref } from '@cm/core/professions';
 import Link from 'next/link';
 import { ChangePill, ChangeText } from '@/components/ChangePill';
+import { CompanyLogo } from '@/components/CompanyLogo';
 import { Flag } from '@/components/Flag';
 import { OpenRolesChart } from '@/components/OpenRolesChart';
 import { Sparkline } from '@/components/Sparkline';
 import { WorldMap } from '@/components/WorldMap';
 import { fmtInt, fmtPct } from '@/lib/format';
+import { logoUrl } from '@/lib/logo';
 import { getMarketOverview } from '@/lib/readApi';
+import './companies/company.css';
 
 export default async function MarketPage() {
   const res = await getMarketOverview();
@@ -44,6 +47,7 @@ function MarketOverviewView({ data }: { data: MarketOverview }) {
   const top = data.countries.slice(0, 6);
   const maxShare = Math.max(0.0001, ...top.map((c) => c.share));
   const movingNote = footnoteFor(data.professionsGaining.map((p) => p.change));
+  const rampingNote = data.companiesRamping.available ? footnoteFor(data.companiesRamping.rows.map((c) => c.change)) : null;
   const skillsNote = data.hottestSkills.some((s) => s.change) ? footnoteFor(data.hottestSkills.map((s) => s.change)) : null;
 
   return (
@@ -130,7 +134,49 @@ function MarketOverviewView({ data }: { data: MarketOverview }) {
               <h3 className="moving-tab">
                 <Building2 size={16} aria-hidden="true" /> Companies ramping
               </h3>
-              <EmptyTable cols={['Company', 'Open roles', 'Change (7D)']} reason={data.companiesRamping.reason} />
+              {data.companiesRamping.available ? (
+                <>
+                  <table className="table">
+                    <caption className="sr-only">Companies with the largest one-week change in open roles</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Company</th>
+                        <th scope="col" className="r">
+                          Open roles
+                        </th>
+                        <th scope="col" className="r">
+                          Change (7D)
+                        </th>
+                        <th scope="col">
+                          <span className="sr-only">Trend</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.companiesRamping.rows.map((c) => (
+                        <tr key={c.slug}>
+                          <th scope="row">
+                            <Link href={`/companies/${c.slug}`} className="co-name-cell">
+                              <CompanyLogo name={c.name} src={logoUrl(c.domain)} size={22} />
+                              {c.name}
+                            </Link>
+                          </th>
+                          <td className="r num">{fmtInt(c.open)}</td>
+                          <td className="r">
+                            <ChangeText change={c.change} window="7D" />
+                          </td>
+                          <td className="spark-cell">
+                            <Sparkline values={c.spark} label={`${c.name} open roles`} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {rampingNote && <p className="footnote">{rampingNote}</p>}
+                </>
+              ) : (
+                <EmptyTable cols={['Company', 'Open roles', 'Change (7D)']} reason={data.companiesRamping.reason} />
+              )}
             </div>
             <div className="moving-col">
               <h3 className="moving-tab">

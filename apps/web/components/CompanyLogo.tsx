@@ -1,3 +1,5 @@
+import '@/styles/logo.css';
+
 /** Rounded-square company logo. The initial sits underneath, so a logo that does not load leaves the initial showing. */
 export function CompanyLogo({ name, src, size = 22 }: { name: string; src: string | null; size?: number }) {
   const initial = (name.trim().charAt(0) || '?').toUpperCase();

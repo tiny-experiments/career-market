@@ -10,6 +10,7 @@
     "./codes": "./src/codes.ts",
     "./dates": "./src/dates.ts",
     "./types": "./src/types.ts",
+    "./company": "./src/company.ts",
     "./professions": "./src/professions.ts",
     "./screener": "./src/screener.ts",
     "./job": "./src/job.ts",

@@ -28,6 +28,7 @@ const schema = z.object({
   BUILDER_CLOSING_SAMPLE_PER_DAY: z.coerce.number().int().min(0).default(60),
   BUILDER_GROUPED_REFRESH_DAYS: z.coerce.number().int().min(1).default(7),
   BUILDER_SKILL_PAGES: z.coerce.number().int().min(0).default(60),
+  BUILDER_COMPANY_PROFILES: z.coerce.number().int().min(0).default(100),
 
   READ_API_HOST: z.string().default('127.0.0.1'),
   READ_API_PORT: z.coerce.number().int().positive().default(4100),
@@ -60,6 +61,8 @@ export interface Config {
     groupedRefreshDays: number;
     /** How many of the largest skills get a Skill page (history, companies, pairs, latest roles). */
     skillPages: number;
+    /** Companies (largest by open roles) that get a full profile: facets, board url and median age. */
+    companyProfiles: number;
   };
   readApi: {
     host: string;
@@ -96,6 +99,7 @@ export function parseConfig(env: Record<string, string | undefined>, cwd = proce
       closingSamplePerDay: raw.BUILDER_CLOSING_SAMPLE_PER_DAY,
       groupedRefreshDays: raw.BUILDER_GROUPED_REFRESH_DAYS,
       skillPages: raw.BUILDER_SKILL_PAGES,
+      companyProfiles: raw.BUILDER_COMPANY_PROFILES,
     },
     readApi: {
       host: raw.READ_API_HOST,

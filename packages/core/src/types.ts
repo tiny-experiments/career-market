@@ -2,6 +2,7 @@
  * Payloads the read API serves and the web app renders. Plain JSON: numbers,
  * strings, ISO days. No krill field leaks through unparsed.
  */
+import type { CompanyMover } from './company.ts';
 import type { IsoDay, Range } from './dates.ts';
 
 export interface Change {
@@ -103,7 +104,8 @@ export interface MarketOverview {
     medianDaysOpen: number | null;
   };
   professionsGaining: ProfessionMover[];
-  companiesRamping: Unavailable;
+  /** Companies with the largest one-week gain; an honest empty state until a week of company history exists. */
+  companiesRamping: { available: true; rows: CompanyMover[] } | Unavailable;
   biggestFreezes: Unavailable;
   hottestSkills: SkillTile[];
   /** Ranked countries (first located country of each job), largest first. */

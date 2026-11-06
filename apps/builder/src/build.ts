@@ -18,7 +18,10 @@ import { backcast, fitSurvival, type ClosingDay, type SurvivalFit } from './comp
 import { chainIndex, rebase, shareAdjustedIndex, type IndexPoint } from './compute/chainIndex.ts';
 import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
+import { planCompanyDays, pullCompanies, type CompanyPlan, type CompanyPull } from './companies/pull.ts';
+import { computeCompanyTables, writeCompanyInputs } from './companies/write.ts';
 import type { KrillApi } from './krill/api.ts';
+import { KrillCompanyApi } from './krill/companyApi.ts';
 import { payBandRows, pullPayBands } from './payBands.ts';
 import { computeProfessions, writeProfessionInputs } from './professions/build.ts';
 import { pullProfessions } from './professions/pull.ts';
@@ -88,6 +91,8 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
         log.error({ err: String(err) }, 'skill page pull failed; skill pages keep the previous day');
       }
     }
+    const companyPlan = await planCompanies(sql, T, config, options);
+    const companies = await pullCompanies(new KrillCompanyApi(api.client), T, companyPlan, log);
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
       await writeProfessionInputs(tx as unknown as Sql, T, professions);
@@ -97,7 +102,8 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
       const fit = await fitFromSamples(tx as unknown as Sql, pulled, T, new Map(pulled.market.map((m) => [m.date, m])));
       const profession = await computeProfessions(tx as unknown as Sql, professions, { T, fit: fit?.fit ?? null, log });
       const skills = skillsPulled ? { ...(await computeSkillPages(tx as unknown as Sql, T, log)), skillsFailed: skillsPulled.failed } : {};
-      return { ...market, ...profession, ...skills, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
+      const company = await writeAndComputeCompanies(tx as unknown as Sql, companies, T, log);
+      return { ...market, ...profession, ...company, ...skills, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
     });
     const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`
@@ -135,6 +141,21 @@ async function planPull(sql: Sql, T: IsoDay, config: Config, options: BuildOptio
     topCompanies: 50,
     skillsPerFamily: 300,
   };
+}
+
+async function planCompanies(sql: Sql, T: IsoDay, config: Config, options: BuildOptions): Promise<CompanyPlan> {
+  const have = new Set(
+    (await sql<{ date: IsoDay }[]>`select distinct date from company_daily where family = '*' and new is not null`).map((r) => r.date),
+  );
+  return {
+    days: planCompanyDays(observedDays(T), have, T, config.builder.groupedRefreshDays, options.full === true),
+    profiles: config.builder.companyProfiles,
+  };
+}
+
+async function writeAndComputeCompanies(tx: Sql, companies: CompanyPull, T: IsoDay, log: Logger): Promise<Record<string, unknown>> {
+  await writeCompanyInputs(tx, companies);
+  return computeCompanyTables(tx, T, log);
 }
 
 async function insertRows(tx: Sql, table: string, rows: Record<string, unknown>[], columns: string[]): Promise<void> {

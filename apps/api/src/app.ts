@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { Sql } from '@cm/core/db';
 import type { Logger } from '@cm/core/logger';
 import { Hono } from 'hono';
+import { registerCompanyRoutes } from './companyRoutes.ts';
 import { isJobId } from '@cm/core/job';
 import { parseScreenerQuery } from '@cm/core/screener';
 import { jobPage } from './job.ts';
@@ -44,6 +45,7 @@ export function createApp(deps: { sql: Sql; token: string; log: Logger; live?: K
   app.get('/v1/market', async (c) => c.json(await marketOverview(deps.sql)));
   app.get('/v1/professions', async (c) => c.json(await professionIndex(deps.sql)));
   app.get('/v1/professions/:code', async (c) => c.json(await professionPage(deps.sql, c.req.param('code'))));
+  registerCompanyRoutes(app, { sql: deps.sql, live });
 
   // Screener: the read model, plus krill live for filtered counts and the matching roles (cached 1 h).
   app.get('/v1/screener', async (c) => c.json(await screener(deps.sql, live, parseScreenerQuery(new URL(c.req.url).searchParams))));

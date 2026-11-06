@@ -1,4 +1,4 @@
--- Career Market read model, part 4: the tables the Skill page needs.
+-- Career Market read model, part 9 (file 0009): the tables the Skill page needs.
 -- Every table is derived from krill and can be rebuilt by the builder, except
 -- the day-by-day counts (skill_company_daily, skill_pair_daily): krill serves no
 -- skill history, so those rows accumulate from the first build onward.
