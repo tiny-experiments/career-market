@@ -8,3 +8,6 @@ coverage/
 .env.local
 next-env.d.ts
 .DS_Store
+
+# next dev generates this; never commit it
+apps/web/AGENTS.md

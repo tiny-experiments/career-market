@@ -1,0 +1,482 @@
+/* Skill page (and the Skills index). Uses the global tokens in globals.css. */
+
+.skill {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Header + demand chart ---------- */
+.skill-hero {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 28px;
+  margin: 0 -24px;
+  padding: 18px 24px 4px;
+  background: var(--hero-glow);
+}
+.skill-hero-left {
+  min-width: 0;
+}
+.crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.crumbs li + li::before {
+  content: '›';
+  margin-right: 8px;
+  color: var(--muted);
+}
+.crumbs li[aria-current='page'] {
+  color: var(--text);
+}
+.skill-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.skill-title {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--blue-soft);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.skill-number {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 14px 0 14px;
+}
+.skill-number-value {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.skill-number-unit {
+  font-size: 20px;
+  color: var(--text-2);
+}
+.skill-hero .pill-lg {
+  font-size: 15px;
+}
+.skill-hero-chart {
+  min-width: 0;
+}
+.skill-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.skill-chart-head .chart-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+.skill-chart-plot {
+  margin-top: 6px;
+}
+.skill-chart-note {
+  margin-left: 46px;
+}
+
+/* ---------- Brand marks ---------- */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--tile);
+  border: 1px solid var(--border);
+}
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.brand-mark-fallback {
+  color: var(--text-2);
+  font-weight: 700;
+  background: var(--card-2);
+}
+
+/* ---------- Cards ---------- */
+.skill-row {
+  display: grid;
+  gap: 16px;
+}
+.skill-row-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.skill-row-2 {
+  grid-template-columns: minmax(0, 3.2fr) minmax(0, 1fr);
+}
+.skill-card {
+  padding: 16px 20px 18px;
+  min-width: 0;
+}
+.skill-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+}
+.accent {
+  color: var(--blue-text);
+}
+.empty-note {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+/* Named in X% of roles: the skill and its peers */
+.compare {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 22px;
+}
+.compare li {
+  display: grid;
+  grid-template-columns: 26px minmax(70px, 110px) 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.compare-name {
+  font-size: 15px;
+  font-weight: 500;
+}
+.compare-name a {
+  color: inherit;
+}
+.skill .compare-name a:not(.link),
+.skill .pair-name a:not(.link),
+.skill .plain-link:not(.link) {
+  text-decoration: none;
+}
+.skill .compare-name a:not(.link):hover,
+.skill .pair-name a:not(.link):hover,
+.skill .plain-link:not(.link):hover {
+  text-decoration: underline;
+}
+.compare-count {
+  text-align: right;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.compare li.is-self .compare-count,
+.compare li.is-self .compare-name {
+  color: var(--text);
+}
+.compare-bar,
+.ranked-bar {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.compare-bar span,
+.ranked-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #2f63e3, #4f8dff);
+}
+
+/* Professions that want it */
+.ranked {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 22px;
+}
+.ranked li {
+  display: grid;
+  grid-template-columns: 20px minmax(80px, 132px) minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.ranked-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ranked-pct {
+  text-align: right;
+  color: var(--text-2);
+}
+
+/* Tables inside skill cards */
+.skill-table {
+  margin-top: -4px;
+}
+.skill-table th,
+.skill-table td {
+  padding: 6px 4px;
+}
+.skill-table tbody th {
+  font-weight: 600;
+}
+.plain-link {
+  color: inherit;
+}
+.company-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Often paired with */
+.pairs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+.pair {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 6px;
+  align-items: center;
+  padding: 10px 10px 8px;
+  min-height: 78px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--tile);
+}
+.pair .pill {
+  grid-column: 2;
+  justify-self: end;
+}
+.pair-text {
+  min-width: 0;
+}
+.pair-name {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.pair-name a {
+  color: inherit;
+}
+.pair-share {
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* Salary effect */
+.salary {
+  background-image: radial-gradient(90% 90% at 100% 100%, rgba(30, 180, 120, 0.2), transparent 70%);
+  background-color: var(--card);
+}
+:root[data-theme='light'] .salary {
+  background-image: radial-gradient(90% 90% at 100% 100%, rgba(13, 160, 90, 0.1), transparent 70%);
+}
+.salary-line {
+  font-size: 15px;
+  color: var(--text-2);
+}
+.salary-big {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 4px 0 6px;
+  color: var(--green);
+}
+.salary-big.is-down {
+  color: var(--red);
+}
+.salary-big.is-flat {
+  color: var(--text);
+}
+.salary-big-empty {
+  color: var(--muted);
+}
+.salary-sub {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Latest roles */
+.latest-table th,
+.latest-table td {
+  padding: 7px 6px;
+}
+.latest-table thead th {
+  font-weight: 500;
+}
+.latest-table tbody tr + tr {
+  border-top: 1px solid var(--border);
+}
+.latest-table .loc {
+  white-space: nowrap;
+}
+.latest-table .age {
+  white-space: nowrap;
+  color: var(--text-2);
+}
+.view-btn {
+  display: inline-block;
+  padding: 3px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.view-btn:hover {
+  background: var(--blue-strong);
+  color: #fff;
+  text-decoration: none;
+}
+.skill-footnote {
+  margin: 0;
+}
+
+/* ---------- Skills index ---------- */
+.skills-index {
+  padding-top: 22px;
+}
+.skills-index-head h1 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.skills-index-head p {
+  margin-top: 6px;
+  color: var(--text-2);
+  max-width: 70ch;
+}
+.skills-grid {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.skills-tile {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+.skills-tile:hover {
+  border-color: var(--border-strong);
+  text-decoration: none;
+  background: var(--card-2);
+}
+.skills-tile .brand-mark {
+  grid-row: 1 / span 2;
+}
+.skills-tile-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.skills-tile-meta {
+  grid-column: 2;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.skills-tile-count {
+  font-weight: 700;
+  font-size: 15px;
+  text-align: right;
+}
+.skills-tile .pill {
+  justify-self: end;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1280px) {
+  .pairs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1100px) {
+  .skill-hero {
+    grid-template-columns: 1fr;
+  }
+  .skill-row-3,
+  .skill-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .skill-hero {
+    margin: 0 -16px;
+    padding: 18px 16px 4px;
+  }
+  .skill-title {
+    font-size: 30px;
+  }
+  .skill-number-value {
+    font-size: 40px;
+  }
+  .pairs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .latest {
+    overflow-x: auto;
+  }
+  .skill-chart-note {
+    margin-left: 0;
+  }
+}

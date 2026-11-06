@@ -19,8 +19,12 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   changes, profession ticker codes, rule-written market notes and the survival-corrected back-cast
   (estimated history before 2026-11-02). For the Profession page it also pulls `/v1/stats/companies/daily`,
   `/v1/companies/{id}`, per-family facets and job lists, and writes a back-cast, work mode, pay band, top
-  companies with signals and the latest roles per profession. Every krill response is parsed with zod.
-  Every table can be rebuilt from krill.
+  companies with signals and the latest roles per profession. For the Skill pages (`/skills/<skill>`) it also reads
+  `/v1/facets` (companies, paired skills, posted-day cuts), `/v1/companies/{id}` and `/v1/jobs` for the
+  `BUILDER_SKILL_PAGES` largest skills (default 60) and writes each skill's demand series, companies,
+  paired skills, salary effect and latest roles. Every krill response is parsed with zod. Every table can
+  be rebuilt from krill, except the day-by-day skill counts: krill serves no skill history, so those rows
+  accumulate from the first build onward and earlier days are estimated by the back-cast.
 - **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
   needs `Authorization: Bearer $READ_API_TOKEN`. `GET /v1/jobs/{krill id}` (the Job page) is the one route
   that also reads krill live: the posting, the employer's company history and similar roles, cached for 1 hour
@@ -115,6 +119,9 @@ Peers are not in v1 and show a coming-soon state.
 pnpm typecheck
 pnpm test
 ```
+
+The skill-fallback test needs a scratch Postgres that may be wiped: set `TEST_DATABASE_URL` to run it
+(CI does); without it that test is skipped.
 
 ## Deploy shape (VPS)
 
