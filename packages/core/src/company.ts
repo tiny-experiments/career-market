@@ -2,7 +2,7 @@
  * Company page payloads and the small helpers the builder, the read API and the
  * web app share. Plain JSON: numbers, strings, ISO days.
  */
-import { addDays, FIRST_OBSERVED_DAY, isBootstrapDay, type IsoDay } from './dates.ts';
+import { addDays, FIRST_OBSERVED_DAY, formatDayShort, isBootstrapDay, type IsoDay } from './dates.ts';
 import type { Change, Unavailable } from './types.ts';
 
 export type CompanySignalState = 'RAMPING' | 'STEADY' | 'COOLING' | 'FREEZING';
@@ -65,6 +65,8 @@ export interface CompanyTrendPoint {
   closed: number;
   /** krill bootstrap day or the first fetch of this company's board: flows are not real hiring. */
   excluded: boolean;
+  /** Excluded because the company's board was added, dropped or fetched in bulk (not a krill bootstrap day). */
+  boardChange: boolean;
 }
 
 export interface CompanyTeam {
@@ -109,6 +111,8 @@ export interface CompanyPage {
   profile: CompanyProfileBlock | Unavailable;
   /** Profession and country filter options for the Current roles list. */
   roleFilters: { professions: CountValue[]; countries: CountValue[]; remote: number | null };
+  /** The latest day is a board change, so no signal can be read yet. */
+  unclearOn: IsoDay | null;
   /** Peers are not in v1; always the coming-soon state. */
   peers: Unavailable;
 }
@@ -121,7 +125,8 @@ export interface CompanyJob {
   workMode: 'onsite' | 'hybrid' | 'remote' | null;
   level: string | null;
   ageDays: number;
-  url: string;
+  /** http(s) posting link, or null when krill gave none that is safe to open. */
+  url: string | null;
 }
 
 export type CompanyJobsPayload =
@@ -146,6 +151,11 @@ export interface CompanyDirectoryRow extends CompanyMover {
 export const EXPLAINER_NO_SIGNAL =
   'Needs a few more comparable days: krill counted every role on 2 and 3 Nov as new, so those days are left out.';
 
+/** Said under the chart when the latest day is a board change. */
+export function explainerUnclear(day: IsoDay): string {
+  return `Unclear: board change on ${formatDayShort(day)}. Hundreds of roles moved at once, which is a board being added or dropped, so that day is left out and no signal can be read yet.`;
+}
+
 export interface DayRow {
   date: IsoDay;
   open: number;
@@ -160,6 +170,8 @@ export interface SeriesDay extends DayRow {
    * was first fetched, and the first fetch itself (every job is "new").
    */
   excluded: boolean;
+  /** Excluded because the board changed, as opposed to a krill bootstrap day. */
+  boardChange: boolean;
 }
 
 export interface CompanySeries {
@@ -197,7 +209,7 @@ export function companySeries(rows: readonly DayRow[], to: IsoDay, from: IsoDay 
     const starts = (r.open > 0 && prevOpen === 0) || isBoardEvent(r, prevOpen);
     if (starts) segmentStart = d;
     const excluded = isBootstrapDay(d) || segmentStart === null || starts;
-    days.push({ ...r, excluded });
+    days.push({ ...r, excluded, boardChange: starts && !isBootstrapDay(d) });
     prevOpen = r.open;
   }
   // A segment that ended (open fell to 0) stays the current one only while it still has open roles.

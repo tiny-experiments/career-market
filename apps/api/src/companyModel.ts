@@ -2,6 +2,7 @@ import { countryName, familyInfo, skillLabel, titleCase } from '@cm/core/codes';
 import {
   companySeries,
   EXPLAINER_NO_SIGNAL,
+  explainerUnclear,
   LEVEL_ORDER,
   STACK_GROUPS,
   type CompanyDirectoryRow,
@@ -186,6 +187,8 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
     select date, open, new, closed from company_daily
     where company_id = ${id} and family = '*' and new is not null and date <= ${asOf} order by date`;
   const series = companySeries(daily, asOf);
+  const lastDay = series.days.at(-1);
+  const unclearOn = lastDay?.boardChange ? lastDay.date : null;
 
   const [signalRow] = await sql<
     { state: CompanySignalState; window_from: IsoDay; window_days: number; opened: number; closed: number; open_base: number; partial: boolean; explainer: string }[]
@@ -244,8 +247,9 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
     company: { id, slug: co.slug, name: co.name, domain: co.domain, careersUrl: co.careers_url, open: co.open, rank: co.rank },
     profiled: co.profiled,
     signal,
-    explainer: signalRow?.explainer ?? EXPLAINER_NO_SIGNAL,
-    series: series.days.map((d) => ({ date: d.date, open: d.open, opened: d.new, closed: d.closed, excluded: d.excluded })),
+    explainer: signalRow?.explainer ?? (unclearOn ? explainerUnclear(unclearOn) : EXPLAINER_NO_SIGNAL),
+    unclearOn,
+    series: series.days.map((d) => ({ date: d.date, open: d.open, opened: d.new, closed: d.closed, excluded: d.excluded, boardChange: d.boardChange })),
     firstObservedDay: FIRST_OBSERVED_DAY,
     flow: signalRow ? { opened: signalRow.opened, closed: signalRow.closed, windowDays: signalRow.window_days, since: signalRow.window_from } : null,
     teams,

@@ -39,6 +39,17 @@ describe('company jobs from krill', () => {
     expect(calls.some((c) => c.includes('workMode=remote') && c.includes('family=ai-ml') && c.includes('country=US') && c.includes('company=co_aaaaaaaaaaaaaaaa'))).toBe(true);
   });
 
+  it('keeps only http(s) posting links', async () => {
+    const urls = ['javascript:alert(1)', 'data:text/html,x', 'not a url', 'http://example.com/a', 'https://example.com/b'];
+    const fetchImpl = (async (input: string | URL | Request) => {
+      if (new URL(String(input)).pathname === '/v1/facets') return Response.json({ total: 5 });
+      return Response.json({ items: urls.map((url, i) => ({ ...job, id: `kr_${i}`, url })) });
+    }) as typeof fetch;
+    const jobs = createCompanyJobs({ baseUrl: 'https://krill.test', apiKey: undefined, log, fetchImpl });
+    const res = await jobs('co_aaaaaaaaaaaaaaaa', { limit: 8 });
+    expect(res.available && res.items.map((j) => j.url)).toEqual([null, null, null, 'http://example.com/a', 'https://example.com/b']);
+  });
+
   it('caches an answer for the same filter', async () => {
     const calls: string[] = [];
     const jobs = createCompanyJobs({ baseUrl: 'https://krill.test', apiKey: undefined, log, fetchImpl: fakeKrill(calls) });

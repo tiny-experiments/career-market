@@ -1,5 +1,5 @@
 import { SENIOR_PLUS, type CompanyJob, type CompanyJobsPayload, type CompanyPage, type CompanySignalState, type CountValue } from '@cm/core/company';
-import { formatDayShort } from '@cm/core/dates';
+import { formatDayLong, formatDayShort } from '@cm/core/dates';
 import type { Change } from '@cm/core/types';
 import {
   Boxes,
@@ -90,6 +90,7 @@ function CompanyView({ data, jobs, filter }: { data: CompanyPage; jobs: CompanyJ
   const logo = logoUrl(company.domain);
   const meta = signal ? SIGNAL_META[signal.state] : null;
   const windowLabel = signal?.partial ? `since ${formatDayShort(signal.windowFrom)}` : '30D';
+  const boardDays = data.series.filter((d) => d.boardChange).map((d) => d.date);
   const teamsNote = changeNote(data.teams.map((t) => t.change));
   const profile = 'available' in data.profile ? null : data.profile;
 
@@ -125,6 +126,11 @@ function CompanyView({ data, jobs, filter }: { data: CompanyPage; jobs: CompanyJ
                   <span aria-hidden="true">{meta.label.toUpperCase()}</span>
                   <span className="sr-only">{`${company.name} ${meta.what}`}</span>
                 </span>
+              ) : data.unclearOn ? (
+                <span className="co-state co-state-flat" title={`The board changed on ${formatDayLong(data.unclearOn)}: that day is excluded, so no signal can be read yet`}>
+                  <span aria-hidden="true">UNCLEAR: BOARD CHANGE ON {formatDayShort(data.unclearOn).toUpperCase()}</span>
+                  <span className="sr-only">{`Unclear: board change on ${formatDayLong(data.unclearOn)}. That day is excluded, so no hiring signal can be read yet.`}</span>
+                </span>
               ) : (
                 <span className="co-state co-state-flat" title="A signal needs comparable days">
                   <span aria-hidden="true">NO SIGNAL YET</span>
@@ -156,6 +162,11 @@ function CompanyView({ data, jobs, filter }: { data: CompanyPage; jobs: CompanyJ
             <TrendingUp size={22} />
           </span>
           <p className="co-explain-text">{data.explainer}</p>
+          {boardDays.length > 0 && (
+            <p className="co-explain-note" title="A board added, dropped or fetched in bulk moves hundreds of roles at once. Those days are not hiring, so they are left out of every number.">
+              Board change excluded: {boardDays.map((d) => formatDayShort(d)).join(', ')}.
+            </p>
+          )}
           {signal?.partial && (
             <p className="co-explain-note">Only {signal.windowDays} comparable day{signal.windowDays === 1 ? '' : 's'} of history so far.</p>
           )}
@@ -446,10 +457,14 @@ function CurrentRoles({ jobs, company }: { jobs: CompanyJobsPayload; company: st
 function Role({ job }: { job: CompanyJob }) {
   return (
     <li className="co-role">
-      <a className="co-role-title" href={job.url} target="_blank" rel="noopener noreferrer">
-        {job.title}
-        <span className="sr-only"> (opens the employer&apos;s posting in a new tab)</span>
-      </a>
+      {job.url ? (
+        <a className="co-role-title" href={job.url} target="_blank" rel="noopener noreferrer">
+          {job.title}
+          <span className="sr-only"> (opens the employer&apos;s posting in a new tab)</span>
+        </a>
+      ) : (
+        <span className="co-role-title">{job.title}</span>
+      )}
       <span className="co-role-team">{job.team ?? (job.level ? `${job.level.charAt(0).toUpperCase()}${job.level.slice(1)} level` : '')}</span>
       <span className="co-role-loc">
         <MapPin size={13} aria-hidden="true" /> {job.location}

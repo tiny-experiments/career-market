@@ -255,6 +255,17 @@
 .co-gap {
   fill: var(--co-gap);
 }
+.co-board-mark {
+  stroke: var(--text-2);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.co-dot-board {
+  border-radius: 0;
+  width: 2px;
+  height: 11px;
+  background: var(--text-2);
+}
 .co-bar-up {
   fill: var(--green);
   opacity: 0.75;

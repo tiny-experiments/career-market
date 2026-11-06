@@ -42,6 +42,18 @@ describe('board events', () => {
   });
 });
 
+describe('board change days', () => {
+  it('marks a board-change day apart from krill bootstrap days', () => {
+    const s = companySeries([row('2026-11-03', 435, 435), row('2026-11-04', 436, 1), row('2026-11-05', 1736, 1302, 4)], '2026-11-05');
+    expect(s.days.map((d) => [d.date.slice(8), d.excluded, d.boardChange])).toEqual([
+      ['02', true, false],
+      ['03', true, false],
+      ['04', false, false],
+      ['05', true, true],
+    ]);
+  });
+});
+
 describe('companySignal', () => {
   const rows = [row('2026-11-02', 100, 100), row('2026-11-03', 100), row('2026-11-04', 104, 6, 2), row('2026-11-05', 109, 8, 3), row('2026-11-06', 112, 7, 4)];
   const series = companySeries(rows, '2026-11-06');

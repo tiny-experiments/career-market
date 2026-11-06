@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDayLong, formatDayShort } from '@cm/core/dates';
+import { formatDayLong, formatDayShort, isBootstrapDay } from '@cm/core/dates';
 import type { CompanyTrendPoint } from '@cm/core/company';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fmtCompact, fmtInt } from '@/lib/format';
@@ -24,6 +24,17 @@ interface Bucket {
   closed: number;
   /** Every day in the bucket was left out (bootstrap or first fetch). */
   excluded: boolean;
+  /** Days in the bucket the company's board was added, dropped or fetched in bulk. */
+  boardDays: string[];
+  /** The bucket holds a krill bootstrap day. */
+  bootstrap: boolean;
+}
+
+/** Why a bucket is left out, in words. */
+function excludedNote(b: Bucket): string {
+  if (b.boardDays.length > 0) return 'Board change excluded: a board was added, dropped or fetched in bulk, so this is not hiring';
+  if (b.bootstrap) return 'Not counted: krill bootstrap day, when almost every role counted as new';
+  return 'Not counted: no comparable roles yet';
 }
 
 function dayIndex(date: string): number {
@@ -45,13 +56,23 @@ export function bucketize(points: readonly CompanyTrendPoint[]): { buckets: Buck
   if (usable <= WEEKLY_AFTER) {
     return {
       weekly: false,
-      buckets: points.map((p) => ({ from: p.date, to: p.date, opened: p.opened, closed: p.closed, excluded: p.excluded })),
+      buckets: points.map((p) => ({
+        from: p.date,
+        to: p.date,
+        opened: p.opened,
+        closed: p.closed,
+        excluded: p.excluded,
+        boardDays: p.boardChange ? [p.date] : [],
+        bootstrap: isBootstrapDay(p.date),
+      })),
     };
   }
   const weeks = new Map<number, Bucket>();
   for (const p of points) {
     const week = Math.floor((dayIndex(p.date) + 3) / 7); // weeks start on Monday
-    const b = weeks.get(week) ?? { from: p.date, to: p.date, opened: 0, closed: 0, excluded: true };
+    const b = weeks.get(week) ?? { from: p.date, to: p.date, opened: 0, closed: 0, excluded: true, boardDays: [], bootstrap: false };
+    if (p.boardChange) b.boardDays.push(p.date);
+    if (isBootstrapDay(p.date)) b.bootstrap = true;
     if (!p.excluded) {
       b.opened += p.opened;
       b.closed += p.closed;
@@ -94,6 +115,7 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
   }, [series, range]);
 
   const real = buckets.filter((b) => !b.excluded);
+  const boardChanged = buckets.filter((b) => b.boardDays.length > 0);
   const height = 190;
   const plotW = width - PAD.left - PAD.right;
   const lineH = 118;
@@ -150,7 +172,8 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
             <span aria-hidden="true">i</span>
             <span className="info-tip">
               Openings are the roles krill first saw that day; closings are the roles it saw disappear. Krill&apos;s bootstrap days
-              (2–3 Nov) and days a board is added or dropped (hundreds of roles at once) are not hiring, so they are left out.
+              (2–3 Nov) are left out, and so are board-change days, when a board is added or dropped and hundreds of roles move at
+              once (marked with a dashed line).
             </span>
           </span>
         </h2>
@@ -164,6 +187,11 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
           <li>
             <span className="co-dot co-dot-net" aria-hidden="true" /> Net change
           </li>
+          {boardChanged.length > 0 && (
+            <li>
+              <span className="co-dot co-dot-board" aria-hidden="true" /> Board change excluded
+            </li>
+          )}
         </ul>
         <div className="range-toggle" role="group" aria-label="Chart range">
           {RANGES.map((r) => (
@@ -202,6 +230,9 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
               />
             ) : null,
           )}
+          {boardChanged.map((b) => (
+            <line key={`m${b.from}`} x1={xs(buckets.indexOf(b))} x2={xs(buckets.indexOf(b))} y1={PAD.top} y2={barsTop + barsH} className="co-board-mark" />
+          ))}
           {openedLine.map((d) => (
             <path key={`o${d}`} d={d} className="co-line co-line-open" />
           ))}
@@ -259,7 +290,7 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
           <div className="chart-tip" style={{ left: Math.min(width - 190, Math.max(0, xs(hover as number) + 10)), top: 8 }} aria-hidden="true">
             <strong>{label(hovered)}</strong>
             {hovered.excluded ? (
-              <em> · not counted (bootstrap or first fetch)</em>
+              <em> · {excludedNote(hovered)}</em>
             ) : (
               <>
                 <span>
@@ -268,6 +299,7 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
                 <span>
                   Net <b className="num">{hovered.opened - hovered.closed >= 0 ? '+' : '−'}{fmtInt(Math.abs(hovered.opened - hovered.closed))}</b>
                 </span>
+                {hovered.boardDays.length > 0 && <em>Board change excluded on {hovered.boardDays.map((d) => formatDayShort(d)).join(', ')}</em>}
               </>
             )}
           </div>
@@ -286,9 +318,12 @@ export function HiringTrendChart({ series, companyName }: { series: CompanyTrend
         <tbody>
           {buckets.map((b) => (
             <tr key={b.from}>
-              <th scope="row">{label(b)}</th>
+              <th scope="row">
+                {label(b)}
+                {!b.excluded && b.boardDays.length > 0 && ` (board change excluded on ${b.boardDays.map((d) => formatDayShort(d)).join(', ')})`}
+              </th>
               {b.excluded ? (
-                <td colSpan={3}>Not counted: krill bootstrap day or first fetch of the board</td>
+                <td colSpan={3}>{excludedNote(b)}</td>
               ) : (
                 <>
                   <td>{b.opened}</td>

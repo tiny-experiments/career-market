@@ -88,6 +88,16 @@ export function createCompanyJobs(deps: { baseUrl: string; apiKey: string | unde
   };
 }
 
+/** Only http(s) links are ever rendered; anything else (javascript:, data:) is dropped. */
+function httpUrl(raw: string): string | null {
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function toJob(j: z.infer<typeof jobPageSchema>['items'][number]): CompanyJob {
   const place = j.places?.[0];
   let location = j.locations?.[0] ?? 'Location not stated';
@@ -105,6 +115,6 @@ function toJob(j: z.infer<typeof jobPageSchema>['items'][number]): CompanyJob {
     workMode: j.workMode ?? null,
     level: j.level ?? null,
     ageDays: j.ageDays ?? 0,
-    url: j.url,
+    url: httpUrl(j.url),
   };
 }
