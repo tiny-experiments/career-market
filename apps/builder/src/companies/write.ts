@@ -9,9 +9,7 @@ import {
   changePoints,
   companySignal,
   explainer,
-  findPeers,
   type LevelDelta,
-  type PeerInput,
 } from './compute.ts';
 import type { CompanyPull } from './pull.ts';
 
@@ -121,7 +119,7 @@ function changesOf(rows: readonly DayRow[], T: IsoDay): { subject: Map<string, C
   return { subject: out, series };
 }
 
-/** Changes, signals and peers, recomputed from the stored company tables. */
+/** Changes and signals, recomputed from the stored company tables. */
 export async function computeCompanyTables(tx: Sql, T: IsoDay, log: Logger): Promise<Record<string, unknown>> {
   const listed = await tx<{ company_id: string; profiled: boolean }[]>`
     select company_id, profiled from company where updated_on = ${T}`;
@@ -216,32 +214,10 @@ export async function computeCompanyTables(tx: Sql, T: IsoDay, log: Logger): Pro
   await tx`delete from company_signal where as_of = ${T}`;
   await insertRows(tx, 'company_signal', signalRows, ['as_of', 'company_id', 'state', 'window_from', 'window_days', 'opened', 'closed', 'open_base', 'partial', 'explainer']);
 
-  // Peers among profiled companies.
-  const profiles = await tx<{ company_id: string; total: number; skills: { value: string; count: number }[] }[]>`
-    select company_id, total, skills from company_profile where as_of = ${T}`;
-  const familyToday = new Map<string, Map<string, number>>();
-  for (const r of slices.filter((s) => s.date === T)) {
-    const m = familyToday.get(r.company_id) ?? new Map<string, number>();
-    m.set(r.family, (m.get(r.family) ?? 0) + r.open);
-    familyToday.set(r.company_id, m);
-  }
-  const inputs: PeerInput[] = profiles.map((p) => ({
-    companyId: p.company_id,
-    total: p.total,
-    families: familyToday.get(p.company_id) ?? new Map(),
-    skills: new Map(p.skills.map((s) => [s.value, s.count])),
-  }));
-  const peers = findPeers(inputs);
-  const peerRows: Record<string, unknown>[] = [];
-  for (const [id, list] of peers) {
-    list.forEach((peer, i) => peerRows.push({ as_of: T, company_id: id, peer_id: peer.peerId, rank: i + 1, similarity: peer.similarity }));
-  }
-  await tx`delete from company_peer where as_of = ${T}`;
-  await insertRows(tx, 'company_peer', peerRows, ['as_of', 'company_id', 'peer_id', 'rank', 'similarity']);
-
+  const [{ n: profileCount }] = (await tx`select count(*)::int as n from company_profile where as_of = ${T}`) as unknown as [{ n: number }];
   const stats = {
     companies: ids.length,
-    companyProfiles: profiles.length,
+    companyProfiles: profileCount,
     companySignals: signalRows.length,
   };
   log.info(stats, 'company tables written');

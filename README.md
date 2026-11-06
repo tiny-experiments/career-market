@@ -71,8 +71,8 @@ builder's refresh call).
 `/companies/<slug>` shows one company. The builder keeps a `company` directory (every company with at
 least 10 open tech roles), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
 and a full profile for the largest `BUILDER_COMPANY_PROFILES` (default 100): facets for skills, countries,
-levels and work modes, the careers-site url, a median age from six facet cuts, family-by-level history
-and similar companies (cosine similarity of profession and skill shares).
+levels and work modes, the careers-site url, a median age from six facet cuts and family-by-level history.
+Peers are not in v1 and show a coming-soon state.
 
 - Openings are krill's "new" for a company: roles first seen that day. krill's bootstrap days (2-3 Nov)
   and the day a company's board is first fetched list every role as new, so both are left out of every

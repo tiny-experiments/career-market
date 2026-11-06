@@ -62,13 +62,3 @@ create table company_signal (
   explainer   text    not null,           -- the rule-written sentence under the hiring trend chart
   primary key (as_of, company_id)
 );
-
--- Similar companies: cosine similarity of family and skill shares, profiled companies only.
-create table company_peer (
-  as_of      date    not null,
-  company_id text    not null,
-  peer_id    text    not null,
-  rank       integer not null,
-  similarity double precision not null,
-  primary key (as_of, company_id, peer_id)
-);

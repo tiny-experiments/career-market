@@ -354,42 +354,18 @@ function CompanyView({ data, jobs, filter }: { data: CompanyPage; jobs: CompanyJ
         </section>
       </div>
 
-      {/* 9. Peers */}
+      {/* 9. Peers: not in v1, kept in the mockup position as a labelled coming-soon state */}
       <section className="card co-peers" aria-labelledby="peers-title">
         <div className="co-peers-head">
           <h2 id="peers-title" className="co-peers-title">
             Peers
-            <span className="info" tabIndex={0} role="note" aria-label="About peers">
-              <span aria-hidden="true">i</span>
-              <span className="info-tip">
-                Companies with a similar mix of professions and skills among their open roles (cosine similarity). Krill has no industry,
-                so similar means similar hiring, not the same market.
-              </span>
-            </span>
           </h2>
           <p className="muted">Similar companies in tech hiring</p>
         </div>
-        {'available' in data.peers ? (
-          <p className="co-peers-empty">{data.peers.reason}</p>
-        ) : (
-          <ul className="co-peer-list">
-            {data.peers.map((p) => (
-              <li key={p.slug}>
-                <Link href={`/companies/${p.slug}`} className="co-peer">
-                  <CompanyLogo name={p.name} src={logoUrl(p.domain)} size={36} />
-                  <span className="co-peer-body">
-                    <span className="co-peer-name">{p.name}</span>
-                    <span className="co-peer-open num">{fmtInt(p.open)} open roles</span>
-                  </span>
-                  <span className="co-peer-right">
-                    <ChangePill change={p.change} window="30D" showWindow />
-                    <Sparkline values={p.spark} width={86} height={22} label={`${p.name} open roles`} />
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <p className="empty-reason co-peers-empty">
+          <span className="badge-soon">Coming soon</span>
+          {data.peers.reason}
+        </p>
       </section>
     </div>
   );

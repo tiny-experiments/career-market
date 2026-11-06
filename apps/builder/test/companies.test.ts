@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { careersUrl } from '../src/companies/write.ts';
 import { planCompanyDays } from '../src/companies/pull.ts';
 import { companySeries } from '@cm/core/company';
-import { changePoints, companySignal, explainer, findPeers, signalState } from '../src/companies/compute.ts';
+import { changePoints, companySignal, explainer, signalState } from '../src/companies/compute.ts';
 import { computeChange } from '../src/compute/changes.ts';
 
 const row = (date: string, open: number, n = 0, closed = 0) => ({ date, open, new: n, closed });
@@ -88,24 +88,6 @@ describe('explainer', () => {
     expect(explainer({ ...sig, opened: 5, closed: 20 }, [{ level: 'mid', delta: -6 }])).toBe(
       'Closings outpace openings 4.0 : 1 over 3 days since 4 Nov; mid roles down most.',
     );
-  });
-});
-
-describe('findPeers', () => {
-  it('ranks by cosine similarity of family and skill shares', () => {
-    const mk = (companyId: string, fam: Record<string, number>, skills: Record<string, number>, total = 100) => ({
-      companyId,
-      total,
-      families: new Map(Object.entries(fam)),
-      skills: new Map(Object.entries(skills)),
-    });
-    const peers = findPeers([
-      mk('a', { software: 60, 'hardware-silicon': 40 }, { 'lang:c': 50 }),
-      mk('b', { software: 55, 'hardware-silicon': 45 }, { 'lang:c': 40 }),
-      mk('c', { sales: 100 }, { 'tool:crm': 90 }),
-    ]);
-    expect(peers.get('a')?.map((p) => p.peerId)).toEqual(['b']);
-    expect(peers.get('c')).toEqual([]);
   });
 });
 

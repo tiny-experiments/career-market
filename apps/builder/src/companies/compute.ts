@@ -109,52 +109,6 @@ export function explainer(signal: SignalCalc | null, levels: readonly LevelDelta
   return `${head}${tail}.`;
 }
 
-/** Cosine similarity of two sparse vectors. */
-export function cosine(a: ReadonlyMap<string, number>, b: ReadonlyMap<string, number>): number {
-  let dot = 0;
-  let na = 0;
-  let nb = 0;
-  for (const [k, v] of a) {
-    na += v * v;
-    const w = b.get(k);
-    if (w !== undefined) dot += v * w;
-  }
-  for (const v of b.values()) nb += v * v;
-  return na === 0 || nb === 0 ? 0 : dot / Math.sqrt(na * nb);
-}
-
-export interface PeerInput {
-  companyId: string;
-  total: number;
-  families: ReadonlyMap<string, number>;
-  skills: ReadonlyMap<string, number>;
-}
-
-/** Share vector of a company: family shares plus skill shares (each over the company's open roles). */
-export function peerVector(c: PeerInput): Map<string, number> {
-  const v = new Map<string, number>();
-  if (c.total <= 0) return v;
-  for (const [k, n] of c.families) v.set(`f:${k}`, n / c.total);
-  for (const [k, n] of c.skills) v.set(`s:${k}`, n / c.total);
-  return v;
-}
-
-/** The most similar companies for each company, best first. */
-export function findPeers(companies: readonly PeerInput[], perCompany = 4, minSimilarity = 0.5): Map<string, { peerId: string; similarity: number }[]> {
-  const vectors = companies.map((c) => ({ id: c.companyId, v: peerVector(c) }));
-  const out = new Map<string, { peerId: string; similarity: number }[]>();
-  for (const a of vectors) {
-    const scored = vectors
-      .filter((b) => b.id !== a.id)
-      .map((b) => ({ peerId: b.id, similarity: cosine(a.v, b.v) }))
-      .filter((s) => s.similarity >= minSimilarity)
-      .sort((x, y) => y.similarity - x.similarity || (x.peerId < y.peerId ? -1 : 1))
-      .slice(0, perCompany);
-    out.set(a.id, scored);
-  }
-  return out;
-}
-
 export function sum(values: readonly number[]): number {
   return values.reduce((n, v) => n + v, 0);
 }

@@ -81,15 +81,6 @@ export interface CountValue {
   count: number;
 }
 
-export interface CompanyPeer {
-  slug: string;
-  name: string;
-  domain: string | null;
-  open: number;
-  change: Change | null;
-  spark: number[];
-}
-
 export interface CompanyProfileBlock {
   total: number;
   /** Open roles that name a skill, grouped like the Tech stack profile. */
@@ -118,7 +109,8 @@ export interface CompanyPage {
   profile: CompanyProfileBlock | Unavailable;
   /** Profession and country filter options for the Current roles list. */
   roleFilters: { professions: CountValue[]; countries: CountValue[]; remote: number | null };
-  peers: CompanyPeer[] | Unavailable;
+  /** Peers are not in v1; always the coming-soon state. */
+  peers: Unavailable;
 }
 
 export interface CompanyJob {

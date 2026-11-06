@@ -7,7 +7,6 @@ import {
   type CompanyDirectoryRow,
   type CompanyMover,
   type CompanyPage,
-  type CompanyPeer,
   type CompanyProfileBlock,
   type CompanySignal,
   type CompanySignalState,
@@ -22,6 +21,12 @@ import { latestBuild, NotReadyError } from './readModel.ts';
 /** Read-only queries for the Company page and the company lists. Nothing here calls krill. */
 
 const SPARK_DAYS = 30;
+/** Peers are not in v1: krill has no industry or similarity measure the captain accepted. */
+const PEERS_COMING_SOON: Unavailable = {
+  available: false,
+  reason: 'Similar companies need an industry or similarity measure krill does not provide yet.',
+};
+
 /** A company needs this many open roles to rank in "Companies ramping". */
 const MIN_RAMPING_OPEN = 300;
 /** ... and must have moved by at least this many roles, so a handful of postings is not a trend. */
@@ -233,8 +238,6 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
     ? profileBlock(prof)
     : { available: false, reason: 'Career Market profiles the largest companies by open roles. This company is not profiled yet.' };
 
-  const peers = await peersOf(sql, asOf, id, co.profiled);
-
   return {
     asOf,
     builtAt: build.builtAt,
@@ -252,28 +255,8 @@ export async function companyPage(sql: Sql, slug: string): Promise<CompanyPage |
       countries: prof ? profileBlock(prof).countries.slice(0, 12) : [],
       remote: prof ? profileBlock(prof).remote : null,
     },
-    peers,
+    peers: PEERS_COMING_SOON,
   };
-}
-
-async function peersOf(sql: Sql, asOf: IsoDay, id: string, profiled: boolean): Promise<CompanyPeer[] | Unavailable> {
-  if (!profiled) {
-    return { available: false, reason: 'Similar companies are found among the largest companies by open roles, and this one is not profiled yet.' };
-  }
-  const rows = await sql<(CompanyRow & { similarity: number })[]>`
-    select c.*, p.similarity from company_peer p join company c on c.company_id = p.peer_id
-    where p.as_of = ${asOf} and p.company_id = ${id} and c.updated_on = ${asOf} order by p.rank`;
-  if (rows.length === 0) return { available: false, reason: 'No other profiled company hires for a similar mix of roles and skills.' };
-  const changes = await changesFor(sql, asOf, rows.map((r) => `company:${r.company_id}`), '1M');
-  const spark = await sparks(sql, asOf, rows.map((r) => r.company_id));
-  return rows.map((r) => ({
-    slug: r.slug,
-    name: r.name,
-    domain: r.domain,
-    open: r.open,
-    change: changes.get(`company:${r.company_id}`) ?? null,
-    spark: spark.get(r.company_id) ?? [],
-  }));
 }
 
 /** The krill company id behind a slug (for live job lists). */
