@@ -1116,3 +1116,644 @@ p {
     flex-wrap: wrap;
   }
 }
+
+/* ---------- Profession page ---------- */
+:root,
+:root[data-theme='dark'] {
+  --amber-soft: rgba(245, 165, 36, 0.14);
+  --amber-border: rgba(245, 165, 36, 0.4);
+}
+:root[data-theme='light'] {
+  --amber-soft: rgba(161, 92, 0, 0.1);
+  --amber-border: rgba(161, 92, 0, 0.35);
+}
+
+.pf-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 740px);
+  gap: 24px;
+  align-items: start;
+  margin: 0 -24px;
+  padding: 16px 24px 14px;
+  background: var(--hero-glow);
+}
+.pf-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.pf-crumbs li + li::before {
+  content: '›';
+  margin: 0 9px;
+  color: var(--muted);
+}
+.pf-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.code-badge {
+  background: var(--blue-strong);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+.pf-headline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 2px;
+}
+.pf-open {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.pf-open-unit {
+  font-size: 19px;
+  color: var(--text-2);
+  margin-top: 12px;
+}
+.pf-headline .pill {
+  margin-top: 10px;
+}
+.pf-specialties {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.pf-specialty {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  min-height: 60px;
+}
+.pf-chart-card {
+  margin-top: 4px;
+  padding: 12px 22px 10px;
+}
+.pf-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 290px;
+  gap: 12px;
+}
+.pf-chart-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 40px;
+  margin-top: 4px;
+}
+.pf-chart-body .chart-plot svg:focus-visible {
+  outline-offset: 0;
+}
+.strip-label {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.dot-open {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chart-line);
+  margin-right: 4px;
+}
+.pf-tip {
+  min-width: 170px;
+}
+.pf-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: space-between;
+}
+.pf-changes {
+  margin: 0;
+  padding: 4px 0 0 28px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+.pf-changes > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+.pf-changes dt {
+  font-size: 14px;
+  color: var(--text-2);
+}
+.pf-changes dd {
+  margin: 0;
+  font-size: 17px;
+  text-align: right;
+}
+.pf-since {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.pf-footnote {
+  margin-top: 6px;
+}
+
+.pf-stats {
+  display: grid;
+  grid-template-columns: 1.15fr 1.4fr 1fr 0.85fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+.pf-stat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 22px;
+  min-height: 58px;
+}
+.stat-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  max-width: 260px;
+}
+.pf-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  margin: 0;
+}
+.pf-modes > div {
+  display: flex;
+  flex-direction: column;
+}
+.pf-modes > div + div {
+  padding-left: 26px;
+  border-left: 1px solid var(--border);
+}
+.pf-modes dt {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.pf-modes dd {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+}
+.pf-modes .pf-modes-note dt,
+.pf-modes .pf-modes-note dd {
+  color: var(--muted);
+}
+.pf-modes .pf-modes-note dd {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pf-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, 0.62fr);
+  grid-template-areas:
+    'sen sen cty'
+    'comp skills cty';
+  gap: 14px 16px;
+  margin-top: 14px;
+}
+.pf-seniority {
+  grid-area: sen;
+}
+.pf-countries {
+  grid-area: cty;
+}
+.pf-companies {
+  grid-area: comp;
+}
+.pf-skills {
+  grid-area: skills;
+}
+.pf-seniority,
+.pf-countries,
+.pf-companies,
+.pf-skills,
+.pf-latest,
+.pf-index {
+  padding: 14px 20px 16px;
+}
+.pf-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.pf-card-title svg {
+  color: var(--text-2);
+}
+.pf-empty {
+  font-size: 13px;
+}
+.pf-stack {
+  display: flex;
+  height: 18px;
+  border-radius: 9px;
+  overflow: hidden;
+  gap: 2px;
+}
+.pf-stack span {
+  min-width: 3px;
+}
+.pf-legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 10px 14px;
+}
+.pf-legend li {
+  display: grid;
+  grid-template-columns: 14px auto;
+  column-gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.pf-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.pf-legend-label {
+  color: var(--text);
+}
+.pf-legend-count {
+  grid-column: 2;
+  font-size: 16px;
+  font-weight: 700;
+}
+.pf-legend-share {
+  grid-column: 2;
+  font-size: 12px;
+}
+.pf-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.pf-list th,
+.pf-list td {
+  padding: 8px 0;
+  text-align: left;
+  font-weight: 500;
+}
+.pf-list td.r {
+  text-align: right;
+  font-weight: 600;
+}
+.pf-list tr + tr {
+  border-top: 1px solid var(--border);
+}
+.pf-list .flag {
+  margin-right: 12px;
+}
+.pf-table th[scope='row'] {
+  font-weight: 600;
+}
+.pf-company {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.signal {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 12px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  min-width: 74px;
+  text-align: center;
+}
+.sig-hot {
+  background: var(--red-soft);
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+}
+.sig-strong {
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: var(--green-border);
+}
+.sig-rising {
+  background: var(--blue-soft);
+  color: var(--blue-text);
+  border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+}
+.sig-steady {
+  background: var(--card-2);
+  color: var(--text-2);
+  border-color: var(--border-strong);
+}
+.sig-cooling {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-color: var(--amber-border);
+}
+.pf-skill-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.pf-skill-grid li {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 60px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--tile);
+}
+.pf-skill-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pf-skill-count {
+  font-size: 17px;
+  font-weight: 700;
+}
+.pf-latest {
+  margin-top: 14px;
+}
+.pf-latest-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pf-roles td,
+.pf-roles th {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.pf-loc {
+  white-space: nowrap;
+}
+.pf-loc svg {
+  vertical-align: -2px;
+  margin-right: 4px;
+  color: var(--text-2);
+}
+.btn-view {
+  display: inline-block;
+  padding: 3px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--card-2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+}
+.btn-view:hover {
+  background: var(--blue-soft);
+  text-decoration: none;
+}
+.pf-index {
+  margin-top: 24px;
+  max-width: 900px;
+}
+.pf-index-lead {
+  margin: 4px 0 14px;
+}
+
+@media (max-width: 1100px) {
+  .pf-top {
+    grid-template-columns: 1fr;
+  }
+  .pf-chart-head {
+    padding-right: 0;
+  }
+  .pf-chart-body {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .pf-changes {
+    flex-direction: row;
+    padding: 8px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .pf-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pf-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'sen' 'comp' 'skills' 'cty';
+  }
+}
+@media (max-width: 760px) {
+  .pf-top {
+    margin: 0 -16px;
+    padding: 14px 16px;
+  }
+  .pf-specialties {
+    grid-template-columns: 1fr;
+  }
+  .pf-open {
+    font-size: 44px;
+  }
+  .pf-stats {
+    grid-template-columns: 1fr;
+  }
+  .pf-skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pf-changes {
+    flex-wrap: wrap;
+  }
+  .pf-roles {
+    display: block;
+    overflow-x: auto;
+  }
+  .pf-latest-head {
+    flex-wrap: wrap;
+  }
+}
+.ticker-link,
+.row-link {
+  color: inherit;
+}
+.row-link:hover,
+.ticker-link:hover {
+  color: var(--blue-text);
+}
+
+.pf-stats-note {
+  margin-top: 6px;
+}
+
+/* Profession page density: the mockup fits the whole page in one screen. */
+.pf .stat-value {
+  font-size: 19px;
+}
+.pf .stat-icon {
+  width: 34px;
+  height: 34px;
+}
+.pf .stat-label {
+  font-size: 12.5px;
+}
+.pf-top {
+  padding: 10px 24px 8px;
+}
+.pf-title {
+  margin-top: 8px;
+  font-size: 25px;
+}
+.pf-open {
+  font-size: 40px;
+}
+.pf-open-unit {
+  font-size: 17px;
+  margin-top: 8px;
+}
+.pf-headline .pill {
+  margin-top: 6px;
+  padding: 5px 14px;
+  font-size: 14px;
+}
+.pf-specialties {
+  margin-top: 4px;
+  gap: 12px;
+}
+.pf-specialty {
+  padding: 8px 16px;
+  min-height: 50px;
+  gap: 12px;
+}
+.pf-chart-card {
+  padding: 8px 18px 6px;
+}
+.pf-chart-head,
+.pf-chart-body {
+  gap: 24px;
+}
+.pf-chart-head {
+  padding-right: 274px;
+}
+.pf-chart-body {
+  grid-template-columns: minmax(0, 1fr) 250px;
+  margin-top: 0;
+}
+.pf-changes > div {
+  padding: 4px 0;
+}
+.pf-changes dt {
+  font-size: 13px;
+}
+.pf-changes dd {
+  font-size: 15px;
+}
+.pf-stats {
+  gap: 12px;
+  margin-top: 10px;
+}
+.pf-stat {
+  padding: 6px 18px;
+  min-height: 48px;
+  gap: 12px;
+}
+.pf-modes dd {
+  font-size: 19px;
+}
+.pf-grid {
+  gap: 10px 12px;
+  margin-top: 10px;
+}
+.pf-seniority,
+.pf-countries,
+.pf-companies,
+.pf-skills,
+.pf-latest,
+.pf-index {
+  padding: 10px 16px 12px;
+}
+.pf-card-title {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.pf-stack {
+  height: 16px;
+}
+.pf-legend {
+  margin-top: 8px;
+  gap: 6px 12px;
+}
+.pf-legend li {
+  font-size: 12px;
+}
+.pf-legend-count {
+  font-size: 14px;
+}
+.pf-list th,
+.pf-list td {
+  padding: 5px 0;
+  font-size: 13px;
+}
+.pf-table td,
+.pf-table th {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.pf-skill-grid {
+  gap: 8px;
+}
+.pf-skill-grid li {
+  min-height: 52px;
+  padding: 6px 10px;
+}
+.pf-skill-count {
+  font-size: 15px;
+}
+.pf-latest {
+  margin-top: 10px;
+}
+.pf-roles td,
+.pf-roles th {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.pf-footnote,
+.pf-stats-note {
+  margin-top: 4px;
+}

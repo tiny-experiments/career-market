@@ -3,17 +3,23 @@ import { z } from 'zod';
 import { KrillClient, KrillHttpError, type Params } from './client.ts';
 import {
   changePageSchema,
+  companyDailySchema,
+  companyDetailSchema,
   companyPageSchema,
   dailyStatsSchema,
   facetsSchema,
+  jobListSchema,
   metaSchema,
   openJobStatusSchema,
   panelDailySchema,
   taxonomySchema,
   type KrillChangePage,
+  type KrillCompanyDailyItem,
+  type KrillCompanyDetail,
   type KrillCompanyPage,
   type KrillDailyItem,
   type KrillFacets,
+  type KrillJobItem,
   type KrillMeta,
   type KrillPanelItem,
   type KrillTaxonomy,
@@ -143,6 +149,59 @@ export class KrillApi {
 
   async companies(params: { sort: 'openJobs' | 'name'; pageSize: number; cursor?: string }): Promise<KrillCompanyPage> {
     return (await this.client.get('/v1/companies', params, companyPageSchema)).data;
+  }
+
+  /**
+   * /v1/stats/companies/daily (krill K2) over a span, every page. `groupBy: 'family'`
+   * adds the family; `family` and `company` filter. Pages hold up to 1000 rows.
+   */
+  async companyDaily(params: {
+    from: IsoDay;
+    to: IsoDay;
+    groupBy?: 'family';
+    family?: string;
+    company?: string;
+  }): Promise<KrillCompanyDailyItem[]> {
+    const out: KrillCompanyDailyItem[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = (
+        await this.client.get(
+          '/v1/stats/companies/daily',
+          // The cursor does not carry the filters: send them again with every page.
+          { ...params, cursor, pageSize: 1000 },
+          companyDailySchema,
+        )
+      ).data;
+      out.push(...page.items);
+      cursor = page.nextCursor ?? undefined;
+    } while (cursor);
+    return out;
+  }
+
+  /** One company: name and the registrable domain krill holds for its logo. */
+  async company(id: string): Promise<KrillCompanyDetail | null> {
+    try {
+      return (await this.client.get(`/v1/companies/${encodeURIComponent(id)}`, {}, companyDetailSchema)).data;
+    } catch (err) {
+      if (err instanceof KrillHttpError && err.status === 404) return null;
+      throw err;
+    }
+  }
+
+  /** Open jobs for a filter, up to `pages` pages (sort: newest | posted | salary). */
+  async jobs(params: Params, pages: number, pageSize = 100): Promise<KrillJobItem[]> {
+    const out: KrillJobItem[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < pages; page++) {
+      const res = (
+        await this.client.get('/v1/jobs', { ...params, cursor, pageSize }, jobListSchema)
+      ).data;
+      out.push(...res.items);
+      cursor = res.nextCursor ?? undefined;
+      if (!cursor) break;
+    }
+    return out;
   }
 
   /** Every 'closed' change event detected on `day`, in feed order. */

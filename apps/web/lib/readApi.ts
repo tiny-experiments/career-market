@@ -34,6 +34,10 @@ async function get<T>(path: string, options: { revalidate?: number } = {}): Prom
 export const getChrome = () => get<ChromePayload>('/v1/chrome');
 export const getMarketOverview = () => get<MarketOverview>('/v1/market');
 
+export const getProfessionPage = (code: string) =>
+  get<import('@cm/core/professions').ProfessionPage>(`/v1/professions/${encodeURIComponent(code)}`);
+export const getProfessionIndex = () => get<import('@cm/core/professions').ProfessionIndex>('/v1/professions');
+
 /** The Screener for a URL query string (filters, mode, sort); live counts under filters are cached by the read API. */
 export const getScreener = (search: string) => get<ScreenerPayload>(`/v1/screener${search ? `?${search}` : ''}`);
 

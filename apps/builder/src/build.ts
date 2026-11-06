@@ -20,6 +20,8 @@ import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
 import type { KrillApi } from './krill/api.ts';
 import { payBandRows, pullPayBands } from './payBands.ts';
+import { computeProfessions, writeProfessionInputs } from './professions/build.ts';
+import { pullProfessions } from './professions/pull.ts';
 import { observedDays, pull, type Pulled } from './pull.ts';
 import { pullScreener } from './screener/pull.ts';
 import { writeScreener } from './screener/write.ts';
@@ -70,13 +72,18 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
   try {
     const plan = await planPull(sql, T, config, options);
     const pulled = await pull(api, { ...meta, lastSnapshotDate: T }, plan, log);
+    const atsList = meta.ats.filter((a) => a.openJobs > 0).map((a) => a.ats);
+    const professions = await pullProfessions(api, T, pulled.families, atsList, log);
     const screener = await pullScreener(api, T, pulled.families, log);
     const pay = await pullPayBands(api, pulled.families, log);
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
+      await writeProfessionInputs(tx as unknown as Sql, T, professions);
       await writePayBands(tx as unknown as Sql, T, pay.bands);
-      const derived = await computeAndWrite(tx as unknown as Sql, pulled, log);
-      return { ...derived, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
+      const market = await computeAndWrite(tx as unknown as Sql, pulled, log);
+      const fit = await fitFromSamples(tx as unknown as Sql, pulled, T, new Map(pulled.market.map((m) => [m.date, m])));
+      const profession = await computeProfessions(tx as unknown as Sql, professions, { T, fit: fit?.fit ?? null, log });
+      return { ...market, ...profession, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
     });
     const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`
@@ -384,7 +391,7 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
 }
 
 /** Fit the survival curve from the stored closing samples of the recent window. */
-async function fitFromSamples(
+export async function fitFromSamples(
   tx: Sql,
   p: Pulled,
   T: IsoDay,
