@@ -1,5 +1,5 @@
 import { familyInfo, isTileSkill, skillLabel } from '@cm/core/codes';
-import { daysBetween, formatDayLong, type IsoDay, type Range } from '@cm/core/dates';
+import { addDays, daysBetween, formatDayLong, type IsoDay, type Range } from '@cm/core/dates';
 import type { Sql } from '@cm/core/db';
 import {
   skillCategory,
@@ -23,6 +23,12 @@ const COMPANY_ROWS = 5;
 const PAIR_ROWS = 6;
 /** Each side of the salary comparison needs this many priced roles (builder: MIN_SALARY_SIDE). */
 const MIN_SALARY_SIDE = 50;
+/**
+ * A skill is served from the latest day it has a summary row, so one failed
+ * krill call degrades to its previous numbers. A skill missing for longer than
+ * this has left the tracked list and is no longer served.
+ */
+export const SKILL_STALE_DAYS = 7;
 
 interface SummaryRow {
   date: IsoDay;
@@ -52,13 +58,14 @@ async function changeMap(sql: Sql, asOf: IsoDay, subjects: string[], range: Rang
 export async function skillPage(sql: Sql, slug: string): Promise<SkillPagePayload | null> {
   const build = await latestBuild(sql);
   if (!build) throw new NotReadyError();
-  const D = await latestSkillDay(sql);
+  const floor = addDays(await latestSkillDay(sql), -SKILL_STALE_DAYS);
 
   const [row] = await sql<SummaryRow[]>`
     select date, skill, slug, open_total, primary_family from skill_summary
-    where date = ${D} and (slug = ${slug} or split_part(skill, ':', 2) = ${slug})
-    order by (slug = ${slug}) desc, open_total desc limit 1`;
+    where date >= ${floor} and (slug = ${slug} or split_part(skill, ':', 2) = ${slug})
+    order by (slug = ${slug}) desc, date desc, open_total desc limit 1`;
   if (!row || !row.primary_family) return null;
+  const D = row.date;
   const id = row.skill;
   const family = row.primary_family;
   const info = familyInfo(family);
@@ -78,7 +85,8 @@ export async function skillPage(sql: Sql, slug: string): Promise<SkillPagePayloa
   const hasEstimate = series.some((p) => p.estimated);
 
   // Names the skill's slug when it has a page of its own.
-  const slugRows = await sql<{ skill: string; slug: string }[]>`select skill, slug from skill_summary where date = ${D}`;
+  const slugRows = await sql<{ skill: string; slug: string }[]>`
+    select distinct on (skill) skill, slug from skill_summary where date >= ${floor} order by skill, date desc`;
   const slugOf = new Map(slugRows.map((r) => [r.skill, r.slug]));
 
   // Peers: the largest other skills of the same kind (PyTorch: TensorFlow, JAX) in the same profession.
@@ -225,12 +233,29 @@ function salaryEffectOf(
 /** Every tracked skill, largest first: the list behind /skills. */
 export async function skillIndex(sql: Sql): Promise<SkillIndexPayload> {
   const D = await latestSkillDay(sql);
-  const rows = await sql<{ skill: string; slug: string; open_total: number; primary_family: string | null; primary_open: number | null }[]>`
-    select s.skill, s.slug, s.open_total, s.primary_family, d.open as primary_open
-    from skill_summary s
-    left join skill_daily d on d.date = s.date and d.skill = s.skill and d.family = s.primary_family and d.country = '*'
-    where s.date = ${D} order by s.open_total desc, s.skill`;
-  const changes = await changeMap(sql, D, rows.map((r) => `skillseries:${r.skill}`), '1M');
+  const floor = addDays(D, -SKILL_STALE_DAYS);
+  const rows = await sql<
+    {
+      skill: string;
+      slug: string;
+      open_total: number;
+      primary_family: string | null;
+      primary_open: number | null;
+      base_date: IsoDay | null;
+      change: number | null;
+      partial: boolean | null;
+      estimated: boolean | null;
+    }[]
+  >`
+    select * from (
+      select distinct on (s.skill) s.skill, s.slug, s.open_total, s.primary_family, d.open as primary_open,
+        c.base_date, c.change, c.partial, c.estimated
+      from skill_summary s
+      left join skill_daily d on d.date = s.date and d.skill = s.skill and d.family = s.primary_family and d.country = '*'
+      left join market_change c on c.as_of = s.date and c.subject = 'skillseries:' || s.skill and c.range = '1M'
+      where s.date >= ${floor} order by s.skill, s.date desc
+    ) latest
+    order by open_total desc, skill`;
   return {
     asOf: D,
     skills: rows
@@ -244,7 +269,10 @@ export async function skillIndex(sql: Sql): Promise<SkillIndexPayload> {
         open: r.open_total,
         primaryName: familyInfo(r.primary_family as string).name,
         primaryOpen: r.primary_open ?? 0,
-        change: changes.get(`skillseries:${r.skill}`) ?? null,
+        change:
+          r.base_date !== null && r.change !== null
+            ? { range: '1M' as const, value: r.change, baseDate: r.base_date, partial: !!r.partial, estimated: !!r.estimated }
+            : null,
       })),
   };
 }

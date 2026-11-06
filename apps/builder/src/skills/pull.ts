@@ -105,7 +105,7 @@ export async function pullSkillPages(
   for (const skill of tracked) {
     const now = await krill.facets({ skills: skill.id });
     if (!now) {
-      log.warn({ skill: skill.id }, 'krill facets failed for skill; its page keeps yesterday’s numbers');
+      log.warn({ skill: skill.id }, 'krill facets failed for skill; its page keeps the numbers of its last good day');
       out.failed.push(skill.id);
       continue;
     }

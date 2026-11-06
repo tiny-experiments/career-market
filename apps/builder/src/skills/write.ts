@@ -69,7 +69,8 @@ export async function writeSkillInputs(tx: Sql, T: IsoDay, p: SkillPulled): Prom
       on conflict (company_id) do update set name = excluded.name, domain = excluded.domain, fetched_on = excluded.fetched_on`;
   }
 
-  await tx`delete from skill_latest_role`;
+  const rewritten = p.tracked.map((s) => s.id);
+  await tx`delete from skill_latest_role where date < ${keepFrom} ${rewritten.length ? tx`or skill in ${tx(rewritten)}` : tx``}`;
   const latestRows: Record<string, unknown>[] = [];
   for (const [skill, jobs] of p.latest) {
     jobs.forEach((j, i) => {
@@ -96,7 +97,7 @@ export async function writeSkillInputs(tx: Sql, T: IsoDay, p: SkillPulled): Prom
     'salary_min', 'salary_max', 'salary_currency', 'opened_on',
   ]);
 
-  await tx`delete from skill_salary_effect`;
+  await tx`delete from skill_salary_effect where date < ${keepFrom} ${rewritten.length ? tx`or skill in ${tx(rewritten)}` : tx``}`;
   const salaryRows: Record<string, unknown>[] = [];
   for (const s of p.tracked) {
     const family = s.families[0]?.family;
