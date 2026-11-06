@@ -95,13 +95,17 @@ levels and work modes, the careers-site url, a median age from six facet cuts an
 Peers are not in v1 and show a coming-soon state.
 
 - Openings are krill's "new" for a company: roles first seen that day. krill's bootstrap days (2-3 Nov)
-  and the day a company's board is first fetched list every role as new, so both are left out of every
-  flow and change, and the chart draws them as gaps.
+  and board events (a day with at least 50 openings that are 10% of the previous day's open roles, or at
+  least 50 closings that are 25%: a board fetched for the first time, added or dropped) are left out of
+  every flow and change. A board event restarts the company's series, the chart marks each excluded day
+  as "board change excluded", and when the latest day is one the signal reads "Unclear: board change on
+  <date>" instead of STEADY. krill has no per-company board status yet, so a real mass layoff looks the same.
 - The signal (RAMPING, STEADY, COOLING, FREEZING) looks at the last 30 comparable days (fewer while history
   is short, and the page says so): RAMPING needs open roles up 5% with openings at least 1.5x closings;
   COOLING needs down 3% with closings at least 1.5x openings; FREEZING needs down 10% with closings at least
   2.5x openings.
-- Current roles are read live from krill by the read API (`/v1/companies/:slug/jobs`) and cached for an hour.
+- Current roles are read live from krill by the read API (`/v1/companies/:slug/jobs`) through the shared live
+  krill client, so it shares its pacing and hour cache with the Screener and Job page.
 - Logos come from Context.dev Logo Link when `CONTEXT_DEV_PUBLIC_CLIENT_ID` is set and krill knows the
   company's domain; otherwise the page draws a monogram tile.
 
