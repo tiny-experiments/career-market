@@ -135,7 +135,7 @@ export async function skillPage(sql: Sql, slug: string): Promise<SkillPagePayloa
 
   const [fx] = await sql<
     { family: string; currency: string; n_with: number; n_without: number; median_with: number | null; median_without: number | null; sample_size: number }[]
-  >`select family, currency, n_with, n_without, median_with, median_without, sample_size from skill_salary_effect where skill = ${id} limit 1`;
+  >`select family, currency, n_with, n_without, median_with, median_without, sample_size from skill_salary_effect where skill = ${id} and date = ${D} limit 1`;
   const salaryEffect = salaryEffectOf(fx);
 
   const roleRows = await sql<
@@ -154,7 +154,7 @@ export async function skillPage(sql: Sql, slug: string): Promise<SkillPagePayloa
   >`
     select l.job_id, l.title, l.company_id, l.company_name, r.domain, l.location, l.salary_min, l.salary_max, l.salary_currency, l.opened_on
     from skill_latest_role l left join company_ref r on r.company_id = l.company_id
-    where l.skill = ${id} order by l.rank`;
+    where l.skill = ${id} and l.date = ${D} order by l.rank`;
   const latestRoles: SkillRoleRow[] = roleRows.map((r) => ({
     id: r.job_id,
     title: r.title,

@@ -91,4 +91,15 @@ describe.skipIf(!url)('skill pages when krill fails a skill on the latest night'
     ]);
     expect(await skillPage(sql, 'tensorflow')).toBeNull();
   });
+
+  it('never serves rows dated differently from the served day', async () => {
+    await sql`insert into skill_latest_role (date, skill, rank, job_id, title, company_id, company_name, opened_on)
+      values (${DAY2}, 'ml:jax', 1, 'jax-rerun', 'Rerun role', 'acme', 'Acme', ${DAY2})`;
+    await sql`insert into skill_salary_effect (date, skill, family, currency, n_with, n_without, sample_size)
+      values (${DAY2}, 'ml:jax', 'ml', 'USD', 1, 1, 2)`;
+    const jax = await skillPage(sql, 'jax');
+    expect(jax?.asOf).toBe(DAY1);
+    expect(jax?.latestRoles.map((r) => r.id)).toEqual([`ml:jax-${DAY1}`]);
+    expect(jax?.salaryEffect).toMatchObject({ available: false, reason: expect.stringContaining('0 naming') });
+  });
 });
