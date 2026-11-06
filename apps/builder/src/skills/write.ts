@@ -39,6 +39,14 @@ export async function writeSkillInputs(tx: Sql, T: IsoDay, p: SkillPulled): Prom
   );
   await tx`delete from skill_summary where date < ${keepFrom}`;
 
+  await tx`delete from skill_tracked where date = ${T} or date < ${keepFrom}`;
+  await insertRows(
+    tx,
+    'skill_tracked',
+    [...p.tracked.map((s) => s.id), ...p.failed].map((skill) => ({ date: T, skill })),
+    ['date', 'skill'],
+  );
+
   await tx`delete from skill_age_cut where snapshot_date <= ${T}`;
   await insertRows(
     tx,

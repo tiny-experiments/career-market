@@ -79,7 +79,7 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
     const screener = await pullScreener(api, T, pulled.families, log);
     const pay = await pullPayBands(api, pulled.families, log);
     // The Skill pages must not take the market build down with them: when krill
-    // fails them, today's skill rows are skipped and the pages keep yesterday's.
+    // fails them, today's skill rows are skipped and the pages keep their last good day.
     let skillsPulled: SkillPulled | null = null;
     if (config.builder.skillPages > 0) {
       try {

@@ -209,7 +209,10 @@ export interface SkillSalaryEffect {
 }
 
 export interface SkillPagePayload {
+  /** The day of the numbers; earlier than the latest build when krill failed this skill since. */
   asOf: IsoDay;
+  /** True when krill could not be read for this skill on the latest build, so the numbers are from `asOf`. */
+  stale: boolean;
   builtAt: string;
   id: string;
   slug: string;
@@ -252,6 +255,8 @@ export interface SkillIndexRow {
   category: string;
   domain: string | null;
   open: number;
+  /** The day of this row's numbers; earlier than the index's `asOf` when krill failed this skill since. */
+  asOf: IsoDay;
   primaryName: string;
   primaryOpen: number;
   change: Change | null;

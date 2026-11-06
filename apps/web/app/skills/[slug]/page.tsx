@@ -1,4 +1,5 @@
-import { formatDayShort } from '@cm/core/dates';
+import { formatDayLong, formatDayShort } from '@cm/core/dates';
+import { companyHref, skillHref } from '@cm/core/screener';
 import { skillNamespace, type SkillPagePayload } from '@cm/core/skills';
 import type { Change } from '@cm/core/types';
 import type { Metadata } from 'next';
@@ -73,6 +74,11 @@ function SkillView({ data }: { data: SkillPagePayload }) {
             <span className="skill-number-unit">{primary.name} roles</span>
           </p>
           <MonthPill change={data.change} />
+          {data.stale && (
+            <p className="muted">
+              Numbers as of <time dateTime={data.asOf}>{formatDayLong(data.asOf)}</time>: the latest build could not read this skill.
+            </p>
+          )}
         </div>
         <div className="skill-hero-chart">
           <SkillDemandChart

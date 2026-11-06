@@ -44,6 +44,7 @@ export default async function SkillsPage() {
               <span className="skills-tile-count num">{fmtInt(s.open)}</span>
               <span className="skills-tile-meta">
                 {s.category} · {fmtInt(s.primaryOpen)} in {s.primaryName}
+                {s.asOf < asOf && <> · as of {formatDayLong(s.asOf)}</>}
               </span>
               <ChangePill change={s.change} window="1M" emptyTitle="Change appears after enough comparable days" />
             </Link>
