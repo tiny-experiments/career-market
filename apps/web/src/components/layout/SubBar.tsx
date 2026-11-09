@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Link, useLocation } from "react-router";
 import { UnderlineIndicator } from "@/components/layout/UnderlineIndicator";
 import { useSlidingIndicator } from "@/hooks";
-import { isTabActive, type SubBarTab } from "@/lib/nav";
+import { isTabActive, tabHref, type SubBarTab } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 export interface SubBarProps {
@@ -38,7 +38,7 @@ export function SubBar({ tabs, className }: SubBarProps) {
         return (
           <Link
             key={tab.to}
-            to={tab.to}
+            to={tabHref(tab, location.search)}
             aria-current={active ? "page" : undefined}
             className={cn(
               "inline-flex shrink-0 items-center px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring",

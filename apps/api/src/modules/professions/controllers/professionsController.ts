@@ -5,8 +5,8 @@ import { indexQuerySchema, detailParamsSchema } from '../schemas.ts';
 export function createProfessionsController(services: ProfessionsServices) {
   return {
     list: async (req: Request, res: Response) => {
-      parse(indexQuerySchema, req.query);
-      res.json(await services.list());
+      const { region } = parse(indexQuerySchema, req.query);
+      res.json(await services.list(region ?? null));
     },
     detail: async (req: Request, res: Response) => {
       const { code } = parse(detailParamsSchema, req.params);

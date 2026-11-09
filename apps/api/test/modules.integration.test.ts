@@ -76,16 +76,21 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
     const setup = createSql(url!, { max: 1 });
     try {
       await migrate(setup);
-      await setup`truncate build_run, market_daily, family_daily, profession_daily, market_change, company,
+      await setup`truncate build_run, market_daily, family_daily, profession_daily, profession_snapshot, market_change, company,
         company_daily, company_signal, search_entry, skill_tracked, skill_summary, skill_daily,
         skill_latest_role, skill_series, screener_facet restart identity cascade`;
       await setup`insert into build_run (snapshot_date, status, finished_at) values ('2026-11-09','ok',now())`;
       await setup`insert into market_daily (date, estimated, open, open_on_today_boards, opened, closed, index_value)
         values ('2026-11-09',false,100,100,10,5,100)`;
       await setup`insert into family_daily (date,family,code,open,opened,closed,share,index_value)
-        values ('2026-11-09','software','SWE',100,10,5,1,100)`;
+        values ('2026-11-06','software','SWE',80,10,5,1,90),('2026-11-08','software','SWE',98,10,5,1,99),
+               ('2026-11-09','software','SWE',100,10,5,1,100)`;
+      await setup`insert into profession_snapshot (date,family,companies,remote,hybrid,onsite,work_mode_total,salary_n,salary_p25,salary_p50,salary_p75)
+        values ('2026-11-09','software',12,20,30,50,100,300,100000,120000,150000)`;
       await setup`insert into profession_daily (date,family,specialty,level,country,open,new,closed,opened)
-        values ('2026-11-09','software','','senior','GB',100,10,5,10)`;
+        values ('2026-11-06','software','','senior','GB',40,10,5,10),('2026-11-06','software','','senior','US',40,10,5,10),
+               ('2026-11-08','software','','senior','GB',50,10,5,10),('2026-11-08','software','','senior','US',48,10,5,10),
+               ('2026-11-09','software','','senior','GB',60,10,5,10),('2026-11-09','software','','senior','US',40,10,5,10)`;
       await setup`insert into market_change (as_of,subject,range,base_date,change,partial,estimated) values
         ('2026-11-09','market','1W','2026-11-02',0.1,false,false),
         ('2026-11-09','family:software','1W','2026-11-02',0.1,false,false),
@@ -128,7 +133,14 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         change: { value: 0.1 },
       });
       expect(res.body.series).toHaveLength(1);
-      expect(res.body.countries[0]).toMatchObject({ code: 'GB', open: 100 });
+      expect(res.body.countries[0]).toMatchObject({ code: 'GB', open: 60 });
+      expect(res.body.stats.remoteShare).toBeCloseTo(0.2);
+      expect(res.body.signalCounts).toEqual({
+        ramping: 1,
+        steady: 0,
+        cooling: 0,
+        freezing: 0,
+      });
       expect(res.headers['cache-control']).toContain('s-maxage=300');
       expect(JSON.stringify(res.body)).not.toMatch(/krill/i);
     });
@@ -144,6 +156,32 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
     it('serves the index and detail from Postgres', async () => {
       const index = await request(app).get('/api/professions').expect(200);
       expect(index.body.rows.length).toBeGreaterThan(0);
+      expect(index.body.region).toBeNull();
+      expect(index.body.rows[0]).toMatchObject({
+        family: 'software',
+        open: 100,
+        companies: 12,
+        pay: { low: 100000, median: 120000, high: 150000 },
+        remoteShare: 0.2,
+        newThisWeek: 30,
+      });
+      expect(index.body.rows[0].change1d).toBeCloseTo(100 / 99 - 1);
+
+      const europe = await request(app)
+        .get('/api/professions?region=europe')
+        .expect(200);
+      expect(europe.body.region).toBe('europe');
+      expect(europe.body.rows[0]).toMatchObject({
+        open: 60,
+        companies: null,
+        remoteShare: null,
+      });
+      // The family index rose 100/90 and Europe's share of it went from 50% to 60%.
+      expect(europe.body.rows[0].change.value).toBeCloseTo(
+        ((100 * 0.6) / (90 * 0.5)) - 1,
+      );
+      await request(app).get('/api/professions?region=mars').expect(400);
+
       const detail = await request(app).get('/api/professions/swe').expect(200);
       expect(detail.body).toMatchObject({ family: 'software', open: 100 });
       expect(JSON.stringify(detail.body)).not.toMatch(/krill/i);

@@ -2,19 +2,24 @@ import { countryName, familyInfo, FAMILIES, skillLabel } from '@cm/core/codes';
 import {
   addDays,
   daysBetween,
+  FIRST_COMPARABLE_BASE,
   FIRST_OBSERVED_DAY,
   isBootstrapDay,
   type IsoDay,
 } from '@cm/core/dates';
+import { skillSlug } from '@cm/core/screener';
 import type { Queries as Sql } from '../../database/client.ts';
 import {
   familyByCode,
   levelLabel,
+  PROFESSION_REGIONS,
   professionLongName,
   specialtyLabel,
   type CompanySignal,
+  type ProfessionCompanyRow,
   type ProfessionIndex,
   type ProfessionPage,
+  type ProfessionRegionId,
 } from '@cm/core/professions';
 import type { Change } from '@cm/core/types';
 import {
@@ -27,9 +32,39 @@ import { NotFoundError } from '../../http/projectionErrors.ts';
 
 const SPARK_DAYS = 30;
 const TOP_COUNTRIES = 7;
-const TOP_SKILLS = 8;
-const TOP_COMPANIES = 5;
-const LATEST_ROLES = 5;
+const TOP_SKILLS = 10;
+const TOP_COMPANIES = 6;
+const LATEST_ROLES = 8;
+const WEEK_DAYS = 7;
+
+/** The newest comparable day at most a week back: the first days counted everything as new. */
+function weekBase(asOf: IsoDay): IsoDay {
+  const week = addDays(asOf, -WEEK_DAYS);
+  return week < FIRST_COMPARABLE_BASE ? FIRST_COMPARABLE_BASE : week;
+}
+
+interface DayRow {
+  date: IsoDay;
+  family: string;
+  index_value: number;
+}
+
+/** Like-for-like change against the day before, by family; a bootstrap day has no comparison. */
+function dayChanges(rows: readonly DayRow[], asOf: IsoDay) {
+  const out = new Map<string, number | null>();
+  const days = [...new Set(rows.map((r) => r.date))].sort();
+  const previous = days.filter((d) => d < asOf).at(-1);
+  if (!previous || isBootstrapDay(previous)) return out;
+  const before = new Map(
+    rows.filter((r) => r.date === previous).map((r) => [r.family, r.index_value]),
+  );
+  for (const r of rows) {
+    if (r.date !== asOf) continue;
+    const base = before.get(r.family);
+    out.set(r.family, base ? r.index_value / base - 1 : null);
+  }
+  return out;
+}
 
 /** One profession (a krill family) for the Profession page. Reads the read model only. */
 export async function professionPage(
@@ -86,6 +121,14 @@ export async function professionPage(
   const [c1w, c1m, c3m] = await Promise.all(
     (['1W', '1M', '3M'] as const).map((r) => changes(sql, asOf, [subject], r)),
   );
+  const change1d = dayChanges(
+    observed.slice(-2).map((r) => ({
+      date: r.date,
+      family,
+      index_value: r.index_value,
+    })),
+    asOf,
+  ).get(family);
 
   const specialties = await sql<{ specialty: string; open: number }[]>`
     select specialty, sum(open)::int as open from profession_daily
@@ -129,9 +172,30 @@ export async function professionPage(
     }[]
   >`select rank, company_id, name, domain, open, base_date, change, coverage_jump, partial, signal from profession_company
     where date = ${asOf} and family = ${family} order by rank limit ${TOP_COMPANIES}`;
+  const companyIds = companyRows.map((c) => c.company_id).concat(['']);
+  const companyRefs = await sql<{ company_id: string; slug: string }[]>`
+    select company_id, slug from company where company_id in ${sql(companyIds)}`;
+  const slugOf = new Map(companyRefs.map((c) => [c.company_id, c.slug]));
+  const companyStates = await sql<
+    { company_id: string; state: ProfessionCompanyRow['state'] }[]
+  >`select company_id, state from company_signal
+    where as_of = ${asOf} and company_id in ${sql(companyIds)}`;
+  const stateOf = new Map(companyStates.map((c) => [c.company_id, c.state]));
   const skills = await sql<{ skill: string; open: number }[]>`
     select skill, open from skill_daily
     where date = ${asOf} and family = ${family} and country = '*' order by open desc limit ${TOP_SKILLS}`;
+  const skillBase = weekBase(asOf);
+  const skillBaseRows = await sql<{ skill: string; open: number }[]>`
+    select skill, open from skill_daily
+    where date = ${skillBase} and family = ${family} and country = '*'
+      and skill in ${sql(skills.map((s) => s.skill).concat(['']))}`;
+  const baseOpen = new Map(skillBaseRows.map((s) => [s.skill, s.open]));
+  const familyBaseOpen = observed.find((r) => r.date === skillBase)?.open ?? 0;
+  const skillChange = (skill: string, open: number): number | null => {
+    const base = baseOpen.get(skill);
+    if (!base || !familyBaseOpen || !today.open) return null;
+    return open / today.open / (base / familyBaseOpen) - 1;
+  };
   const roles = await sql<
     {
       job_id: string;
@@ -173,6 +237,7 @@ export async function professionPage(
       '1M': c1m?.get(subject) ?? null,
       '3M': c3m?.get(subject) ?? null,
     },
+    change1d: change1d ?? null,
     specialties: specialties.map((s) => ({
       id: s.specialty,
       label: specialtyLabel(s.specialty),
@@ -240,6 +305,7 @@ export async function professionPage(
       ? companyRows.map((c) => ({
           rank: c.rank,
           id: c.company_id,
+          slug: slugOf.get(c.company_id) ?? null,
           name: c.name,
           domain: c.domain,
           open: c.open,
@@ -255,6 +321,7 @@ export async function professionPage(
               : null,
           coverageJump: c.coverage_jump,
           signal: c.signal,
+          state: stateOf.get(c.company_id) ?? null,
         }))
       : {
           available: false,
@@ -263,8 +330,11 @@ export async function professionPage(
         },
     skills: skills.map((s) => ({
       id: s.skill,
+      slug: skillSlug(s.skill),
       label: skillLabel(s.skill),
       open: s.open,
+      share: totalOpen ? s.open / totalOpen : 0,
+      change: skillChange(s.skill, s.open),
     })),
     latestRoles: roles.map((r) => ({
       id: r.job_id,
@@ -281,41 +351,91 @@ export async function professionPage(
   };
 }
 
-/** Every profession with its open roles, 1W change and a 30-day trend (the /professions list). */
-export async function professionIndex(sql: Sql): Promise<ProfessionIndex> {
+/** Every profession with its open roles, changes, pay and trend (the /professions list). */
+export async function professionIndex(
+  sql: Sql,
+  region: ProfessionRegionId | null = null,
+): Promise<ProfessionIndex> {
   const build = await latestBuild(sql);
   if (!build) throw new NotReadyError();
   const { asOf } = build;
-  const rows = await sql<
-    { family: string; open: number; index_value: number }[]
-  >`
-    select family, open, index_value from family_daily where date = ${asOf}`;
-  const ch = await changes(
-    sql,
-    asOf,
-    rows.map((r) => `family:${r.family}`),
-    '1W',
-  );
   const sparkFrom = addDays(asOf, -(SPARK_DAYS - 1));
-  const spark = await sql<{ family: string; index_value: number }[]>`
-    select family, index_value from family_daily where date >= ${sparkFrom} and date <= ${asOf} order by date`;
+  const weekFrom = addDays(asOf, -(WEEK_DAYS - 1));
+  const days = await sql<
+    (DayRow & { open: number; opened: number })[]
+  >`select date, family, open, opened, index_value from family_daily
+    where date >= ${sparkFrom} and date <= ${asOf} order by date`;
+  const rows = days.filter((d) => d.date === asOf);
+  const subjects = rows.map((r) => `family:${r.family}`);
+  const [week, month, snapshots] = await Promise.all([
+    changes(sql, asOf, subjects, '1W'),
+    changes(sql, asOf, subjects, '1M'),
+    sql<
+      {
+        family: string;
+        companies: number | null;
+        remote: number | null;
+        hybrid: number | null;
+        onsite: number | null;
+        salary_p25: number | null;
+        salary_p50: number | null;
+        salary_p75: number | null;
+      }[]
+    >`select family, companies, remote, hybrid, onsite, salary_p25, salary_p50, salary_p75
+      from profession_snapshot where date = ${asOf}`,
+  ]);
+  const snapshot = new Map(snapshots.map((s) => [s.family, s]));
+  const scope = region
+    ? await regionalScope(sql, asOf, sparkFrom, region)
+    : null;
+  const oneDay = dayChanges(days, asOf);
   const order = new Map(FAMILIES.map((f, i) => [f.id, i]));
+  const isNewDay = (date: IsoDay) => date >= weekFrom && !isBootstrapDay(date);
+
   return {
     asOf,
     builtAt: build.builtAt,
+    region,
     rows: rows
       .map((r) => {
         const info = familyInfo(r.family);
+        const snap = snapshot.get(r.family);
+        const history = days.filter((d) => d.family === r.family);
+        const stated = snap
+          ? (snap.remote ?? 0) + (snap.hybrid ?? 0) + (snap.onsite ?? 0)
+          : 0;
+        const pay =
+          snap?.salary_p25 != null &&
+          snap.salary_p50 != null &&
+          snap.salary_p75 != null
+            ? {
+                low: snap.salary_p25,
+                median: snap.salary_p50,
+                high: snap.salary_p75,
+              }
+            : null;
+        const worldwide = {
+          open: r.open,
+          change: week.get(`family:${r.family}`) ?? null,
+          change1d: oneDay.get(r.family) ?? null,
+          change1m: month.get(`family:${r.family}`)?.value ?? null,
+          newThisWeek: history
+            .filter((d) => isNewDay(d.date))
+            .reduce((n, d) => n + d.opened, 0),
+          companies: snap?.companies ?? null,
+          remoteShare: snap && stated ? (snap.remote ?? 0) / stated : null,
+          spark: history.map((d) =>
+            Math.round((r.open * d.index_value) / r.index_value),
+          ),
+        };
         return {
           family: r.family,
           code: info.code,
           name: info.name,
           longName: professionLongName(r.family),
-          open: r.open,
-          change: ch.get(`family:${r.family}`) ?? null,
-          spark: spark
-            .filter((s) => s.family === r.family)
-            .map((s) => Math.round((r.open * s.index_value) / r.index_value)),
+          pay,
+          ...worldwide,
+          ...(scope ? scope(r.family, history) : {}),
         };
       })
       .sort(
@@ -323,5 +443,80 @@ export async function professionIndex(sql: Sql): Promise<ProfessionIndex> {
           b.open - a.open ||
           (order.get(a.family) ?? 99) - (order.get(b.family) ?? 99),
       ),
+  };
+}
+
+/**
+ * One region's figures for a family. Roles are only counted by country per
+ * day, so a change reads the family's like-for-like index scaled by how the
+ * region's share of the family moved: a burst of newly read pages in one day
+ * does not show up as growth.
+ */
+async function regionalScope(
+  sql: Sql,
+  asOf: IsoDay,
+  sparkFrom: IsoDay,
+  region: ProfessionRegionId,
+) {
+  const countries = PROFESSION_REGIONS.find((r) => r.id === region)!.countries;
+  const rows = await sql<
+    {
+      date: IsoDay;
+      family: string;
+      region_open: number;
+      region_opened: number;
+      total: number;
+    }[]
+  >`select date, family,
+      coalesce(sum(open) filter (where country in ${sql(countries)}), 0)::int as region_open,
+      coalesce(sum(opened) filter (where country in ${sql(countries)}), 0)::int as region_opened,
+      sum(open)::int as total
+    from profession_daily where date >= ${sparkFrom} and date <= ${asOf}
+    group by date, family order by date`;
+  const byFamily = new Map<string, typeof rows>();
+  for (const r of rows) {
+    byFamily.set(r.family, [...(byFamily.get(r.family) ?? []), r]);
+  }
+  const weekFrom = addDays(asOf, -(WEEK_DAYS - 1));
+  const base = weekBase(asOf);
+  return (family: string, history: readonly DayRow[]) => {
+    const days = byFamily.get(family) ?? [];
+    const indexOn = new Map(history.map((d) => [d.date, d.index_value]));
+    const today = days.find((d) => d.date === asOf);
+    const level = (d: (typeof rows)[number] | undefined) =>
+      d && d.total ? ((indexOn.get(d.date) ?? 0) * d.region_open) / d.total : 0;
+    const now = level(today);
+    const changeFrom = (day: (typeof rows)[number] | undefined) => {
+      const then = level(day);
+      return now && then ? now / then - 1 : null;
+    };
+    const previous = days.filter((d) => d.date < asOf).at(-1);
+    const baseDay = days.find((d) => d.date >= base && d.date < asOf);
+    const open = today?.region_open ?? 0;
+    const weekChange = changeFrom(baseDay);
+    return {
+      open,
+      change:
+        weekChange === null
+          ? null
+          : ({
+              range: '1W',
+              value: weekChange,
+              baseDate: baseDay?.date ?? base,
+              partial: false,
+              estimated: false,
+            } satisfies Change),
+      change1d:
+        previous && !isBootstrapDay(previous.date) ? changeFrom(previous) : null,
+      change1m: null,
+      newThisWeek: days
+        .filter((d) => d.date >= weekFrom && !isBootstrapDay(d.date))
+        .reduce((n, d) => n + d.region_opened, 0),
+      companies: null,
+      remoteShare: null,
+      spark: days.map((d) =>
+        now ? Math.round((open * level(d)) / now) : d.region_open,
+      ),
+    };
   };
 }

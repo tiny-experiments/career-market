@@ -28,7 +28,7 @@ export function KpiTile({
       )}
     >
       <span className="inline-flex items-center gap-1.5 text-eyebrow font-semibold text-muted-foreground">
-        <span className="truncate">{label}</span>
+        <span className="min-w-0">{label}</span>
         {hint ? (
           <MetricHoverCard
             title={label}

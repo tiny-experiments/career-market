@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isTabActive, MARKET_TABS, PROFESSIONS_TABS } from "@/lib/nav";
+import { isTabActive, MARKET_TABS, PROFESSIONS_TABS, tabHref } from "@/lib/nav";
 
 const at = (pathname: string, search = "") => ({ pathname, search });
 
@@ -22,5 +22,34 @@ describe("nav", () => {
     expect(isTabActive(gaining, at("/professions", "?view=gaining"))).toBe(
       true,
     );
+  });
+});
+
+describe("tabHref", () => {
+  const tab = {
+    label: "Gaining",
+    to: "/professions?view=gaining",
+    exact: true,
+  };
+
+  it("keeps the page's region and drops the old view", () => {
+    expect(tabHref(tab, "?view=cooling&region=europe")).toBe(
+      "/professions?view=gaining&region=europe",
+    );
+  });
+
+  it("leaves a plain tab plain", () => {
+    expect(tabHref({ label: "All", to: "/professions" }, "")).toBe(
+      "/professions",
+    );
+  });
+
+  it("still marks the view as current under a region", () => {
+    expect(
+      isTabActive(tab, {
+        pathname: "/professions",
+        search: "?view=gaining&region=europe",
+      }),
+    ).toBe(true);
   });
 });

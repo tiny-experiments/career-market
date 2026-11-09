@@ -37,6 +37,30 @@ export const METRICS = {
     text: "Companies with at least one open role in this profession.",
   },
   rank: { title: "Rank", text: "Position by open roles, largest first." },
+  newThisWeek: {
+    title: "New this week",
+    text: "Roles first posted in the last seven days.",
+  },
+  professionsGrowing: {
+    title: "Professions growing",
+    text: "How many professions have more open roles than a week ago.",
+  },
+  dailyFlow: {
+    title: "Opened and closed",
+    text: "Roles opened and roles closed each day this past week.",
+  },
+  specialties: {
+    title: "Specialties",
+    text: "The areas of this profession with the most open roles.",
+  },
+  skillShare: {
+    title: "Share of roles",
+    text: "The share of this profession's open roles that name the skill.",
+  },
+  skillChange: {
+    title: "7-day change",
+    text: "How much that share has grown or shrunk compared with a week ago.",
+  },
 
   // Changes, one per window
   changeDay: {

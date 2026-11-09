@@ -7,17 +7,20 @@ import { clearResources } from "@/lib/api";
 import { PAGES } from "@/content";
 import { routes } from "@/router";
 import { stubFetch, type Routes } from "./support/fetchStub";
+import {
+  MARKET_FIXTURE,
+  PROFESSIONS_FIXTURE,
+  PROFESSION_FIXTURE,
+} from "./support/marketFixtures";
 
 const page = (items: unknown[] = [{}]) => ({
   body: { items, page: 1, pageSize: 50, total: items.length },
 });
 
 const API: Routes = {
-  "/api/market": { body: { asOf: "2026-11-09" } },
-  "/api/professions": { body: { rows: [] } },
-  "/api/professions/swe": {
-    body: { name: "Software Engineering", code: "SWE" },
-  },
+  "/api/market": { body: MARKET_FIXTURE },
+  "/api/professions": { body: PROFESSIONS_FIXTURE },
+  "/api/professions/swe": { body: PROFESSION_FIXTURE },
   "/api/companies?page=1&pageSize=50": page(),
   "/api/companies?page=1&pageSize=50&signal=ramping": page(),
   "/api/companies/stripe": {

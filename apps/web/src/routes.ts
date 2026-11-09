@@ -22,6 +22,7 @@ import {
   LIST_PAGE_SIZE,
   pageFrom,
 } from "@/lib/listFilters";
+import { professionRegionFrom } from "@/lib/professions";
 import {
   COMPANIES_TABS,
   JOBS_TABS,
@@ -71,7 +72,7 @@ export const pageRoutes: readonly PageRoute[] = [
     handle: handleFor("market", MARKET_TABS),
     page: () =>
       import("@/pages/MarketPage").then((m) => ({ Component: m.MarketPage })),
-    data: () => [marketOverview()],
+    data: () => [marketOverview(), professionsIndex()],
   },
   {
     path: "/professions",
@@ -80,7 +81,7 @@ export const pageRoutes: readonly PageRoute[] = [
       import("@/pages/ProfessionsPage").then((m) => ({
         Component: m.ProfessionsPage,
       })),
-    data: () => [professionsIndex()],
+    data: ({ search }) => [professionsIndex(professionRegionFrom(search))],
   },
   {
     path: "/professions/:code",

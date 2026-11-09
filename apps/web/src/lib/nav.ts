@@ -74,6 +74,22 @@ export const JOBS_TABS: readonly SubBarTab[] = [
   { label: "With pay", to: "/jobs?pay=listed", exact: true },
 ];
 
+/** Query parameters that scope a page rather than choose its view; tabs carry them along. */
+const SCOPE_PARAMS = ["region"] as const;
+
+/** A tab's address from here: its own view, with the page's scope kept. */
+export function tabHref(tab: SubBarTab, search: string): string {
+  const current = new URLSearchParams(search);
+  const [path, query = ""] = tab.to.split("?");
+  const params = new URLSearchParams(query);
+  for (const name of SCOPE_PARAMS) {
+    const value = current.get(name);
+    if (value !== null) params.set(name, value);
+  }
+  const next = params.toString();
+  return next ? `${path}?${next}` : (path ?? tab.to);
+}
+
 /** Whether a sub-bar tab is the current one for this location. */
 export function isTabActive(
   tab: SubBarTab,
@@ -87,6 +103,7 @@ export function isTabActive(
 
 function normaliseQuery(search: string): string {
   const params = new URLSearchParams(search);
+  for (const name of SCOPE_PARAMS) params.delete(name);
   const pairs = [...params.entries()].sort(([a], [b]) => a.localeCompare(b));
   return new URLSearchParams(pairs).toString();
 }

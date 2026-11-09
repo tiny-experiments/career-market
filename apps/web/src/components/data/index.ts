@@ -5,6 +5,7 @@ export {
   type DataTableProps,
   type SortDirection,
 } from "./DataTable";
+export { BreakdownList, type BreakdownItem } from "./BreakdownList";
 export { Delta, type DeltaProps } from "./Delta";
 export { Gauge, type GaugeProps } from "./Gauge";
 export { KpiTile, type KpiTileProps } from "./KpiTile";
@@ -24,3 +25,4 @@ export { ShareBar } from "./ShareBar";
 export { SignalBadge, type Signal } from "./SignalBadge";
 export { Sparkline, type SparklineProps } from "./Sparkline";
 export { StatCard, type StatCardProps } from "./StatCard";
+export { TablePanel, type TablePanelProps } from "./TablePanel";
