@@ -186,6 +186,18 @@ const PERIOD_WORD: Record<string, string> = {
   monthly: "a month",
 };
 
+const YEARLY_PERIODS: ReadonlySet<string> = new Set([
+  "year",
+  "yearly",
+  "annual",
+  "annually",
+  "per year",
+  "p.a.",
+]);
+
+/** Below this a stated figure with no known period is a rate, not a salary. */
+const YEARLY_FLOOR = 10_000;
+
 /**
  * The pay a posting states, as one phrase: "$144K–$157K" for a yearly figure,
  * "$45–$60 an hour" for a rate, null when it states none. Listed pay only.
@@ -214,10 +226,16 @@ export function formatListedPay(
   ) {
     return null;
   }
-  const period = pay.period?.toLowerCase() ?? "year";
+  const period = pay.period?.trim().toLowerCase() ?? "";
   const word = PERIOD_WORD[period];
-  if (word === undefined) return formatMoneyRange(low, high, currency);
+  if (
+    word === undefined &&
+    (YEARLY_PERIODS.has(period) || Math.min(low, high) >= YEARLY_FLOOR)
+  ) {
+    return formatMoneyRange(low, high, currency);
+  }
   const a = formatExact(low, currency);
   const b = formatExact(high, currency);
-  return `${a === b ? a : `${a}–${b}`} ${word}`;
+  const range = a === b ? a : `${a}–${b}`;
+  return word === undefined ? range : `${range} ${word}`;
 }

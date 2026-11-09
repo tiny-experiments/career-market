@@ -171,4 +171,15 @@ describe("format", () => {
     ).toBe("AUD 45–AUD 60 an hour");
     expect(formatListedPay(null)).toBeNull();
   });
+
+  it("never rounds a rate or an unknown period into thousands", () => {
+    const pay = (min: number, max: number, period: string | null) =>
+      formatListedPay({ min, max, currency: "USD", period });
+    expect(pay(45, 60, "per hour")).toBe("$45–$60");
+    expect(pay(45, 60, null)).toBe("$45–$60");
+    expect(pay(120_000, 120_000, null)).toBe("$120K");
+    expect(pay(120_000, 150_000, "per year")).toBe("$120K–$150K");
+    expect(pay(120_000, 150_000, "p.a.")).toBe("$120K–$150K");
+    expect(pay(5_000, 9_000, "yearly")).toBe("$5K–$9K");
+  });
 });

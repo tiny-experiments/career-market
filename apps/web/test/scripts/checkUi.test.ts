@@ -56,6 +56,25 @@ describe("check-ui", () => {
     expect(found.map((f) => [f.line, f.value])).toEqual([[8, "Estimated"]]);
   });
 
+  it("reads code as code: generics, URLs in JSX text and template literals", () => {
+    const text = [
+      `const [open, setOpen] = useState<boolean>(false);`,
+      `const estimated = rows.length;`,
+      `const m: Map<string, number> = new Map();`,
+      `const backcast = 1;`,
+      `const view = <div>{estimated}</div>;`,
+      `const link = <p>See https://x.y estimated</p>;`,
+      "const note = `${open} roles, ${count} estimated, ${last}`;",
+      "const plain = `survival`;",
+    ].join("\n");
+    const found = retiredWords(text, "src/components/Thing.tsx");
+    expect(found.map((f) => [f.line, f.value])).toEqual([
+      [6, "estimated"],
+      [7, "estimated"],
+      [8, "survival"],
+    ]);
+  });
+
   it("flags arbitrary values but not arbitrary variants", () => {
     const text = `className="p-[13px] data-[side=top]:mt-1 focus-visible:ring-[3px]"`;
     expect(arbitraryValues(text, "x").map((f) => f.value)).toEqual([
