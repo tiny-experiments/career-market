@@ -118,7 +118,8 @@ function BusiestCard({ pulse }: { readonly pulse: JobsPulse }) {
 
 /** The market at a glance, above the filters: a door into each view of the list. */
 export function JobsPulseStrip() {
-  const { data } = useResource(jobsPulse());
+  const { data, error } = useResource(jobsPulse());
+  if (data === null && error !== null) return null;
   if (data === null) {
     return (
       <div className={GRID} role="status" aria-label="Loading">
