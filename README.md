@@ -25,17 +25,16 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   paired skills, salary effect and latest roles. Every krill response is parsed with zod. Every table can
   be rebuilt from krill, except the day-by-day skill counts: krill serves no skill history, so those rows
   accumulate from the first build onward and earlier days are estimated by the back-cast.
-- **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
-  needs `Authorization: Bearer $READ_API_TOKEN`. `GET /v1/jobs/{krill id}` (the Job page) is the one route
-  that also reads krill live: the posting, the employer's company history and similar roles, cached for 1 hour
-  and paced under krill's rate limit, joined with the read model's profession trend, pay band and typical
-  posting window. A panel krill could not answer shows as unavailable and marks the payload `degraded`;
-  the web app then caches that page for 60 seconds instead of an hour. A closed role answers 410 with its
-  tombstone.
-- **web app** (`apps/web`, Next.js App Router) renders pages on the server from the read API only. It
-  never connects to Postgres, and the token never reaches the browser. Pages render per request; the read
-  API responses they use are cached for 1 hour, and the builder expires that cache right after a build
-  through `POST /api/revalidate`.
+- **read API** (`apps/api`) is a small public, read-only Express service over the read model: JSON under
+  `/api/*` (see `apps/api/README.md`), no token. It runs behind a single reverse proxy and sets
+  `API_TRUST_PROXY=1` so the per-IP rate limit sees each client. Job lists and `GET /api/jobs/{krill id}`
+  (the Job page) also read krill live, cached for 1 hour and paced under krill's rate limit; job lists are
+  depth-capped and limited in flight for the same reason (see `apps/api/README.md`). The Job page joins the
+  posting, the employer's company history and similar roles with the read model's profession trend, pay
+  band and typical posting window. A panel krill could not answer shows as unavailable and marks the
+  payload `degraded`. A closed role answers 410 with its tombstone.
+- **web app** (`apps/web`, Next.js App Router) is being replaced by a new SPA that reads the public API
+  from the browser. It never connects to Postgres.
 - **packages/core**: the one config module that reads the environment, logging (pino), the Postgres
   client (postgres.js), migrations, display codes and the shared payload types.
 
@@ -47,7 +46,7 @@ Hosting: the web app deploys to Vercel; the read API, builder and Postgres run o
 Requirements: Node 22.9+, pnpm 10 (`corepack enable`), Docker.
 
 ```sh
-cp .env.example .env          # then set READ_API_URL=http://127.0.0.1:4100 for local work
+cp .env.example .env
 pnpm install
 pnpm db:up                    # Postgres 16 on 127.0.0.1:55432 (CM_PG_PORT to change)
 pnpm migrate                  # apply packages/core/migrations/*.sql
@@ -75,20 +74,18 @@ PORT=3000 pnpm web:dev        # web app in development
 pnpm web:build && PORT=3000 pnpm web:start
 ```
 
-The web app needs only `READ_API_URL` and `READ_API_TOKEN` (and `REVALIDATE_TOKEN` to accept the
-builder's refresh call). `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
+The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
 
-### Screener and search
+### Jobs and search
 
 - The builder also reads the 150 largest companies (`/v1/companies`, with domain), their daily statistics
   (`/v1/stats/companies/daily`), and krill facets per company, profession and skill. It writes
   `screener_company`, `screener_company_day`, `screener_subject`, `screener_facet` and `search_entry`.
-- The read API serves `/v1/screener` and `/v1/search`. With no filter the Screener comes from the read
-  model; with filters the read API asks krill for the counts (`/v1/facets`, company facet) and for the
-  matching roles (`/v1/jobs`), caches each answer in memory for an hour and shares requests in flight.
-  It needs `KRILL_API_KEY` for a comfortable rate (600 calls a minute; 60 without a key).
-- The web app calls `/api/search` (its own route) for the typeahead; the browser never sees the read API
-  token. Company logos use `CONTEXT_DEV_PUBLIC_CLIENT_ID`; without it each company shows its initial.
+- The read API serves `/api/jobs` (replacing the Screener) and `/api/search`; see `apps/api/README.md`.
+  Job lists ask krill for the counts and the matching roles, cache each answer in memory for an hour and
+  share requests in flight. They need `KRILL_API_KEY` for a comfortable rate (600 calls a minute; 60
+  without a key).
+- Company logos use `CONTEXT_DEV_PUBLIC_CLIENT_ID`; without it each company shows its initial.
 
 ### Company page
 
@@ -108,8 +105,8 @@ Peers are not in v1 and show a coming-soon state.
   is short, and the page says so): RAMPING needs open roles up 5% with openings at least 1.5x closings;
   COOLING needs down 3% with closings at least 1.5x openings; FREEZING needs down 10% with closings at least
   2.5x openings.
-- Current roles are read live from krill by the read API (`/v1/companies/:slug/jobs`) through the shared live
-  krill client, so it shares its pacing and hour cache with the Screener and Job page.
+- Current roles are read live from krill by the read API (`/api/companies/:slug/jobs`) through the shared live
+  krill client, so it shares its pacing and hour cache with job lists and the Job page.
 - Logos come from Context.dev Logo Link when `CONTEXT_DEV_PUBLIC_CLIENT_ID` is set and krill knows the
   company's domain; otherwise the page draws a monogram tile.
 
@@ -120,22 +117,20 @@ pnpm typecheck
 pnpm test
 ```
 
-The skill-fallback test needs a scratch Postgres that may be wiped: set `TEST_DATABASE_URL` to run it
-(CI does); without it that test is skipped.
+The API integration tests need a scratch Postgres that may be wiped: set `TEST_DATABASE_URL` to run them
+(CI does); without it they are skipped. See `apps/api/README.md`.
 
 ## Deploy shape (VPS)
 
 `Dockerfile` builds one server image for the read API and the builder.
 `deploy/docker-compose.yml` runs both on the external `infra` network next to the shared Postgres; it
 publishes no ports, and the reverse proxy routes `https://api.careers.market` to `read-api:4100`.
+The proxy is the sole ingress, so the compose file sets `API_TRUST_PROXY=1` (override it in `deploy/.env`).
 
 ```sh
 cp deploy/.env.example deploy/.env
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
-
-On Vercel, set the project root to `apps/web` and set `READ_API_URL=https://api.careers.market`,
-`READ_API_TOKEN` and `REVALIDATE_TOKEN`.
 
 ## Data
 
