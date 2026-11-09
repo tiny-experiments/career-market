@@ -37,6 +37,13 @@ describe("MarketPage", () => {
     expect(names()[0]).toContain("Software");
   });
 
+  it("colours the gauge by the direction of the headline change", async () => {
+    const { container } = renderWithRouter(<MarketPage />);
+    await screen.findByText("Market status");
+    expect(container.querySelector("svg .stroke-up")).toBeInTheDocument();
+    expect(container.querySelector("svg .stroke-down")).toBeNull();
+  });
+
   it("re-sorts the table for a view", async () => {
     renderWithRouter(<MarketPage />, { path: "/?view=cooling" });
     await screen.findByText("Market status");

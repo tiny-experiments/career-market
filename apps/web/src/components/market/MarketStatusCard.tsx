@@ -4,7 +4,7 @@ import { Gauge } from "@/components/data/Gauge";
 import { KpiTile } from "@/components/data/KpiTile";
 import { MarketCard } from "@/components/data/MarketCard";
 import type { MarketOverview } from "@/lib/api";
-import { formatCount, formatDays, formatShare } from "@/lib/format";
+import { direction, formatCount, formatDays, formatShare } from "@/lib/format";
 import { HINTS } from "@/lib/marketCopy";
 import { marketBreadth, type ProfessionRow } from "@/lib/professions";
 import { FlowBars } from "./FlowBars";
@@ -21,8 +21,8 @@ export function MarketStatusCard({
   readonly professions: readonly ProfessionRow[];
 }) {
   const breadth = marketBreadth(professions);
-  const tone =
-    breadth.share >= 0.55 ? "up" : breadth.share <= 0.45 ? "down" : "flat";
+  const change = market.headline.change?.value;
+  const tone = change === undefined ? "flat" : direction(change);
   const flow = market.series
     .filter((point) => !point.estimated && !point.bootstrap)
     .slice(-FLOW_DAYS)
