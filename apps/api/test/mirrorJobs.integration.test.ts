@@ -187,7 +187,8 @@ describe.skipIf(!url)('job mirror reads (real Postgres)', () => {
     [{ workMode: ['hybrid', 'onsite'] }, ['kr_c', 'kr_b']],
     [{ level: ['staff'] }, ['kr_c', 'kr_b']],
     [{ level: ['senior'] }, ['kr_a']],
-    [{ postedWithin: 1 }, ['kr_c', 'kr_a']],
+    [{ postedWithin: 1 }, ['kr_c']],
+    [{ postedWithin: 2 }, ['kr_c', 'kr_a']],
     [{ hasPay: 'true' }, ['kr_c', 'kr_a', 'kr_b']],
     [{ hasPay: 'true', currency: 'EUR' }, ['kr_b']],
     [{ salaryMin: 150_000 }, ['kr_c', 'kr_a']],
@@ -208,7 +209,7 @@ describe.skipIf(!url)('job mirror reads (real Postgres)', () => {
   });
 
   it('reports live counts for the Jobs strip', async () => {
-    expect(await repo().pulseCounts()).toEqual({ open: 3, newToday: 2, withPay: 3 });
+    expect(await repo().pulseCounts()).toEqual({ open: 3, newToday: 1, withPay: 3 });
   });
 
   describe('lookup', () => {
@@ -249,6 +250,16 @@ describe.skipIf(!url)('job mirror reads (real Postgres)', () => {
         },
       });
       expect(await repo().lookup('kr_never')).toEqual({ kind: 'missing' });
+    });
+    it('reads the latest recorded closing through the job index', async () => {
+      await setup`insert into worker_change (event_key, job_id, kind, date) values
+        ('c:0', 'kr_gone', 'closed', '2026-11-03'), ('c:1', 'kr_gone', 'closed', '2026-11-07')`;
+      const plan = await setup.begin(async (tx) => {
+        await tx`set local enable_seqscan = off`;
+        return tx<{ 'QUERY PLAN': string }[]>`explain select date from worker_change
+          where job_id = 'kr_gone' and kind = 'closed' order by date desc limit 1`;
+      });
+      expect(plan.map((row) => row['QUERY PLAN']).join('\n')).toContain('worker_change_job_idx');
     });
     it('passes a closed answer straight through', async () => {
       const tombstone = {

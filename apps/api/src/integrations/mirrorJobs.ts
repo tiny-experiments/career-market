@@ -82,7 +82,7 @@ function conditions(query: JobsQuery, today: IsoDay): RawBuilder<unknown>[] {
   if (query.level?.length)
     where.push(sql`level = any(${textArray(levelsFor(query.level))})`);
   if (query.postedWithin)
-    where.push(sql`opened_at >= ${addDays(today, -query.postedWithin)}::date`);
+    where.push(sql`opened_at > ${addDays(today, -query.postedWithin)}::date`);
 
   // Annual figures only compare within one currency, so ranking by pay narrows to it.
   const priced = query.salaryMin !== undefined || query.sort === 'salary';
@@ -308,7 +308,7 @@ export function createMirrorJobs(deps: {
       const { rows } = await sql<JobsPulseCounts>`
         select
           (select coalesce(sum(open), 0)::int from company_open_count) as open,
-          (select count(*)::int from job_mirror where opened_at >= ${addDays(today(), -1)}::date) as "newToday",
+          (select count(*)::int from job_mirror where opened_at > ${addDays(today(), -1)}::date) as "newToday",
           (select count(*)::int from job_mirror where salary_min is not null or salary_max is not null) as "withPay"`.execute(
         deps.db,
       );
