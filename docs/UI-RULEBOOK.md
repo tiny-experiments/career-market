@@ -105,10 +105,10 @@ apps/web/src/
     market/    the Market and Professions pieces: MarketStatusCard, ProfessionListCard, CompaniesRampingCard, ProfessionsTable, WhereJobsPanel, WorldMap
     professions/  the profession detail page: ProfessionHeader, ProfessionChartPanel, ProfessionPanels, ProfessionTables
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
-    jobs/      VerdictCard, RolesTable (and the job page's parts to come)
+    jobs/      JobsTable, RolesTable, JobsPulseStrip, JobFiltersRail, CompanyFilter, VerdictCard, TypicalWindowBar, JobView, JobPosting, JobRail panels, ClosedJob
     companies/ the Companies and Company pages' tables, market cards and panels
     skills/    the Skills and Skill pages' tables, market cards and panels
-  content/     every customer-facing sentence: metrics (hover cards), phrasing, site (titles, About, footer), states
+  content/     every customer-facing sentence: metrics (hover cards), phrasing, jobs, site (titles, About, footer), states
   hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
   lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, skillViews, redirects, prefetch
   lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
@@ -163,6 +163,7 @@ apps/web/src/
 | A company, skill or profession mark             | `Logo` (round for companies, square for the rest)                     |
 | Nothing to show / something broke / loading     | `EmptyState` / `ErrorState` / `Skeleton` rows                         |
 | A job's read                                    | `VerdictCard` first, one `Button size="lg"` to apply                  |
+| A list of jobs anywhere on the site             | `JobsTable`, fed through `lib/jobRows`                                |
 
 ## 8. Using shadcn
 
@@ -209,6 +210,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 
 - **2026-11-09** — First version, with the design system: tokens in `index.css` (dark default, light), shadcn/ui vendored and customised through variants, the shell (`SiteHeader` with sliding underline, `SubBar` from route handles, `SearchBox`, `Footer`, `TickerStrip`), the market components (`DataTable`, `MarketCard`, `KpiTile`, `Gauge`, `RankedList`, `Sparkline`, `AreaChart`, `Delta`, `SignalBadge`, `MetricHoverCard`, `Logo`, `Pager`, `StatCard`, `Panel`), `/design`, and `check:ui`.
 - **2026-11-09** — Market and Professions pages. `AreaChart` follows the pointer when given `formatValue`; `RankedList` has a `comfortable` density and an optional `trend`; `DataTable` reports row hover; sub-bar tabs carry `region` along.
+- **2026-11-09** — Jobs, job page and search built; `DataTable` columns can hide below `2xl`; `PageHeader` takes an `eyebrow`; `--spacing-chrome` and `--spacing-rail-h` size a sticky rail under the nav.
 - **2026-11-09** — `/design` is development builds only; a series is one solid line (estimated-history styling removed).
 - **2026-11-09** — Copy module `src/content` (hover-card sentences, comparison phrasing, page titles and meta, states, About, footer line); time and money formatters in `lib/format.ts`; `check:ui` gains the retired-word rule.
 - **2026-11-09** — Companies and Skills pages: `BreakdownList`, `ChangeCell`, `ListSearch`, `PagedRankedCard`, `RolesTable`, and `DataTable`'s `inset` for tables inside cards.
