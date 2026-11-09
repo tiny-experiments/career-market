@@ -60,11 +60,17 @@ interface CompanyState {
 /** Timeouts and network errors tolerated in one step before it gives up. */
 const MAX_SKIPS = 5;
 
-/** A refusal from the service ends the run; one slow request only skips that company. */
+function refusesEveryRequest(err: unknown): boolean {
+  if (!(err instanceof ContextDevError)) return false;
+  const status = err.status;
+  return status === null || status === 401 || status === 403 || status === 429 || status >= 500;
+}
+
+/** A service-wide refusal ends the run; a slow request or an answer about one domain only skips that company. */
 function failureAction(err: unknown, step: { skips: number }, stats: LogoStats, log: Logger, what: string): 'skip' | 'stop' {
   stats.skipped += 1;
   step.skips += 1;
-  if (!(err instanceof ContextDevError) && step.skips < MAX_SKIPS) return 'skip';
+  if (!refusesEveryRequest(err) && step.skips < MAX_SKIPS) return 'skip';
   log.warn({ err: String(err), skipped: step.skips }, `${what} paused until the next run`);
   stats.stoppedEarly = true;
   return 'stop';

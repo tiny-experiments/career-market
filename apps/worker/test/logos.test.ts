@@ -215,6 +215,38 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('resolveCompanyDomains (dedicate
     expect((await sql`select brand_checked_at from company_domain where company_id = 'a'`)[0]?.brand_checked_at).toBeNull();
   });
 
+  it('skips a company the service rejects by itself, without stamping it, and carries on', async () => {
+    await company('a', 'Oddco', 1);
+    await company('b', 'Fineco', 2);
+    const brandSearch = vi.fn(async (q: string) => {
+      if (q === 'oddco') throw new ContextDevError('brand search answered 400', 400);
+      return [{ domain: `${q}.com`, name: q }];
+    });
+    const stats = await resolveCompanyDomains(deps({ brandSearch }));
+    expect(stats).toMatchObject({ skipped: 1, lookups: 1, stoppedEarly: false });
+    expect(await row('b')).toMatchObject({ domain: 'fineco.com' });
+    expect((await sql`select brand_checked_at from company_domain where company_id = 'a'`)[0]?.brand_checked_at).toBeNull();
+  });
+
+  it('skips a domain whose logo check is rejected, but stops when the service refuses everything', async () => {
+    await company('a', 'Oddco', 1, 'odd.com');
+    await company('b', 'Fineco', 2, 'fine.com');
+    const logoProbe = vi.fn(async (d: string) => {
+      if (d === 'odd.com') throw new ContextDevError('logo check answered 404', 404);
+      return 'real' as const;
+    });
+    const stats = await resolveCompanyDomains(deps({ logoProbe }));
+    expect(stats).toMatchObject({ skipped: 1, logoChecks: 1, stoppedEarly: false });
+    expect((await row('b')).logo).toBe('real');
+    expect((await row('a')).logo).toBeNull();
+
+    await sql`update company_domain set logo = null, logo_checked_at = null`;
+    const refusing = vi.fn(async () => { throw new ContextDevError('logo check answered 403', 403); });
+    const refused = await resolveCompanyDomains(deps({ logoProbe: refusing }));
+    expect(refused.stoppedEarly).toBe(true);
+    expect(refused.logoChecks).toBe(0);
+  });
+
   it('skips a company that times out and carries on with the next', async () => {
     await company('a', 'Slowco', 1);
     await company('b', 'Fastco', 2);
