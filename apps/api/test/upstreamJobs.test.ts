@@ -90,6 +90,8 @@ describe('temporary job repository adapter', () => {
       currency: 'USD',
     });
     expect(jobs[1]!.searchParams.get('cursor')).toBe('bbbbbbbb');
+    const terminal = await source.list({ ...query, page: 3 });
+    expect(terminal).toMatchObject({ items: [], page: 3, total: 3 });
     const beyond = await source.list({ ...query, page: 99 });
     expect(beyond).toMatchObject({ items: [], page: 99, total: 3 });
   });

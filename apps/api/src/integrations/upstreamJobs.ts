@@ -73,6 +73,14 @@ export function createUpstreamJobs(
         ...[...checkpoints.keys()].filter((p) => p <= query.page),
       );
       let cursor = checkpoints.get(page) ?? null;
+      if (page > 1 && cursor === null) {
+        return {
+          items: [],
+          page: query.page,
+          pageSize: query.pageSize,
+          total: total.total,
+        };
+      }
       while (true) {
         const result = await live.get(
           '/v1/jobs',
