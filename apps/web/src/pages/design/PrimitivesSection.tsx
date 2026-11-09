@@ -271,11 +271,9 @@ export function PrimitivesSection() {
           <div className="flex flex-wrap items-center gap-6 rounded-xl bg-card p-4 shadow-card">
             <span className="inline-flex items-center gap-1.5 text-sm font-medium">
               7-day change
-              <MetricHoverCard
-                title="7-day change"
-                formula="open roles now ÷ open roles a week ago − 1"
-              >
-                Change in open roles compared with a week ago.
+              <MetricHoverCard title="7-day change">
+                How much open roles have grown or shrunk compared with a week
+                ago.
               </MetricHoverCard>
             </span>
             <span className="inline-flex items-center gap-1.5 text-sm font-medium">

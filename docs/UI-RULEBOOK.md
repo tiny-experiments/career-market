@@ -104,6 +104,7 @@ apps/web/src/
     data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, RangeTabs
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
     jobs/      VerdictCard (and the job page's parts to come)
+  content/     every customer-facing sentence: metrics (hover cards), phrasing, site (titles, About, footer), states
   hooks/       useResource, usePagedList, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
   lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, redirects, prefetch
   lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
@@ -170,7 +171,7 @@ shadcn owns **behaviour**: overlays, focus, keyboard, portals, form controls. We
 The feedback that shaped these rules: "1.3% since November 3" sounds machine-written, footnotes and method text clutter the page, and a visitor should hover to learn how a number is made.
 
 - **A change is a caret, a number and the comparison in words**: `▲ 1.3% this week`. Never a date as a qualifier ("since 3 Nov"), never an asterisk, never a footnote.
-- **The method lives in the hover card, in one sentence, about what the number is**: "Change in open roles compared with a week ago." A formula only when it is the reader's own arithmetic. Never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
+- **The method lives in the hover card, in one sentence, about what the number is**: "How much open roles have grown or shrunk compared with a week ago." Never a formula, never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
 - **No timestamps in the chrome.** No "Updated 06:14 UTC", no "as of", no refresh rhythm. The footer's line is the only sentence about freshness.
 - **Never state the total number of companies.** Per-profession and per-signal counts are fine; a grand total is not.
 - **A series is one solid line.** No estimated-history styling and no caveat sentence under the chart.
@@ -180,6 +181,8 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **Links say where they go in words**: "See all 1,240 jobs", not "See all rows in screener".
 - **Empty states say what to do**: "No jobs match these filters. Try widening the region." **Error states say what broke and offer a retry**: "Companies could not be loaded." Never an API code.
 - **Every status carries a word**, never a bare coloured dot.
+- **Words live in `src/content`.** Hover-card sentences (`METRICS`), comparisons (`describeChange`, `changeSuffix`), counts and links (`seeAll`, `showing`), page titles and meta (`PAGES`), empty and error states (`EMPTY`, `ERROR`), the verdict (`verdictSummary`) and the About page (`ABOUT`). A page imports a sentence; it never writes one inline.
+- **Retired words.** `check:ui` fails on `krill` anywhere in `src`, and on `survival`, `back-cast`, `estimated` or `bootstrap` in any string literal, JSX text or `index.html`. They describe the method; say what the figure is instead.
 
 ## 10. Definition of done
 
@@ -198,3 +201,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 
 - **2026-11-09** — First version, with the design system: tokens in `index.css` (dark default, light), shadcn/ui vendored and customised through variants, the shell (`SiteHeader` with sliding underline, `SubBar` from route handles, `SearchBox`, `Footer`, `TickerStrip`), the market components (`DataTable`, `MarketCard`, `KpiTile`, `Gauge`, `RankedList`, `Sparkline`, `AreaChart`, `Delta`, `SignalBadge`, `MetricHoverCard`, `Logo`, `Pager`, `StatCard`, `Panel`), `/design`, and `check:ui`.
 - **2026-11-09** — `/design` is development builds only; a series is one solid line (estimated-history styling removed).
+- **2026-11-09** — Copy module `src/content` (hover-card sentences, comparison phrasing, page titles and meta, states, About, footer line); time and money formatters in `lib/format.ts`; `check:ui` gains the retired-word rule.

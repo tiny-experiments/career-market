@@ -14,6 +14,11 @@ declare module "../../scripts/check-ui.mjs" {
   }
   export const RULES: Record<string, string>;
   export function arbitraryValues(text: string, path: string): Finding[];
+  export function customerFacingText(
+    text: string,
+    path: string,
+  ): { text: string; index: number }[];
+  export function retiredWords(text: string, path: string): Finding[];
   export function checkSource(
     path: string,
     text: string,

@@ -1,5 +1,6 @@
 import { RotateCw, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ERROR_DETAIL, TRY_AGAIN } from "@/content";
 import { cn } from "@/lib/utils";
 
 /**
@@ -16,7 +17,7 @@ export interface ErrorStateProps {
 
 export function ErrorState({
   title,
-  message = "Something went wrong on our side. Trying again usually works.",
+  message = ERROR_DETAIL,
   onRetry,
   className,
 }: ErrorStateProps) {
@@ -36,7 +37,7 @@ export function ErrorState({
       {onRetry === undefined ? null : (
         <Button variant="outline" size="sm" onClick={onRetry}>
           <RotateCw />
-          Try again
+          {TRY_AGAIN}
         </Button>
       )}
     </div>

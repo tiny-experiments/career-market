@@ -1,5 +1,5 @@
 export { BrandLockup, BrandMark } from "./BrandMark";
-export { FOOTER_LINE, Footer } from "./Footer";
+export { Footer } from "./Footer";
 export { GlobalSearch } from "./GlobalSearch";
 export { PageContainer } from "./PageContainer";
 export { PageHeader, type Crumb, type PageHeaderProps } from "./PageHeader";

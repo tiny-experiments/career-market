@@ -24,7 +24,7 @@ import {
 
 const WEEK_HINT = {
   title: "7-day change",
-  text: "Change in open roles compared with a week ago.",
+  text: "How much open roles have grown or shrunk compared with a week ago.",
 } as const;
 
 const rankColumn = <Row,>(): Column<Row> => ({

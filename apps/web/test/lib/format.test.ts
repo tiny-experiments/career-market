@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  daysSince,
   direction,
   formatCount,
+  formatDay,
   formatDays,
+  formatListedPay,
+  formatMoney,
+  formatMoneyRange,
   formatPay,
   formatPayRange,
   formatPercent,
+  formatRelativeDay,
+  formatRelativeDays,
   formatShare,
   monogram,
 } from "@/lib/format";
@@ -56,5 +63,123 @@ describe("format", () => {
     expect(direction(0.037)).toBe("up");
     expect(direction(-0.007)).toBe("down");
     expect(direction(0.0002)).toBe("flat");
+  });
+
+  it("writes a day as a date, not a qualifier", () => {
+    expect(formatDay("2026-11-09")).toBe("9 Nov 2026");
+    expect(formatDay("2026-01-01")).toBe("1 Jan 2026");
+    expect(formatDay("not a day")).toBe("not a day");
+  });
+
+  it("says how long ago in words", () => {
+    expect(formatRelativeDays(0)).toBe("today");
+    expect(formatRelativeDays(1)).toBe("yesterday");
+    expect(formatRelativeDays(3)).toBe("3 days ago");
+    expect(formatRelativeDays(6)).toBe("6 days ago");
+    expect(formatRelativeDays(7)).toBe("a week ago");
+    expect(formatRelativeDays(12)).toBe("2 weeks ago");
+    expect(formatRelativeDays(29)).toBe("4 weeks ago");
+    expect(formatRelativeDays(30)).toBe("a month ago");
+    expect(formatRelativeDays(100)).toBe("3 months ago");
+    expect(formatRelativeDays(365)).toBe("a year ago");
+    expect(formatRelativeDays(800)).toBe("2 years ago");
+    expect(formatRelativeDays(-2)).toBe("today");
+  });
+
+  it("counts the days since an ISO day in UTC", () => {
+    const today = new Date("2026-11-09T23:30:00Z");
+    expect(daysSince("2026-11-09", today)).toBe(0);
+    expect(daysSince("2026-11-06", today)).toBe(3);
+    expect(daysSince("2026-11-10", today)).toBe(0);
+    expect(daysSince("garbage", today)).toBe(0);
+    expect(formatRelativeDay("2026-11-06", today)).toBe("3 days ago");
+  });
+
+  it("writes money in any currency in the same shape as pay", () => {
+    expect(formatMoney(144_000)).toBe("$144K");
+    expect(formatMoney(80_000, "EUR")).toBe("€80K");
+    expect(formatMoney(1_250_000, "GBP")).toBe("£1.25M");
+    expect(formatMoney(90_000, "CHF")).toBe("CHF 90K");
+    expect(formatMoney(80_000, "CAD")).toBe("CAD 80K");
+    expect(formatMoney(80_000, "aud")).toBe("AUD 80K");
+    expect(formatMoney(9_000_000, "JPY")).toBe("JPY 9M");
+    expect(formatMoneyRange(70_000, 90_000, "CAD")).toBe("CAD 70K–CAD 90K");
+    expect(formatMoneyRange(144_000, 157_000)).toBe("$144K–$157K");
+    expect(formatMoneyRange(80_000, 80_000, "EUR")).toBe("€80K");
+  });
+
+  it("writes the pay a posting lists, or nothing", () => {
+    expect(
+      formatListedPay({
+        min: 144_000,
+        max: 157_000,
+        currency: "USD",
+        period: "year",
+        annualMin: 144_000,
+        annualMax: 157_000,
+      }),
+    ).toBe("$144K–$157K");
+    expect(
+      formatListedPay({
+        min: 45,
+        max: 60,
+        currency: "USD",
+        period: "hour",
+        annualMin: null,
+        annualMax: null,
+      }),
+    ).toBe("$45–$60 an hour");
+    expect(
+      formatListedPay({
+        min: 45.5,
+        max: null,
+        currency: null,
+        period: "hourly",
+      }),
+    ).toBe("$45.50 an hour");
+    expect(
+      formatListedPay({
+        min: 8_000,
+        max: 10_000,
+        currency: "EUR",
+        period: "month",
+      }),
+    ).toBe("€8,000–€10,000 a month");
+    expect(
+      formatListedPay({
+        min: 120_000,
+        max: null,
+        currency: "GBP",
+        period: null,
+      }),
+    ).toBe("£120K");
+    expect(
+      formatListedPay({
+        min: null,
+        max: null,
+        currency: "USD",
+        period: "year",
+      }),
+    ).toBeNull();
+    expect(
+      formatListedPay({
+        min: 45,
+        max: 60,
+        currency: "AUD",
+        period: "hour",
+      }),
+    ).toBe("AUD 45–AUD 60 an hour");
+    expect(formatListedPay(null)).toBeNull();
+  });
+
+  it("never rounds a rate or an unknown period into thousands", () => {
+    const pay = (min: number, max: number, period: string | null) =>
+      formatListedPay({ min, max, currency: "USD", period });
+    expect(pay(45, 60, "per hour")).toBe("$45–$60");
+    expect(pay(45, 60, null)).toBe("$45–$60");
+    expect(pay(120_000, 120_000, null)).toBe("$120K");
+    expect(pay(120_000, 150_000, "per year")).toBe("$120K–$150K");
+    expect(pay(120_000, 150_000, "p.a.")).toBe("$120K–$150K");
+    expect(pay(5_000, 9_000, "yearly")).toBe("$5K–$9K");
   });
 });

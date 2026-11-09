@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { Params } from "react-router";
+import { PAGES, type PageKey } from "@/content";
 import {
   companiesList,
   companyDetail,
@@ -50,6 +51,15 @@ export const SEARCH_PAGE_LIMIT = 10;
 /** How many of a company's roles its page shows before "see all". */
 export const COMPANY_JOBS_PREVIEW = 25;
 
+const handleFor = (
+  key: PageKey,
+  subBar?: RouteHandle["subBar"],
+): RouteHandle => ({
+  title: PAGES[key].title,
+  meta: PAGES[key].meta,
+  ...(subBar ? { subBar } : {}),
+});
+
 /**
  * Every page a visitor can reach: address, chrome, chunk and the data behind
  * it. The router is built from this, and so is hover prefetching, so the two
@@ -58,14 +68,14 @@ export const COMPANY_JOBS_PREVIEW = 25;
 export const pageRoutes: readonly PageRoute[] = [
   {
     path: "/",
-    handle: { title: "Market", subBar: MARKET_TABS },
+    handle: handleFor("market", MARKET_TABS),
     page: () =>
       import("@/pages/MarketPage").then((m) => ({ Component: m.MarketPage })),
     data: () => [marketOverview()],
   },
   {
     path: "/professions",
-    handle: { title: "Professions", subBar: PROFESSIONS_TABS },
+    handle: handleFor("professions", PROFESSIONS_TABS),
     page: () =>
       import("@/pages/ProfessionsPage").then((m) => ({
         Component: m.ProfessionsPage,
@@ -74,7 +84,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/professions/:code",
-    handle: { title: "Profession" },
+    handle: handleFor("profession"),
     page: () =>
       import("@/pages/ProfessionPage").then((m) => ({
         Component: m.ProfessionPage,
@@ -83,7 +93,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/companies",
-    handle: { title: "Companies", subBar: COMPANIES_TABS },
+    handle: handleFor("companies", COMPANIES_TABS),
     page: () =>
       import("@/pages/CompaniesPage").then((m) => ({
         Component: m.CompaniesPage,
@@ -98,7 +108,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/companies/:slug",
-    handle: { title: "Company" },
+    handle: handleFor("company"),
     page: () =>
       import("@/pages/CompanyPage").then((m) => ({
         Component: m.CompanyPage,
@@ -113,21 +123,21 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/skills",
-    handle: { title: "Skills", subBar: SKILLS_TABS },
+    handle: handleFor("skills", SKILLS_TABS),
     page: () =>
       import("@/pages/SkillsPage").then((m) => ({ Component: m.SkillsPage })),
     data: () => [skillsIndex()],
   },
   {
     path: "/skills/:slug",
-    handle: { title: "Skill" },
+    handle: handleFor("skill"),
     page: () =>
       import("@/pages/SkillPage").then((m) => ({ Component: m.SkillPage })),
     data: ({ params }) => [skillDetail(params["slug"] ?? "")],
   },
   {
     path: "/jobs",
-    handle: { title: "Jobs", subBar: JOBS_TABS },
+    handle: handleFor("jobs", JOBS_TABS),
     page: () =>
       import("@/pages/JobsPage").then((m) => ({ Component: m.JobsPage })),
     data: ({ search }) => [
@@ -140,14 +150,14 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/jobs/:id",
-    handle: { title: "Job" },
+    handle: handleFor("job"),
     page: () =>
       import("@/pages/JobPage").then((m) => ({ Component: m.JobPage })),
     data: ({ params }) => [jobDetail(params["id"] ?? "")],
   },
   {
     path: "/search",
-    handle: { title: "Search" },
+    handle: handleFor("search"),
     page: () =>
       import("@/pages/SearchPage").then((m) => ({ Component: m.SearchPage })),
     data: ({ search }) => {
@@ -159,7 +169,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/about",
-    handle: { title: "About" },
+    handle: handleFor("about"),
     page: () =>
       import("@/pages/AboutPage").then((m) => ({ Component: m.AboutPage })),
   },

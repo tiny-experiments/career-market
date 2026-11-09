@@ -6,8 +6,9 @@
  * scripts/check-ui.allowlist.json names it with a reason.
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
-import { basename, dirname, join, relative, sep } from "node:path";
+import { basename, dirname, extname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const WEB = dirname(dirname(fileURLToPath(import.meta.url)));
 const ALLOW_LIST = join(WEB, "scripts", "check-ui.allowlist.json");
@@ -35,6 +36,11 @@ const RAW_ELEMENT = /<(button|input|select|textarea|dialog)(?=[\s/>]|$)/gm;
 const COMPONENT_NAME = /^(?:[A-Z][A-Za-z0-9]*|use[A-Z][A-Za-z0-9]*)\.tsx$/;
 // Customer-facing copy never names where the data comes from.
 const PROVIDER = /\bkrill\b/gi;
+// Nor how a figure is made (UI-RULEBOOK.md §9): these words describe the
+// method, and the method belongs in a hover card said plainly, not on the page.
+const RETIRED = /\b(?:survival|back-?cast|estimated|bootstrap)\b/gi;
+// Pages outside src/ that a visitor reads.
+const EXTRA_FILES = ["index.html"];
 
 const ANSI = {
   bold: (s) => `\u001b[1m${s}\u001b[22m`,
@@ -68,6 +74,8 @@ export const RULES = {
     "Use the primitive from src/components/ui/ (Button, Input, Select…).",
   "provider-name":
     "Never name the data source in the app; say what the figure is instead.",
+  "retired-word":
+    "Say what the figure is, not how it is made; the word is retired from customer-facing text (docs/UI-RULEBOOK.md §9).",
 };
 
 const lineAt = (text, index) => text.slice(0, index).split("\n").length;
@@ -123,6 +131,72 @@ export function arbitraryValues(text, path) {
   }
 }
 
+const SCRIPT_KIND = {
+  ".ts": ts.ScriptKind.TS,
+  ".tsx": ts.ScriptKind.TSX,
+  ".js": ts.ScriptKind.JS,
+  ".jsx": ts.ScriptKind.JSX,
+};
+
+const TEXT_NODES = new Set([
+  ts.SyntaxKind.StringLiteral,
+  ts.SyntaxKind.NoSubstitutionTemplateLiteral,
+  ts.SyntaxKind.TemplateHead,
+  ts.SyntaxKind.TemplateMiddle,
+  ts.SyntaxKind.TemplateTail,
+]);
+
+/**
+ * The parts of a source file a visitor can read: string literals, template
+ * text and the text between JSX tags, each with the offset it starts at.
+ * Comments and identifiers (`point.estimated`) are never collected; an HTML
+ * file is read whole and a stylesheet holds no copy.
+ */
+export function customerFacingText(text, path) {
+  if (path.endsWith(".html")) return [{ text, index: 0 }];
+  const kind = SCRIPT_KIND[extname(path)];
+  if (kind === undefined) return [];
+  const file = ts.createSourceFile(
+    path,
+    text,
+    ts.ScriptTarget.Latest,
+    false,
+    kind,
+  );
+  const parts = [];
+  const visit = (node) => {
+    if (
+      TEXT_NODES.has(node.kind) ||
+      (node.kind === ts.SyntaxKind.JsxText &&
+        !node.containsOnlyTriviaWhiteSpaces)
+    ) {
+      const index = node.getStart(file);
+      parts.push({ text: text.slice(index, node.getEnd()), index });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return parts;
+}
+
+/** Retired words inside the customer-facing parts of a file. */
+export function retiredWords(text, path) {
+  return customerFacingText(text, path)
+    .flatMap((part) =>
+      [...part.text.matchAll(RETIRED)].map((match) => ({
+        index: part.index + match.index,
+        value: match[0],
+      })),
+    )
+    .sort((a, b) => a.index - b.index)
+    .map(({ index, value }) => ({
+      path,
+      line: lineAt(text, index),
+      rule: "retired-word",
+      value,
+    }));
+}
+
 /** `primitives` is the set of element names that have a file in components/ui. */
 export function checkSource(path, text, primitives) {
   const findings = [];
@@ -133,6 +207,7 @@ export function checkSource(path, text, primitives) {
   findings.push(...matches(PALETTE, text, "palette-colour", path));
   findings.push(...arbitraryValues(text, path));
   findings.push(...matches(PROVIDER, text, "provider-name", path));
+  findings.push(...retiredWords(text, path));
   if (path.endsWith(".tsx") && !path.startsWith(PRIMITIVES)) {
     findings.push(
       ...[...text.matchAll(RAW_ELEMENT)]
@@ -289,7 +364,10 @@ export function checkUi({ root = WEB, allowList = ALLOW_LIST } = {}) {
       .filter((name) => name.endsWith(".tsx"))
       .map((name) => name.replace(/\.tsx$/, "")),
   );
-  const files = sourceFiles(root);
+  const files = [
+    ...sourceFiles(root),
+    ...EXTRA_FILES.filter((file) => existsSync(join(root, file))),
+  ];
   const findings = files.flatMap((path) =>
     checkSource(path, readFileSync(join(root, path), "utf8"), primitives),
   );

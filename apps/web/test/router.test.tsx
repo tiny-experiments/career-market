@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { clearResources } from "@/lib/api";
+import { PAGES } from "@/content";
 import { routes } from "@/router";
 import { stubFetch, type Routes } from "./support/fetchStub";
 
@@ -99,6 +100,26 @@ describe("the router", () => {
     open("/about");
     await heading("About");
     expect(mock).not.toHaveBeenCalled();
+  });
+
+  it("sets the tab title and meta description from the page's copy, and restores the site's", async () => {
+    stubFetch();
+    const tag = document.createElement("meta");
+    tag.name = "description";
+    tag.content = "The site description";
+    document.head.append(tag);
+    try {
+      const router = open("/about");
+      await heading("About");
+      await waitFor(() => expect(tag.content).toBe(PAGES.about.meta));
+      expect(document.title).toBe("About · Career Market");
+
+      await router.navigate("/nope/nothing");
+      await waitFor(() => expect(tag.content).toBe("The site description"));
+      expect(document.title).toBe("Career Market");
+    } finally {
+      tag.remove();
+    }
   });
 
   it("does not ask for an empty search", async () => {
