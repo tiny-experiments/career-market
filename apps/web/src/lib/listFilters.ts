@@ -23,6 +23,7 @@ const REGIONS = [
   "latam",
   "mena",
 ] as const;
+const WORK_MODES = ["remote", "hybrid", "onsite"] as const;
 const LEVELS = [
   "entry",
   "mid",
@@ -57,6 +58,17 @@ function oneOf<T extends string>(
   allowed: readonly T[],
 ): T | undefined {
   return allowed.find((candidate) => candidate === value);
+}
+
+/** A comma list, keeping only the values the API knows. */
+function someOf(
+  value: string | null,
+  allowed: readonly string[],
+): string | undefined {
+  const kept = (value ?? "")
+    .split(",")
+    .filter((item) => allowed.includes(item));
+  return kept.length > 0 ? [...new Set(kept)].join(",") : undefined;
 }
 
 function matching(value: string | null, pattern: RegExp): string | undefined {
@@ -108,17 +120,20 @@ export function jobsFiltersFrom(search: URLSearchParams): JobsQuery {
   return {
     q: text(search.get("q"), 80),
     company: text(search.get("company"), 160),
-    family: matching(search.get("family"), /^[a-z0-9-]{1,40}$/),
+    family: matching(
+      search.get("family"),
+      /^[a-z0-9-]{1,40}(,[a-z0-9-]{1,40})*$/,
+    ),
     specialty: matching(search.get("specialty"), /^[a-z0-9-]{1,60}$/),
     skill: matching(search.get("skill"), /^[a-z0-9:+#._-]{1,80}$/i),
     region: oneOf(search.get("region"), REGIONS),
     country: matching(search.get("country"), /^[A-Z]{2}$/),
-    workMode: oneOf(search.get("mode"), ["remote", "hybrid", "onsite"]),
-    level: oneOf(search.get("level"), LEVELS),
+    workMode: someOf(search.get("mode"), WORK_MODES),
+    level: someOf(search.get("level"), LEVELS),
     postedWithin: postedWithinFrom(search.get("posted")),
     salaryMin: wholeNumber(search.get("salary"), 0, MAX_SALARY),
     hasPay: search.get("pay") === "listed" ? "true" : undefined,
     currency: oneOf(search.get("currency"), CURRENCIES),
-    sort: oneOf(search.get("sort"), ["newest", "opened", "salary"]),
+    sort: oneOf(search.get("sort"), ["newest", "opened", "oldest", "salary"]),
   };
 }

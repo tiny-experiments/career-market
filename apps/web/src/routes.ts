@@ -7,7 +7,9 @@ import {
   companyJobs,
   companySignals,
   jobDetail,
+  jobFacets,
   jobsList,
+  jobsPulse,
   marketOverview,
   professionDetail,
   professionsIndex,
@@ -149,6 +151,8 @@ export const pageRoutes: readonly PageRoute[] = [
         page: pageFrom(search),
         pageSize: LIST_PAGE_SIZE,
       }),
+      jobsPulse(),
+      jobFacets(),
     ],
   },
   {

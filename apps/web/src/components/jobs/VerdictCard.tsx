@@ -1,75 +1,132 @@
-import { CalendarClock, History, Repeat, Sparkles } from "lucide-react";
+import { Check, Clock, Infinity as EverOpen, Repeat } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
+import { MetricHoverCard } from "@/components/common";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  JOB_PAGE,
+  VERDICT_HINT,
+  VERDICT_LABEL,
+  type VerdictKind,
+} from "@/content";
 import { cn } from "@/lib/utils";
 
-export type Verdict = "first-time" | "reposted" | "evergreen" | "closing-soon";
+export type Verdict = VerdictKind;
 
 const VERDICTS: Record<
   Verdict,
   {
-    readonly label: string;
     readonly icon: LucideIcon;
     readonly variant: "up" | "flat" | "warn" | "down";
+    readonly band: string;
+    readonly disc: string;
   }
 > = {
-  "first-time": { label: "First time posted", icon: Sparkles, variant: "up" },
-  reposted: { label: "Reposted", icon: Repeat, variant: "warn" },
-  evergreen: { label: "Likely evergreen", icon: History, variant: "flat" },
+  "first-time": {
+    icon: Check,
+    variant: "up",
+    band: "bg-up-soft",
+    disc: "bg-up",
+  },
+  reposted: {
+    icon: Repeat,
+    variant: "warn",
+    band: "bg-warn-soft",
+    disc: "bg-warn",
+  },
+  evergreen: {
+    icon: EverOpen,
+    variant: "flat",
+    band: "bg-flat-soft",
+    disc: "bg-flat",
+  },
   "closing-soon": {
-    label: "Closing soon",
-    icon: CalendarClock,
+    icon: Clock,
     variant: "down",
+    band: "bg-down-soft",
+    disc: "bg-down",
   },
 };
 
 export interface VerdictCardProps {
   readonly verdict: Verdict;
-  /** The one-line read of this posting: "Posted 3 days ago, first time we have seen it." */
+  /** The bold line: "First time posted · 5 days ago". */
+  readonly headline?: string;
+  /** The one-line read of this posting. */
   readonly summary: string;
   /** Short facts under it: times reposted, typical window, days open. */
   readonly facts?: readonly {
     readonly label: string;
     readonly value: string;
   }[];
+  /** Beside the words on wide screens: the posting against its window. */
+  readonly children?: ReactNode;
   readonly className?: string;
 }
 
-/** The first thing on a job page: what kind of posting this is, in a sentence, with its facts. */
+/** The first thing on a job page: what kind of posting this is, in a sentence. */
 export function VerdictCard({
   verdict,
+  headline,
   summary,
   facts,
+  children,
   className,
 }: VerdictCardProps) {
-  const { label, icon: Icon, variant } = VERDICTS[verdict];
+  const { icon: Icon, variant, band, disc } = VERDICTS[verdict];
+  const label = VERDICT_LABEL[verdict];
   return (
-    <Card className={cn("gap-3", className)}>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Icon className="size-4 text-muted-foreground" aria-hidden />
-          <Badge variant={variant} size="md">
-            {label}
-          </Badge>
+    <section
+      aria-label={JOB_PAGE.verdictRegion}
+      className={cn(
+        "flex flex-col gap-5 rounded-xl p-5 lg:flex-row lg:items-center lg:gap-10",
+        band,
+        className,
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-4">
+        <span
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-full text-background",
+            disc,
+          )}
+        >
+          <Icon className="size-5" aria-hidden />
+        </span>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            {headline === undefined ? (
+              <Badge variant={variant} size="md" className="bg-card">
+                {label}
+              </Badge>
+            ) : (
+              <p className="text-h2 font-bold">{headline}</p>
+            )}
+            <MetricHoverCard title={label}>
+              {VERDICT_HINT[verdict]}
+            </MetricHoverCard>
+          </div>
+          <p className="text-body text-subtle">{summary}</p>
+          {facts && facts.length > 0 ? (
+            <dl className="mt-1 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {facts.map((fact) => (
+                <div
+                  key={fact.label}
+                  className="flex flex-col gap-0.5 rounded-lg bg-card px-3 py-2"
+                >
+                  <dt className="text-eyebrow font-semibold text-muted-foreground">
+                    {fact.label}
+                  </dt>
+                  <dd className="text-sm font-bold">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
-        <p className="text-body font-medium">{summary}</p>
-        {facts && facts.length > 0 ? (
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {facts.map((fact) => (
-              <div
-                key={fact.label}
-                className="flex flex-col gap-0.5 rounded-lg bg-tile px-3 py-2"
-              >
-                <dt className="text-eyebrow font-semibold text-muted-foreground">
-                  {fact.label}
-                </dt>
-                <dd className="text-sm font-bold">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-      </CardContent>
-    </Card>
+      </div>
+      {children === undefined ? null : (
+        <div className="w-full shrink-0 lg:w-96">{children}</div>
+      )}
+    </section>
   );
 }

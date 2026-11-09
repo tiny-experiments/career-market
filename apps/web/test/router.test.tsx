@@ -19,6 +19,7 @@ import {
   PROFESSIONS_FIXTURE,
   PROFESSION_FIXTURE,
 } from "./support/marketFixtures";
+import { jobListItem, jobPage } from "./support/jobFixtures";
 
 const page = (items: unknown[] = [{}]) => ({
   body: { items, page: 1, pageSize: 50, total: items.length },
@@ -35,20 +36,42 @@ const API: Routes = {
   "/api/companies/stripe/jobs?page=1&pageSize=25": page([jobItem]),
   "/api/skills": { body: { skills: [] } },
   "/api/skills/python": { body: skillPayload },
-  "/api/jobs?page=1&pageSize=50": page(),
-  "/api/jobs?page=1&pageSize=50&workMode=remote": page(),
-  "/api/jobs/kr_open12": {
+  "/api/jobs?page=1&pageSize=50": page([jobListItem()]),
+  "/api/jobs?page=1&pageSize=50&workMode=remote": page([jobListItem()]),
+  "/api/jobs/pulse": {
     body: {
-      status: "open",
-      job: { title: "Staff Engineer", company: { name: "Stripe" } },
+      open: 100,
+      newToday: 3,
+      withPay: 40,
+      change1w: 0.01,
+      openSpark: [99, 100],
+      newSpark: [2, 3],
+      workModes: { remote: 1, hybrid: 1, onsite: 1 },
+      professions: [],
     },
   },
+  "/api/jobs/facets": { body: { facets: [] } },
+  "/api/jobs/kr_open12": { body: jobPage() },
   "/api/jobs/kr_gone12": {
     status: 410,
-    body: { status: "closed", id: "kr_gone12" },
+    body: {
+      status: "closed",
+      id: "kr_gone12",
+      closedAt: "2026-11-07",
+      openedAt: null,
+      openedSource: null,
+      family: null,
+      familyName: null,
+    },
   },
   "/api/search?limit=10&q=rust&roles=1": {
-    body: { query: "rust", groups: [], roles: [], rolesUnavailable: false },
+    body: {
+      query: "rust",
+      groups: [],
+      roles: [],
+      rolesTotal: 0,
+      rolesUnavailable: false,
+    },
   },
 };
 
@@ -89,7 +112,11 @@ describe("the router", () => {
     ],
     ["/jobs/kr_open12", "Staff Engineer", "/api/jobs/kr_open12"],
     ["/jobs/kr_gone12", "This role has closed", "/api/jobs/kr_gone12"],
-    ["/search?q=rust", "Search", "/api/search?limit=10&q=rust&roles=1"],
+    [
+      "/search?q=rust",
+      "Results for “rust”",
+      "/api/search?limit=10&q=rust&roles=1",
+    ],
   ])(
     "opens %s wired to its endpoint, with one request",
     async (path, title, api) => {
@@ -194,6 +221,13 @@ describe("the router", () => {
       "/jobs",
       "?family=swe&mode=remote",
     ],
+    [
+      "/screener?mode=companies&growth=ramping",
+      "/companies",
+      "?signal=ramping",
+    ],
+    ["/screener?mode=professions", "/professions", ""],
+    ["/screener?mode=skills", "/skills", ""],
     ["/job/kr_open12/staff-engineer", "/jobs/kr_open12", ""],
     ["/methodology", "/about", ""],
     ["/data", "/about", ""],
