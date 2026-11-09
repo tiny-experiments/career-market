@@ -253,8 +253,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('resolveCompanyDomains (dedicate
     const stats = await resolveCompanyDomains(deps({ logoProbe }));
     expect(stats).toMatchObject({ skipped: 1, logoChecks: 1, stoppedEarly: false });
     expect(logoProbe.mock.calls.filter((c) => c[0] === 'odd.com')).toHaveLength(1);
-    expect((await row('b')).logo).toBe('real');
-    expect((await row('a')).logo).toBeNull();
+    const fine = await row('b');
+    const odd = await row('a');
+    expect(fine).toBeDefined();
+    expect(odd).toBeDefined();
+    expect(fine!.logo).toBe('real');
+    expect(odd!.logo).toBeNull();
 
     await sql`update company_domain set logo = null, logo_checked_at = null`;
     const refusing = vi.fn(async () => { throw new ContextDevError('logo check answered 403', 403); });
