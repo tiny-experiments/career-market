@@ -59,6 +59,8 @@ export interface BuildOptions {
   force?: boolean;
   /** Refetch every grouped day since the first observed day. */
   full?: boolean;
+  /** Operator override: build the advertised day though krill has not marked its export as written. */
+  assumeExported?: boolean;
 }
 
 export type BuildResult =
@@ -75,7 +77,7 @@ async function buildUnlocked(deps: BuildDeps, options: BuildOptions): Promise<Bu
   const T = meta.lastSnapshotDate;
   if (!T) return { status: 'skipped', reason: 'krill has no snapshot yet', snapshotDate: null };
 
-  if (!snapshotReady(meta)) return { status: 'skipped', reason: 'snapshot not complete', snapshotDate: T };
+  if (!options.assumeExported && !snapshotReady(meta)) return { status: 'skipped', reason: 'snapshot not complete', snapshotDate: T };
 
   if (!options.force) {
     const [done] = await sql`select 1 from build_run where snapshot_date = ${T} and status = 'ok' limit 1`;

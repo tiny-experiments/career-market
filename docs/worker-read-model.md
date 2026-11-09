@@ -52,6 +52,8 @@ The watcher checks metadata every five minutes (`BUILDER_POLL_MINUTES=5`). A new
 snapshot must have `exportedAt` for its date; older providers without that field
 must report the date in every enabled ATS's `lastRun`. Already successful dates
 are skipped unless `--force` is supplied. A failed build retries at the next poll.
+The one-off `build --assume-exported` passes the `exportedAt` check for an operator who has confirmed
+the day's export exists; the watcher never does.
 
 A complete mirror is staged before publication. Current facets prove whether
 profession partitions cover every open job; when they do, ATS × profession
