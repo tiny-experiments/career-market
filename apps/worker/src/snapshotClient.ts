@@ -1,11 +1,12 @@
 import type { Logger } from '@cm/core/logger';
 import type { z } from 'zod';
-import { KrillClient, type Params } from './krill/client.ts';
+import { KrillClient, type Params, type ReadOptions } from './krill/client.ts';
 import type { MirrorJob } from './mirror.ts';
 import type { KrillCompanyListing } from './krill/companyApi.ts';
 
 /** Reuse the complete snapshot for current facets and samples, rather than pull it again in thousands of slices. */
 export class SnapshotClient extends KrillClient {
+  private readonly valuesCache = new WeakMap<MirrorJob, Record<string, string[]>>();
   private readonly index = new Map<string, MirrorJob[]>();
   private readonly companies: Map<string, KrillCompanyListing>;
   private readonly answers = new Map<string, unknown>();
@@ -15,7 +16,7 @@ export class SnapshotClient extends KrillClient {
     this.companies = new Map(directory.map((company) => [company.id, company]));
     for (const job of jobs) {
       for (const [key, values] of Object.entries(this.values(job))) {
-        for (const value of new Set(values)) {
+        for (const value of values) {
           const indexKey = `${key}:${value}`;
           const list = this.index.get(indexKey);
           if (list) list.push(job); else this.index.set(indexKey, [job]);
@@ -25,10 +26,14 @@ export class SnapshotClient extends KrillClient {
   }
 
   private values(job: MirrorJob): Record<string, string[]> {
-    return { family: job.family ? [job.family] : [], specialty: job.specialty ? [job.specialty] : [],
+    const cached = this.valuesCache.get(job);
+    if (cached) return cached;
+    const values = { family: job.family ? [job.family] : [], specialty: job.specialty ? [job.specialty] : [],
       level: job.level ? [job.level] : [], workMode: job.workMode ? [job.workMode] : [],
-      ats: job.ats ? [job.ats] : [], company: [job.company.id], skill: job.skills,
-      language: job.languages, country: [...new Set(job.places.flatMap((p) => p.countryCode ? [p.countryCode] : []))] };
+      ats: job.ats ? [job.ats] : [], company: [job.company.id], skill: [...new Set(job.skills)],
+      language: [...new Set(job.languages)], country: [...new Set(job.places.flatMap((p) => p.countryCode ? [p.countryCode] : []))] };
+    this.valuesCache.set(job, values);
+    return values;
   }
 
   private filtered(params: Params): MirrorJob[] {
@@ -55,16 +60,18 @@ export class SnapshotClient extends KrillClient {
   }
 
   override async get<S extends z.ZodTypeAny>(pathname: string, params: Params, schema: S,
-    options: { cache?: boolean; acceptStatuses?: number[] } = {}): Promise<{ status: number; data: z.infer<S> }> {
-    const key = JSON.stringify([pathname, Object.entries(params).sort(([a], [b]) => a.localeCompare(b))]);
+    options: ReadOptions = {}): Promise<{ status: number; data: z.infer<S> }> {
+    const key = JSON.stringify([pathname, Object.entries(params).sort(([a], [b]) => a.localeCompare(b)), options.countOnly, options.facetDimensions]);
     let answer = this.answers.get(key);
     if (answer === undefined) {
       if (pathname === '/v1/facets') {
         const jobs = this.filtered(params);
         const counts = new Map<string, Map<string, number>>();
-        for (const job of jobs) for (const [name, values] of Object.entries(this.values(job))) {
+        const dimensions = options.countOnly ? [] : options.facetDimensions ?? ['family', 'specialty', 'level', 'workMode', 'ats', 'company', 'skill', 'language', 'country'];
+        for (const job of jobs) for (const name of dimensions) {
+          const values = this.values(job)[name] ?? [];
           const count = counts.get(name) ?? new Map<string, number>();
-          for (const value of new Set(values)) count.set(value, (count.get(value) ?? 0) + 1);
+          for (const value of values) count.set(value, (count.get(value) ?? 0) + 1);
           counts.set(name, count);
         }
         const facets = Object.fromEntries(['family', 'specialty', 'level', 'workMode', 'ats', 'company', 'skill', 'language', 'country'].map((name) => [name,

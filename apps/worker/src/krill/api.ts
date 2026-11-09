@@ -59,8 +59,8 @@ export class KrillApi {
     return items;
   }
 
-  async facets(params: Params): Promise<KrillFacets> {
-    return (await this.client.get('/v1/facets', params, facetsSchema)).data;
+  async facets(params: Params, facetDimensions?: string[]): Promise<KrillFacets> {
+    return (await this.client.get('/v1/facets', params, facetsSchema, { facetDimensions })).data;
   }
 
   /**
@@ -93,7 +93,7 @@ export class KrillApi {
   /** A facet total, or null when krill answers 500 for it. */
   private async tryTotal(params: Params): Promise<number | null> {
     try {
-      return (await this.client.get('/v1/facets', { ...params, limit: 1 }, facetsSchema)).data.total;
+      return (await this.client.get('/v1/facets', { ...params, limit: 1 }, facetsSchema, { countOnly: true })).data.total;
     } catch (err) {
       if (err instanceof KrillHttpError && err.status === 500) return null;
       throw err;

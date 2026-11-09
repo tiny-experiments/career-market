@@ -17,7 +17,7 @@ const setup = () => {
   let network = 0;
   const source = new KrillClient({ baseUrl: 'https://source.test', ratePerMinute: 500, logger: log, timeoutMs: 1000,
     fetchImpl: (async () => { network++; return new Response('{"description":"Full description"}'); }) as typeof fetch });
-  return { network: () => network, client: new SnapshotClient(source, [job('z'), job('a', { company: { id: 'co_bbbbbbbbbbbbbbbb', name: 'Bee' }, family: 'data', workMode: 'onsite',
+  return { network: () => network, client: new SnapshotClient(source, [job('z', { skills: ['lang:python', 'lang:python'] }), job('a', { company: { id: 'co_bbbbbbbbbbbbbbbb', name: 'Bee' }, family: 'data', workMode: 'onsite',
     firstSeenAt: '2026-11-08', postedAt: '2026-11-07T00:00:00Z', salary: { min: 100, max: 200, annualMin: 100, annualMax: 200, currency: 'USD', period: 'year' } })],
     [{ id: 'co_aaaaaaaaaaaaaaaa', name: 'Acme', domain: null, openJobs: 1, ats: [] }, { id: 'co_bbbbbbbbbbbbbbbb', name: 'Bee', domain: 'bee.test', openJobs: 1, ats: [] }], log) };
 };
@@ -28,9 +28,16 @@ describe('snapshot-derived current inputs', () => {
     const facets = (await client.get('/v1/facets', { skills: 'lang:python', limit: 100 }, facetsSchema)).data;
     expect(facets.total).toBe(2);
     expect(facets.facets.country).toEqual([{ value: 'US', count: 2 }]);
+    expect(facets.facets.skill).toEqual([{ value: 'lang:python', count: 2 }]);
     expect((await client.get('/v1/facets', { family: 'swe', postedSince: '1970-01-01' }, facetsSchema)).data.total).toBe(0);
     expect((await client.get('/v1/facets', { family: 'data', skills: 'lang:python', country: 'US', postedSince: '2026-11-07' }, facetsSchema)).data.total).toBe(1);
     expect(network()).toBe(0);
+  });
+  it('supports count-only and selected-dimension reads without polluting the full-facet cache', async () => {
+    const { client } = setup();
+    expect((await client.get('/v1/facets', {}, facetsSchema, { countOnly: true })).data).toMatchObject({ total: 2, facets: { family: [] } });
+    expect((await client.get('/v1/facets', {}, facetsSchema, { facetDimensions: ['family'] })).data.facets.family).toHaveLength(2);
+    expect((await client.get('/v1/facets', {}, facetsSchema)).data.facets.skill).toEqual([{ value: 'lang:python', count: 2 }]);
   });
   it('pages sorted jobs and applies salary and work-mode filters', async () => {
     const { client } = setup();

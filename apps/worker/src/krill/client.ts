@@ -31,6 +31,14 @@ export interface KrillClientOptions {
 
 export type Params = Record<string, string | number | undefined>;
 
+export interface ReadOptions {
+  cache?: boolean;
+  acceptStatuses?: number[];
+  /** Local snapshot projections; never added to the upstream URL. */
+  countOnly?: boolean;
+  facetDimensions?: string[];
+}
+
 interface CachedResponse {
   status: number;
   body: string;
@@ -84,7 +92,7 @@ export class KrillClient {
     pathname: string,
     params: Params,
     schema: S,
-    options: { cache?: boolean; acceptStatuses?: number[] } = {},
+    options: ReadOptions = {},
   ): Promise<{ status: number; data: z.infer<S> }> {
     const url = this.url(pathname, params);
     const accept = new Set([200, ...(options.acceptStatuses ?? [])]);

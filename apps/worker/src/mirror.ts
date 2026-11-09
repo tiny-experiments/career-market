@@ -22,7 +22,7 @@ export function mirrorRow(job: MirrorJob) {
     first_seen_at: job.firstSeenAt, last_seen_at: job.lastSeenAt, opened_source: job.openedSource,
     salary_min: job.salary?.annualMin ?? null, salary_max: job.salary?.annualMax ?? null,
     salary_currency: job.salary?.currency ?? null, repost_count: job.repostCount,
-    stale_score: job.staleScore, description: job.description ?? null,
+    stale_score: job.staleScore, description: job.description ?? null, description_present: job.description !== undefined,
   };
 }
 
@@ -41,8 +41,9 @@ export async function upsertJobs(tx: Sql, jobs: readonly MirrorJob[], stage = fa
         last_seen_at = excluded.last_seen_at, opened_source = excluded.opened_source,
         salary_min = excluded.salary_min, salary_max = excluded.salary_max, salary_currency = excluded.salary_currency,
         repost_count = excluded.repost_count, stale_score = excluded.stale_score,
-        description = coalesce(excluded.description, ${tx(table)}.description),
-        payload = excluded.payload || jsonb_build_object('description', coalesce(excluded.description, ${tx(table)}.description)), mirrored_at = now()`;
+        description = case when excluded.description_present then excluded.description else ${tx(table)}.description end,
+        description_present = excluded.description_present or ${tx(table)}.description_present,
+        payload = excluded.payload || jsonb_build_object('description', case when excluded.description_present then excluded.description else ${tx(table)}.description end), mirrored_at = now()`;
   }
 }
 
@@ -93,10 +94,12 @@ export async function refreshCounts(tx: Sql): Promise<void> {
 
 export async function promoteMirror(tx: Sql, snapshotDate: string, cursor: string, exportedAt?: string | null): Promise<void> {
   // Preserve descriptions fetched by sweeps when the upstream listing omits them.
-  await tx`update job_mirror_stage s set description = j.description from job_mirror j where s.id = j.id and s.description is null`;
-  await tx`update job_mirror_stage set payload = payload || jsonb_build_object('description', description)`;
-  await tx`delete from job_mirror`;
-  await tx`insert into job_mirror select * from job_mirror_stage`;
+  await tx`update job_mirror_stage s set description = j.description, description_present = true, payload = s.payload || jsonb_build_object('description', j.description)
+    from job_mirror j where s.id = j.id and not s.description_present and j.description_present`;
+  // Both tables carry the same indexes. Publishing swaps names instead of copying every indexed row.
+  await tx`alter table job_mirror rename to job_mirror_previous`;
+  await tx`alter table job_mirror_stage rename to job_mirror`;
+  await tx`alter table job_mirror_previous rename to job_mirror_stage`;
   await refreshCounts(tx);
   await tx`insert into worker_state(name, cursor, snapshot_date, exported_at)
     values ('changes', ${cursor}, ${snapshotDate}, ${exportedAt ?? null})

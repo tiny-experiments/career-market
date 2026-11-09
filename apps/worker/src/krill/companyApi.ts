@@ -147,7 +147,7 @@ export class KrillCompanyApi {
   /** Open roles of a company that match a filter; null when krill answers 500 for it (a known krill fault). */
   async total(id: string, filter: Params): Promise<number | null> {
     try {
-      return (await this.client.get('/v1/facets', { company: id, limit: 1, ...filter }, companyFacetsSchema)).data.total;
+      return (await this.client.get('/v1/facets', { company: id, limit: 1, ...filter }, companyFacetsSchema, { countOnly: true })).data.total;
     } catch (err) {
       if (err instanceof KrillHttpError && err.status === 500) return null;
       throw err;

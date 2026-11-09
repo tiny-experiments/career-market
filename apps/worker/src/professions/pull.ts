@@ -51,7 +51,7 @@ export async function pullProfessions(
   // Work mode per family (the main pull already fetched these facets: no new krill call).
   for (const family of families) {
     try {
-      const f = await api.facets({ family, limit: 300 });
+      const f = await api.facets({ family, limit: 300 }, ['workMode']);
       const mode = (v: string) => f.facets.workMode.find((x) => x.value === v)?.count ?? 0;
       out.workModes.set(family, { remote: mode('remote'), hybrid: mode('hybrid'), onsite: mode('onsite'), total: f.total });
     } catch (err) {
@@ -139,7 +139,7 @@ async function familyTotals(
   log: Logger,
 ): Promise<Map<string, number> | null> {
   try {
-    const f = await api.facets({ ...params, limit: 100 });
+    const f = await api.facets({ ...params, limit: 100 }, ['family']);
     return new Map(families.map((fam) => [fam, f.facets.family.find((x) => x.value === fam)?.count ?? 0]));
   } catch (err) {
     if (!(err instanceof KrillHttpError) || err.status !== 500) throw err;

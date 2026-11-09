@@ -85,6 +85,26 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated 
     expect(await stageMirror(sql, api, ['a'], ['swe', 'data'])).toBe(1);
     expect(partitions.sort()).toEqual(['data', 'swe']);
   });
+  it('keeps prepared readers and indexes correct across atomic table publication', async () => {
+    await upsertJobs(sql, [job('j1', { title: 'Before' })]);
+    await upsertJobs(sql, [job('j1', { title: 'After' })], true);
+    const reader = await sql.reserve();
+    const read = () => reader`select title from job_mirror where id = ${'j1'}`;
+    try {
+      expect((await read())[0]?.title).toBe('Before');
+      await sql.begin(async (tx) => { await promoteMirror(tx as unknown as Sql, '2026-11-09', 'cursor'); });
+      expect((await read())[0]?.title).toBe('After');
+      const [indexes] = await sql`select count(*)::int as n from pg_index where indrelid = 'job_mirror'::regclass`;
+      expect(indexes?.n).toBeGreaterThan(5);
+    } finally { reader.release(); }
+  });
+  it('distinguishes missing listing text from an explicit null in full job detail', async () => {
+    await upsertJobs(sql, [job()]);
+    await upsertJobs(sql, [job('j1', { description: undefined })]);
+    expect((await sql`select description from job_mirror`)[0]?.description).toBe('Build useful software.');
+    await upsertJobs(sql, [job('j1', { description: null })]);
+    expect((await sql`select description, description_present from job_mirror`)[0]).toMatchObject({ description: null, description_present: true });
+  });
   it('applies opened, updated, closed and reopened with replay-safe counters', async () => {
     const open = apiWith(() => job());
     await applyChangePage(sql, open, page('opened'), 'start');

@@ -31,6 +31,7 @@ create table job_mirror (
   repost_count integer not null,
   stale_score double precision,
   description text,
+  description_present boolean not null default false,
   payload jsonb not null,
   mirrored_at timestamptz not null default now()
 );
@@ -48,8 +49,7 @@ create extension if not exists pg_trgm;
 create index job_mirror_company_name_idx on job_mirror using gin(lower(company_name) gin_trgm_ops);
 
 -- Staging is persistent, but never read by the API; failed builds leave the previous mirror intact.
-create table job_mirror_stage (like job_mirror including defaults including constraints);
-alter table job_mirror_stage add primary key (id);
+create table job_mirror_stage (like job_mirror including all);
 
 create table worker_change (
   event_key text primary key,

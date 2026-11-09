@@ -66,7 +66,7 @@ export async function pull(api: KrillApi, meta: Pulled['meta'], plan: PullPlan, 
   const failedFamilies: string[] = [];
   await concurrentMap(families, async (family) => {
     try {
-      const f = await api.facets({ family, limit: plan.skillsPerFamily });
+      const f = await api.facets({ family, limit: plan.skillsPerFamily }, ['skill']);
       familySkills.set(family, { total: f.total, skills: f.facets.skill });
     } catch (err) {
       if (!(err instanceof KrillHttpError) || err.status !== 500) throw err;

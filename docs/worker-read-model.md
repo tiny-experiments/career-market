@@ -13,7 +13,9 @@ the SPA or the public read API.
   `countries`, `locations`, `work_mode`, `remote`, `employment_type`, `posted_at`,
   `opened_at`, `first_seen_at`, `last_seen_at`, `opened_source`, `salary_min`,
   `salary_max`, `salary_currency`, `repost_count`, `stale_score`, `description`,
-  `payload`, `mirrored_at` are the SQL column names. Pay is annualized.
+  `description_present`, `payload`, `mirrored_at` are the SQL column names.
+  `description_present` distinguishes a missing listing field from full detail
+  that explicitly has no text. Pay is annualized.
 - `job_mirror_stage`: worker-only staging; never query this from an API route.
 - `worker_state`: `name='changes'`, opaque `cursor`, last built `snapshot_date`
   and `exported_at`. Cursor and applied jobs commit in the same transaction.
@@ -48,7 +50,9 @@ whole-ATS pulls, retaining unclassified jobs. The same snapshot supplies
 current facets, age cuts and salary samples locally, avoiding thousands of
 redundant network requests. Historical statistics and closing samples retain
 the original upstream inputs and compute functions. Snapshot publication and
-all derived tables are one database transaction. A session advisory lock
+all derived tables are one database transaction. Both mirror tables carry the
+same indexes; publication swaps their names atomically instead of copying the
+whole indexed inventory. No other table holds foreign keys to either mirror. A session advisory lock
 serializes builds and sweeps across worker processes without holding a long
 transaction during network calls.
 

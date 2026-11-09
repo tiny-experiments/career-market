@@ -69,7 +69,7 @@ export class SkillKrill {
   /** Facets for a filter, or null when krill answers 500 for it (a known krill bug on some filters). */
   async facets(params: Params): Promise<SkillFacets | null> {
     try {
-      return (await this.api.client.get('/v1/facets', { limit: 20, ...params }, skillFacetsSchema)).data;
+      return (await this.api.client.get('/v1/facets', { limit: 20, ...params }, skillFacetsSchema, { facetDimensions: params.postedSince ? ['family'] : ['family', 'skill', 'company'] })).data;
     } catch (err) {
       if (err instanceof KrillHttpError && err.status === 500) return null;
       throw err;
