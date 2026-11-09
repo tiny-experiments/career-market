@@ -28,7 +28,7 @@ export function growingItems(rows: readonly SkillIndexRow[]): RankedItem[] {
         values={row.spark}
         width={56}
         height={22}
-        className="hidden sm:block"
+        className="hidden xl:block"
       />
     ),
   }));

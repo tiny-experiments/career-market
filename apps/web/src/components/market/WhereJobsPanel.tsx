@@ -75,7 +75,6 @@ export function WhereJobsPanel({
           rows={rows}
           rowKey={(row) => row.code}
           rowHref={(row) => `/jobs?country=${row.code}`}
-          rowLabel={(row) => `Jobs in ${row.name}`}
           linkColumn="name"
           onRowHover={(row) => setHovered(row?.code ?? null)}
         />

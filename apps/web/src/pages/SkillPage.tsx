@@ -20,6 +20,7 @@ import {
   PAGES,
   rankByOpenRoles,
   seeAll,
+  sentence,
   shareOf,
   skillPage as skillCopy,
 } from "@/content";
@@ -43,7 +44,7 @@ function roleRow(role: SkillPagePayload["latestRoles"][number]): RoleRow {
     pay: role.salary
       ? formatMoneyRange(role.salary.min, role.salary.max, role.salary.currency)
       : null,
-    posted: formatRelativeDays(role.ageDays),
+    posted: sentence(formatRelativeDays(role.ageDays)),
     href: `/jobs/${role.id}`,
   };
 }

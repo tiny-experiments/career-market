@@ -39,7 +39,7 @@ describe("CompanyPage", () => {
     expect(job).toHaveAttribute("href", "/jobs/kr_open12");
     expect(
       screen.getByRole("link", { name: "See all jobs at Stripe" }),
-    ).toHaveAttribute("href", "/jobs?company=stripe");
+    ).toHaveAttribute("href", "/jobs?company=Stripe");
 
     const outbound = screen
       .getAllByRole("link")

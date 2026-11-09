@@ -8,6 +8,7 @@ import { TablePanel } from "@/components/data/TablePanel";
 import { ChangeCell } from "@/components/market/ChangeCell";
 import { Button } from "@/components/ui/button";
 import type { ProfessionPage } from "@/lib/api";
+import { skillDomain } from "@cm/core/skills";
 import { formatCount, formatRelativeDays, formatShare } from "@/lib/format";
 import { METRICS, NO_FIGURE, seeAll, sentence, WINDOW_HEADER } from "@/content";
 
@@ -81,7 +82,12 @@ const skillColumns = (withChange: boolean): Column<SkillRow>[] => [
     header: "Skill",
     cell: (row) => (
       <span className="flex items-center gap-3">
-        <Logo name={row.label} shape="square" size="sm" />
+        <Logo
+          name={row.label}
+          domain={skillDomain(row.id)}
+          shape="square"
+          size="sm"
+        />
         <span className="truncate font-bold">{row.label}</span>
       </span>
     ),
@@ -181,7 +187,6 @@ export function ProfessionTables({ page }: { readonly page: ProfessionPage }) {
                 ? `/companies/${row.slug}`
                 : `/jobs?company=${encodeURIComponent(row.name)}`
             }
-            rowLabel={(row) => row.name}
             linkColumn="name"
           />
         </TablePanel>
@@ -194,7 +199,6 @@ export function ProfessionTables({ page }: { readonly page: ProfessionPage }) {
             rows={page.skills}
             rowKey={(row) => row.id}
             rowHref={(row) => `/skills/${row.slug}`}
-            rowLabel={(row) => row.label}
             linkColumn="name"
           />
         </TablePanel>
@@ -217,7 +221,6 @@ export function ProfessionTables({ page }: { readonly page: ProfessionPage }) {
             rows={page.latestRoles}
             rowKey={(row) => row.id}
             rowHref={(row) => `/jobs/${row.id}`}
-            rowLabel={(row) => `${row.title} at ${row.company}`}
             linkColumn="title"
           />
         </TablePanel>

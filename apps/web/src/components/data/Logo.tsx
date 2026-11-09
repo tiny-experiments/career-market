@@ -72,6 +72,7 @@ export function Logo({
     <Avatar
       size={SIZE[size]}
       data-shape={shape}
+      aria-hidden="true"
       className={cn("bg-tile", radius, className)}
     >
       <AvatarFallback

@@ -31,6 +31,7 @@ import {
   rankByOpenRoles,
   seeAll,
   seeAllAt,
+  sentence,
   SIGNALS,
 } from "@/content";
 import { useResource } from "@/hooks";
@@ -58,7 +59,10 @@ function roleRow(job: JobListItem): RoleRow {
     workMode: job.workMode,
     level: job.level,
     pay: formatListedPay(job.salary),
-    posted: job.ageDays === null ? NO_FIGURE : formatRelativeDays(job.ageDays),
+    posted:
+      job.ageDays === null
+        ? NO_FIGURE
+        : sentence(formatRelativeDays(job.ageDays)),
     href: job.href,
   };
 }
@@ -181,7 +185,7 @@ function CompanyBody({
         title={DIRECTORY_COPY.openRolesTable}
         action={
           <Link
-            to={`/jobs?company=${encodeURIComponent(page.company.slug)}`}
+            to={`/jobs?company=${encodeURIComponent(name)}`}
             aria-label={seeAllAt(name)}
             className="rounded-sm text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
           >

@@ -42,7 +42,9 @@ describe("SearchBox", () => {
   it("asks for a query before anything is typed", async () => {
     const user = userEvent.setup();
     renderWithRouter(<SearchBox />);
-    await user.click(screen.getByRole("button", { name: "Search" }));
+    await user.click(
+      screen.getByRole("button", { name: /^Search professions/ }),
+    );
     expect(
       await screen.findByText(
         "Start typing to search professions, companies, skills and jobs.",

@@ -52,25 +52,30 @@ export function CompaniesRampingCard({
         onNext: () => setPage((p) => Math.min(pageCount, p + 1)),
       }}
     >
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {SIGNALS.map(({ signal, label, tone }) => (
-          <Link
-            key={signal}
-            to={`/companies?signal=${signal}`}
-            className="flex flex-col gap-1 rounded-lg bg-tile px-3 py-2.5 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span className="inline-flex items-center gap-1 truncate text-eyebrow font-semibold text-muted-foreground">
-              {label}
-              {signal === "ramping" ? (
-                <MetricHoverCard title={METRICS.signal.title}>
-                  {METRICS.signal.text}
-                </MetricHoverCard>
-              ) : null}
-            </span>
-            <span className={cn("text-sm font-bold", tone)}>
-              {formatCount(market.signalCounts[signal])}
-            </span>
-          </Link>
+          // The (i) sits beside the link, never inside it: one control per tile.
+          <div key={signal} className="relative">
+            <Link
+              to={`/companies?signal=${signal}`}
+              className="flex flex-col gap-1 rounded-lg bg-tile px-3 py-2.5 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="truncate text-eyebrow font-semibold text-muted-foreground">
+                {label}
+              </span>
+              <span className={cn("text-sm font-bold", tone)}>
+                {formatCount(market.signalCounts[signal])}
+              </span>
+            </Link>
+            {signal === "ramping" ? (
+              <MetricHoverCard
+                title={METRICS.hiringSignals.title}
+                className="absolute top-2 right-2"
+              >
+                {METRICS.hiringSignals.text}
+              </MetricHoverCard>
+            ) : null}
+          </div>
         ))}
       </div>
       {rows.length === 0 ? (

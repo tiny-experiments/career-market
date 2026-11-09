@@ -43,8 +43,8 @@ export function MarketStatusCard({
         <div className="col-span-6 row-span-2 flex flex-col items-center justify-center gap-1 rounded-lg bg-tile px-2 py-3 text-center sm:col-span-2">
           <span className="inline-flex items-center gap-1.5 text-eyebrow font-semibold text-muted-foreground">
             {MARKET_COPY.hiringIndex}
-            <MetricHoverCard title={MARKET_COPY.hiringIndex}>
-              {METRICS.openRoles.text}
+            <MetricHoverCard title={METRICS.hiringIndex.title}>
+              {METRICS.hiringIndex.text}
             </MetricHoverCard>
           </span>
           <Gauge

@@ -133,7 +133,9 @@ apps/web/src/
 - **Presentational by default.** Components take data and callbacks; fetching lives in hooks and pages.
 - **`asChild`** for composition (`<Button asChild><Link/></Button>`).
 - Every reusable component accepts `className` and merges it with `cn()`.
-- Interactive elements have a visible focus ring (the primary ring) and an accessible name.
+- Interactive elements have a visible focus ring (the primary ring), an accessible name that contains their visible text, and a hit area of at least 24 px (`MetricHoverCard`'s (i) grows its own with a negative margin).
+- Never nest one control in another: a hover trigger sits beside a link, not inside it.
+- `index.css` ends with a `prefers-reduced-motion` rule that settles every transition and animation at once; nothing needs its own.
 - **Never write `cursor-pointer` by hand.** The base rule in `index.css` gives the hand to every enabled control by role.
 
 ### When to use which
@@ -186,7 +188,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **A series is one solid line.** No estimated-history styling and no caveat sentence under the chart.
 - **Pay is a range**, `$144K–$157K`, and its method ("the middle half of listed pay for senior roles in the United States") is a hover card. No "estimated base pay" labels.
 - **Whole figures with separators** (`99,923`), **percentages with one decimal** for changes and none for shares, **units after numbers** (`38 days`).
-- **The row is the link.** A name in a table is bold text inside the row link, never a bare blue link. A job row opens our job page; the only outbound link on the site is the apply button.
+- **The row is the link.** A name in a table is bold text inside the row link, never a bare blue link. The link is named by what it shows (no `aria-label` that drops the visible words), and a `Logo` is hidden from assistive tech because the name beside it does the naming. A job row opens our job page; the only outbound link on the site is the apply button.
 - **Links say where they go in words**: "See all 1,240 jobs", not "See all rows in screener".
 - **Empty states say what to do**: "No jobs match these filters. Try widening the region." **Error states say what broke and offer a retry**: "Companies could not be loaded." Never an API code.
 - **Every status carries a word**, never a bare coloured dot.
@@ -214,3 +216,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **2026-11-09** — `/design` is development builds only; a series is one solid line (estimated-history styling removed).
 - **2026-11-09** — Copy module `src/content` (hover-card sentences, comparison phrasing, page titles and meta, states, About, footer line); time and money formatters in `lib/format.ts`; `check:ui` gains the retired-word rule.
 - **2026-11-09** — Companies and Skills pages: `BreakdownList`, `ChangeCell`, `ListSearch`, `PagedRankedCard`, `RolesTable`, and `DataTable`'s `inset` for tables inside cards.
+- **2026-11-09** — Final review: AA contrast for `muted-foreground`, `up`, `down`, `warn` in both themes; reduced-motion rule; row links named by their content and `Logo` decorative; 24 px hover-card triggers; `PageSkeleton` `market` variant; ranked-card sparklines only from `xl`; Jobs company links carry the company's name.

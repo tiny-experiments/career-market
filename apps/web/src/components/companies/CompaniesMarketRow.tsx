@@ -22,7 +22,7 @@ function ranked(movers: readonly CompanyMover[]): RankedItem[] {
         values={mover.spark}
         width={56}
         height={22}
-        className="hidden sm:block"
+        className="hidden xl:block"
       />
     ),
     to: `/companies/${mover.slug}`,

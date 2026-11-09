@@ -29,8 +29,9 @@ function title(text: string, hint: { title: string; text: string }) {
   );
 }
 
-function jobsAt(slug: string, filter: string): string {
-  return `/jobs?company=${encodeURIComponent(slug)}&${filter}`;
+/** The Jobs page filtered to this company; the name, so the filter chip reads as the company does. */
+function jobsAt(company: string, filter: string): string {
+  return `/jobs?company=${encodeURIComponent(company)}&${filter}`;
 }
 
 /** What a company is hiring for, at what level and where: three panels on one row. */
@@ -41,7 +42,7 @@ export function CompanyBreakdowns({
   readonly page: CompanyPage;
   readonly facets: CompanyFacets;
 }) {
-  const slug = page.company.slug;
+  const slug = page.company.name;
   const teams = new Map(page.teams.map((team) => [team.family, team]));
   const families: BreakdownItem[] = facets.families
     .slice(0, SHOWN)

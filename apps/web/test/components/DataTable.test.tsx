@@ -35,7 +35,6 @@ describe("DataTable", () => {
         rows={ROWS}
         rowKey={(row) => row.code}
         rowHref={(row) => `/professions/${row.code}`}
-        rowLabel={(row) => row.name}
       />,
     );
     const link = screen.getByRole("link", { name: "Software" });
@@ -57,7 +56,6 @@ describe("DataTable", () => {
         rows={ROWS}
         rowKey={(row) => row.code}
         rowHref={(row) => `/professions/${row.code}`}
-        rowLabel={(row) => row.name}
         linkColumn="name"
       />,
     );

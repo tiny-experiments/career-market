@@ -69,7 +69,7 @@ export function ProfessionsPage() {
       />
       <ResourceView
         state={professions}
-        skeleton={<PageSkeleton withHeader={false} />}
+        skeleton={<PageSkeleton variant="market" withHeader={false} />}
         errorTitle={ERROR.professions.title}
       >
         {({ rows }) => (

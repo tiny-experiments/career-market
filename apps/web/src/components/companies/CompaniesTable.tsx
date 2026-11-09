@@ -131,7 +131,6 @@ export function CompaniesTable({
       rows={rows}
       rowKey={(row) => row.slug}
       rowHref={(row) => `/companies/${row.slug}`}
-      rowLabel={(row) => row.name}
       linkColumn="name"
       sort={sort}
       onSort={onSort}

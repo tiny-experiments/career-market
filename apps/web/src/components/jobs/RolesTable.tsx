@@ -116,7 +116,6 @@ export function RolesTable({
       rows={roles}
       rowKey={(role) => role.id}
       rowHref={(role) => role.href}
-      rowLabel={(role) => role.title}
       caption={caption}
       inset="card"
     />

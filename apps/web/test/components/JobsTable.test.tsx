@@ -18,7 +18,7 @@ describe("JobsTable", () => {
   it("opens our own job page from the row, and offers no way off the site", () => {
     show();
     const link = screen.getByRole("link", {
-      name: "Staff Engineer at Stripe",
+      name: /Staff Engineer/,
     });
     expect(link).toHaveAttribute("href", "/jobs/kr_open12");
     expect(screen.getAllByRole("link")).toHaveLength(1);
