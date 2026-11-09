@@ -101,6 +101,10 @@ export interface CompanyPage {
   unclearOn: IsoDay | null;
   /** Peers are not in v1; always the coming-soon state. */
   peers: Unavailable;
+  change7d: Change | null;
+  change30d: Change | null;
+  /** null until the company's roles have been counted. */
+  facets: CompanyFacets | null;
 }
 
 export interface CompanyJob {
@@ -131,6 +135,40 @@ export interface CompanyMover {
 export interface CompanyDirectoryRow extends CompanyMover {
   rank: number;
   state: CompanySignalState | null;
+  /** Change of open roles over 30 days. */
+  change30d: Change | null;
+  /** The profession with the most of this company's open roles. */
+  topProfession: { family: string; name: string } | null;
+  /** Remote roles among those that state a work mode; null when none state one. */
+  remoteShare: number | null;
+}
+
+/** How many companies carry each signal, and who is moving most this week. */
+export interface CompanySignalsOverview {
+  counts: Record<CompanySignalState, number>;
+  ramping: CompanyMover[];
+  cooling: CompanyMover[];
+}
+
+/** One skill among a company's open roles. */
+export interface CompanySkillCount extends CountValue {
+  /** null when the skill has no page of its own. */
+  slug: string | null;
+  domain: string | null;
+}
+
+/** Every company's open roles, by what they are and where. */
+export interface CompanyFacets {
+  open: number;
+  remoteShare: number | null;
+  families: CountValue[];
+  levels: CountValue[];
+  countries: (CountValue & { code: string })[];
+  workModes: CountValue[];
+  skills: CompanySkillCount[];
+  medianDaysOpen: number | null;
+  /** The middle half of listed USD pay; null with too few roles listing it. */
+  pay: { roles: number; low: number; median: number; high: number } | null;
 }
 
 /** Said under the chart while no comparable day exists. */

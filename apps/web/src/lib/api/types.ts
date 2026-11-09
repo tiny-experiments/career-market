@@ -6,12 +6,23 @@
 import type { KrillJob } from "@cm/core/krillJob";
 import type { SearchResults, RoleHit } from "@cm/core/screener";
 
-export type { CompanyDirectoryRow, CompanyPage } from "@cm/core/company";
+export type {
+  CompanyDirectoryRow,
+  CompanyFacets,
+  CompanyMover,
+  CompanyPage,
+  CompanySignalsOverview,
+  CompanySignalState,
+} from "@cm/core/company";
 export type { ClosedJobPayload, JobPagePayload } from "@cm/core/job";
 export type { ProfessionIndex, ProfessionPage } from "@cm/core/professions";
 export type { RoleHit, SearchHit, SearchResults } from "@cm/core/screener";
-export type { SkillIndexPayload, SkillPagePayload } from "@cm/core/skills";
-export type { ChromePayload, MarketOverview } from "@cm/core/types";
+export type {
+  SkillIndexPayload,
+  SkillIndexRow,
+  SkillPagePayload,
+} from "@cm/core/skills";
+export type { Change, ChromePayload, MarketOverview } from "@cm/core/types";
 
 export interface PageQuery {
   readonly page: number;

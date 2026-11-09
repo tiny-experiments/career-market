@@ -29,17 +29,17 @@ The bar is CoinMarketCap, TradingView, Apple: full width, breathing room, bold w
 
 Inter (variable, self-hosted) for everything; Geist Mono for codes (`SWE`, `AIML`) and formulas. Tabular figures are on for the whole body, so columns never jitter.
 
-| Role        | Size / line | Weight | Tailwind                                             | Where                                  |
-| ----------- | ----------- | ------ | ---------------------------------------------------- | -------------------------------------- |
-| Display     | 38 / 42     | 800    | `text-display font-extrabold`                        | the headline figure on a detail page   |
-| H1          | 26 / 32     | 800    | `text-h1 font-extrabold`                             | page and section titles                |
-| H2          | 18 / 24     | 700    | `text-h2 font-bold`                                  | card and panel titles                  |
-| Body        | 15 / 22     | 400    | `text-body`                                          | prose, descriptions                    |
-| Table       | 14 / 20     | 500    | `text-sm font-medium`                                | table cells, list rows                 |
-| Name        | 14 / 20     | 700    | `text-sm font-bold`                                  | the name in a row                      |
-| Small       | 13 / 18     | 400    | `text-small`                                         | secondary lines, footer                |
-| Label       | 12 / 16     | 600    | `text-eyebrow font-semibold text-muted-foreground`   | tile labels, table headers             |
-| Code / mono | 12 / 16     | 600    | `font-mono text-eyebrow font-semibold`               | ticker codes, formulas                 |
+| Role        | Size / line | Weight | Tailwind                                           | Where                                |
+| ----------- | ----------- | ------ | -------------------------------------------------- | ------------------------------------ |
+| Display     | 38 / 42     | 800    | `text-display font-extrabold`                      | the headline figure on a detail page |
+| H1          | 26 / 32     | 800    | `text-h1 font-extrabold`                           | page and section titles              |
+| H2          | 18 / 24     | 700    | `text-h2 font-bold`                                | card and panel titles                |
+| Body        | 15 / 22     | 400    | `text-body`                                        | prose, descriptions                  |
+| Table       | 14 / 20     | 500    | `text-sm font-medium`                              | table cells, list rows               |
+| Name        | 14 / 20     | 700    | `text-sm font-bold`                                | the name in a row                    |
+| Small       | 13 / 18     | 400    | `text-small`                                       | secondary lines, footer              |
+| Label       | 12 / 16     | 600    | `text-eyebrow font-semibold text-muted-foreground` | tile labels, table headers           |
+| Code / mono | 12 / 16     | 600    | `font-mono text-eyebrow font-semibold`             | ticker codes, formulas               |
 
 Rules:
 
@@ -58,17 +58,17 @@ Rules:
 
 ## 4. Layout
 
-| Token             | Value   | Class                 | Use                                            |
-| ----------------- | ------- | --------------------- | ---------------------------------------------- |
-| `--container-page`| 1920 px | `max-w-page`          | the fluid page column                          |
-| `--spacing-gutter`| 24 px   | `px-gutter`           | page gutters at every width                    |
-| `--spacing-nav`   | 56 px   | `h-nav`               | the top bar                                    |
-| `--spacing-subbar`| 46 px   | `h-subbar`            | the section's view tabs under the top bar      |
-| `--spacing-row`   | 52 px   | `h-row`               | a table row                                    |
-| `--spacing-row-compact` | 40 px | `h-row-compact`     | a list row inside a card                       |
-| `--spacing-control` | 32 px | `h-control`           | every toolbar control (buttons, selects, chips) |
-| `--spacing-rail`  | 320 px  | `w-rail`              | a detail page's sticky side rail               |
-| `--spacing-spark` | 120 × 34| `w-spark h-spark-h`   | a sparkline                                    |
+| Token                   | Value    | Class               | Use                                             |
+| ----------------------- | -------- | ------------------- | ----------------------------------------------- |
+| `--container-page`      | 1920 px  | `max-w-page`        | the fluid page column                           |
+| `--spacing-gutter`      | 24 px    | `px-gutter`         | page gutters at every width                     |
+| `--spacing-nav`         | 56 px    | `h-nav`             | the top bar                                     |
+| `--spacing-subbar`      | 46 px    | `h-subbar`          | the section's view tabs under the top bar       |
+| `--spacing-row`         | 52 px    | `h-row`             | a table row                                     |
+| `--spacing-row-compact` | 40 px    | `h-row-compact`     | a list row inside a card                        |
+| `--spacing-control`     | 32 px    | `h-control`         | every toolbar control (buttons, selects, chips) |
+| `--spacing-rail`        | 320 px   | `w-rail`            | a detail page's sticky side rail                |
+| `--spacing-spark`       | 120 × 34 | `w-spark h-spark-h` | a sparkline                                     |
 
 - **Fluid to 1920 px.** No 1600 px cap, no centred narrow column. Tables run edge to edge of the column (`-mx-gutter` when inside a padded container).
 - **Nav and sub-bar are one sticky unit** (`SiteHeader`). The sub-bar comes from the route's `handle.subBar`; a page never draws its own.
@@ -79,13 +79,13 @@ Rules:
 
 ## 5. Shape and elevation
 
-| Class          | Size  | Use                                     |
-| -------------- | ----- | --------------------------------------- |
-| `rounded-sm`   | 4 px  | checkboxes, kbd, focus rings            |
-| `rounded-md`   | 6 px  | small controls                          |
-| `rounded-lg`   | 8 px  | controls, tiles, inputs                 |
-| `rounded-xl`   | 12 px | cards, hover cards, dialogs             |
-| `rounded-full` |       | pills, logos, dots                      |
+| Class          | Size  | Use                          |
+| -------------- | ----- | ---------------------------- |
+| `rounded-sm`   | 4 px  | checkboxes, kbd, focus rings |
+| `rounded-md`   | 6 px  | small controls               |
+| `rounded-lg`   | 8 px  | controls, tiles, inputs      |
+| `rounded-xl`   | 12 px | cards, hover cards, dialogs  |
+| `rounded-full` |       | pills, logos, dots           |
 
 Elevation is one token, two themes:
 
@@ -101,14 +101,16 @@ apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
     layout/    SiteHeader, TopNav, SubBar, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
-    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs
+    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard
     market/    the Market and Professions pieces: MarketStatusCard, ProfessionListCard, CompaniesRampingCard, ProfessionsTable, WhereJobsPanel, WorldMap
     professions/  the profession detail page: ProfessionHeader, ProfessionChartPanel, ProfessionPanels, ProfessionTables
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
-    jobs/      VerdictCard (and the job page's parts to come)
+    jobs/      VerdictCard, RolesTable (and the job page's parts to come)
+    companies/ the Companies and Company pages' tables, market cards and panels
+    skills/    the Skills and Skill pages' tables, market cards and panels
   content/     every customer-facing sentence: metrics (hover cards), phrasing, site (titles, About, footer), states
-  hooks/       useResource, usePagedList, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
-  lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, redirects, prefetch
+  hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
+  lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, skillViews, redirects, prefetch
   lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
   layouts/     RootLayout
   pages/       route components: assembly only. pages/design holds the /design chapters.
@@ -136,30 +138,31 @@ apps/web/src/
 
 ### When to use which
 
-| Need                                           | Use                                                        |
-| ---------------------------------------------- | ---------------------------------------------------------- |
-| Move between the five sections                 | `TopNav` (from `SECTIONS`); never add a sixth              |
-| Switch a section's view (Gaining, Remote…)     | the route's `handle.subBar` → `SubBar`; the view is a query parameter |
-| Tabs inside a page (Chart · Companies · Skills)| `Tabs` with `TabsList variant="underline"`                 |
-| A chart's range (1W 1M 3M 1Y All)              | `RangeTabs` (segmented)                                    |
-| Filter a table above it                        | `Chip` row; the chosen chip is the one blue tint           |
-| A filter rail's controls                       | `Input`, `Select`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Switch` |
-| A ranked list of things with their change      | `DataTable` (full width, 52 px rows) or `RankedList` inside a card |
-| Many pages of rows                             | `Pager`, 50 a page, every control a link                   |
-| A home-page door into a section                | `MarketCard` (header is the link, optional pager)          |
-| A section of a detail page                     | `Panel`                                                    |
-| A full-width table on a detail page            | `TablePanel` around a `DataTable`                          |
-| The parts of something, with a bar each        | `BreakdownList`                                            |
-| A fact on a detail page's rail                 | `StatCard`                                                 |
-| A small fact inside a market card              | `KpiTile`                                                  |
-| A change                                       | `Delta` (text in a cell, pill beside a headline)           |
-| A company's hiring signal                      | `SignalBadge`                                              |
-| A share of a whole                             | `ShareBar` under the percentage; `SegmentBar` for parts    |
-| Explain what a figure means                    | `MetricHoverCard` (the only explanation surface)           |
-| Name an icon                                   | `Tooltip`                                                  |
-| A company, skill or profession mark            | `Logo` (round for companies, square for the rest)          |
-| Nothing to show / something broke / loading    | `EmptyState` / `ErrorState` / `Skeleton` rows              |
-| A job's read                                   | `VerdictCard` first, one `Button size="lg"` to apply       |
+| Need                                            | Use                                                                   |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
+| Move between the five sections                  | `TopNav` (from `SECTIONS`); never add a sixth                         |
+| Switch a section's view (Gaining, Remote…)      | the route's `handle.subBar` → `SubBar`; the view is a query parameter |
+| Tabs inside a page (Chart · Companies · Skills) | `Tabs` with `TabsList variant="underline"`                            |
+| A chart's range (1W 1M 3M 1Y All)               | `RangeTabs` (segmented)                                               |
+| Filter a table above it                         | `Chip` row; the chosen chip is the one blue tint                      |
+| A filter rail's controls                        | `Input`, `Select`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Switch`  |
+| A change that may not exist yet in a table cell | `ChangeCell` (the figure, or a quiet dash)                            |
+| A ranked list of things with their change       | `DataTable` (full width, 52 px rows) or `RankedList` inside a card    |
+| Many pages of rows                              | `Pager`, 50 a page, every control a link                              |
+| A home-page door into a section                 | `MarketCard` (header is the link, optional pager)                     |
+| A section of a detail page                      | `Panel`                                                               |
+| A full-width table on a detail page             | `TablePanel` around a `DataTable`                                     |
+| The parts of something, with a bar each         | `BreakdownList`                                                       |
+| A fact on a detail page's rail                  | `StatCard`                                                            |
+| A small fact inside a market card               | `KpiTile`                                                             |
+| A change                                        | `Delta` (text in a cell, pill beside a headline)                      |
+| A company's hiring signal                       | `SignalBadge`                                                         |
+| A share of a whole                              | `ShareBar` under the percentage; `SegmentBar` for parts               |
+| Explain what a figure means                     | `MetricHoverCard` (the only explanation surface)                      |
+| Name an icon                                    | `Tooltip`                                                             |
+| A company, skill or profession mark             | `Logo` (round for companies, square for the rest)                     |
+| Nothing to show / something broke / loading     | `EmptyState` / `ErrorState` / `Skeleton` rows                         |
+| A job's read                                    | `VerdictCard` first, one `Button size="lg"` to apply                  |
 
 ## 8. Using shadcn
 
@@ -177,6 +180,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **A change is a caret, a number and the comparison in words**: `▲ 1.3% this week`. Never a date as a qualifier ("since 3 Nov"), never an asterisk, never a footnote.
 - **The method lives in the hover card, in one sentence, about what the number is**: "How much open roles have grown or shrunk compared with a week ago." Never a formula, never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
 - **No timestamps in the chrome.** No "Updated 06:14 UTC", no "as of", no refresh rhythm. The footer's line is the only sentence about freshness.
+- **A change names a real window.** A 7-day or 30-day figure shows only once its window nearly covers that span (`fullWindow` in `@cm/core/changes`); until then the cell is a dash.
 - **Never state the total number of companies.** Per-profession and per-signal counts are fine; a grand total is not.
 - **A series is one solid line.** No estimated-history styling and no caveat sentence under the chart.
 - **Pay is a range**, `$144K–$157K`, and its method ("the middle half of listed pay for senior roles in the United States") is a hover card. No "estimated base pay" labels.
@@ -207,3 +211,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **2026-11-09** — Market and Professions pages. `AreaChart` follows the pointer when given `formatValue`; `RankedList` has a `comfortable` density and an optional `trend`; `DataTable` reports row hover; sub-bar tabs carry `region` along.
 - **2026-11-09** — `/design` is development builds only; a series is one solid line (estimated-history styling removed).
 - **2026-11-09** — Copy module `src/content` (hover-card sentences, comparison phrasing, page titles and meta, states, About, footer line); time and money formatters in `lib/format.ts`; `check:ui` gains the retired-word rule.
+- **2026-11-09** — Companies and Skills pages: `BreakdownList`, `ChangeCell`, `ListSearch`, `PagedRankedCard`, `RolesTable`, and `DataTable`'s `inset` for tables inside cards.

@@ -29,6 +29,7 @@ import { writeNotes } from './compute/notes.ts';
 import { planCompanyDays, pullCompanies, type CompanyPlan, type CompanyPull } from './companies/pull.ts';
 import { computeCompanyTables, writeCompanyInputs } from './companies/write.ts';
 import { KrillCompanyApi } from './krill/companyApi.ts';
+import { applyCompanyNames } from './logos/names.ts';
 import { applyCompanyDomains } from './logos/resolve.ts';
 import { payBandRows, pullPayBands } from './payBands.ts';
 import { computeProfessions, writeProfessionInputs } from './professions/build.ts';
@@ -134,6 +135,7 @@ async function buildUnlocked(deps: BuildDeps, options: BuildOptions): Promise<Bu
       await tx`insert into job_counter_daily(date, new_today, closed_today) values (${T}, ${today?.new ?? 0}, ${today?.closed ?? 0}) on conflict(date) do nothing`;
       const screenerStats = await writeScreener(tx as unknown as Sql, screener, T, log);
       await applyCompanyDomains(tx as unknown as Sql);
+      await applyCompanyNames(tx as unknown as Sql);
       return { ...market, ...profession, ...company, ...skills, paySamples: pay.samples, payBands: pay.bands.length, ...screenerStats };
     });
     const finalStats = { ...stats, mirrorJobs, durationMs: Date.now() - started, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };

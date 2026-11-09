@@ -102,6 +102,7 @@ export async function promoteMirror(tx: Sql, snapshotDate: string, cursor: strin
   await tx`alter table job_mirror_stage rename to job_mirror`;
   await tx`alter table job_mirror_previous rename to job_mirror_stage`;
   await refreshCounts(tx);
+  await tx`select refresh_market_facets()`;
   await tx`delete from job_description_retry r where not exists(select 1 from job_mirror j where j.id = r.job_id)`;
   await tx`insert into worker_state(name, cursor, snapshot_date, exported_at)
     values ('changes', ${cursor}, ${snapshotDate}, ${exportedAt ?? null})

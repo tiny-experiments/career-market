@@ -11,6 +11,10 @@ export interface BreakdownItem {
   readonly share: number;
   /** A background class from the series tokens, when the list keys a chart. */
   readonly swatch?: string;
+  /** A mark before the name. */
+  readonly logo?: ReactNode;
+  /** A small figure after the value: the share, a change. */
+  readonly trailing?: ReactNode;
   readonly to?: string;
 }
 
@@ -44,9 +48,17 @@ function Row({ item }: { readonly item: BreakdownItem }) {
               className={cn("size-2.5 shrink-0 rounded-sm", item.swatch)}
             />
           )}
+          {item.logo}
           <span className="truncate font-semibold">{item.label}</span>
         </span>
-        <span className="shrink-0 font-medium">{item.value}</span>
+        <span className="flex shrink-0 items-baseline gap-3">
+          <span className="font-medium">{item.value}</span>
+          {item.trailing === undefined ? null : (
+            <span className="w-14 text-right text-xs text-muted-foreground">
+              {item.trailing}
+            </span>
+          )}
+        </span>
       </span>
       <ShareBar value={item.share} />
     </>

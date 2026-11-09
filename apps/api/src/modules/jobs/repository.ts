@@ -94,7 +94,7 @@ export async function jobPage(deps: JobDeps, id: string): Promise<JobResult> {
     similarRoles(deps, fallbacks, job),
   ]);
 
-  const posting = toPosting(job, company.domain);
+  const posting = toPosting(job, company.domain, company.name);
   const context: JobContext = {
     health: postingHealth(
       {
@@ -144,7 +144,11 @@ export function toSalary(job: Pick<KrillJob, 'salary'>): JobSalary | null {
   };
 }
 
-function toPosting(job: KrillJobDetail, domain: string | null): JobPosting {
+function toPosting(
+  job: KrillJobDetail,
+  domain: string | null,
+  displayName: string | null,
+): JobPosting {
   const evidence = new Map(
     (job.skillEvidence ?? []).map((e) => [e.id, e.count]),
   );
@@ -159,7 +163,11 @@ function toPosting(job: KrillJobDetail, domain: string | null): JobPosting {
   return {
     id: job.id,
     title: job.title,
-    company: { id: job.company.id, name: job.company.name, domain },
+    company: {
+      id: job.company.id,
+      name: displayName ?? job.company.name,
+      domain,
+    },
     applyUrl: httpUrl(job.applyUrl) ?? httpUrl(job.url),
     postingUrl: httpUrl(job.url),
     location: first ? shortLocation(first) : null,
@@ -368,24 +376,30 @@ async function companyFor(
   deps: JobDeps,
   job: KrillJobDetail,
   asOf: IsoDay | null,
-): Promise<{ domain: string | null; trend: CompanyTrend | Unavailable }> {
+): Promise<{
+  domain: string | null;
+  name: string | null;
+  trend: CompanyTrend | Unavailable;
+}> {
   const to = asOf ?? job.lastSeenAt;
   const [company] = await deps.sql<
-    { domain: string | null; openJobs: number }[]
+    { domain: string | null; name: string | null; openJobs: number }[]
   >`
-    select domain, open as "openJobs" from company where company_id = ${job.company.id}`;
+    select domain, display_name as name, open as "openJobs" from company where company_id = ${job.company.id}`;
   const items = await deps.sql<
     { date: IsoDay; open: number; new: number; closed: number }[]
   >`
     select date, open, new, closed from company_daily where company_id = ${job.company.id}
       and family = '*' and new is not null and date >= ${addDays(to, -(SPARK_DAYS + 5))} and date <= ${to} order by date`;
   const domain = company?.domain ?? null;
+  const name = company?.name ?? null;
   const usable = items.filter((i) => i.date > FIRST_COMPARABLE_BASE);
   const open =
     company?.openJobs ?? usable.at(-1)?.open ?? items.at(-1)?.open ?? null;
   if (open === null)
     return {
       domain,
+      name,
       trend: {
         available: false,
         reason: 'Company hiring history is not available yet.',
@@ -394,6 +408,7 @@ async function companyFor(
   const signal = companySignal(usable);
   return {
     domain,
+    name,
     trend: {
       available: true,
       open,
@@ -448,12 +463,12 @@ async function similarRoles(
     await Promise.all(
       picked.map(async (j) => {
         const [row] = await deps.sql<
-          { domain: string | null }[]
-        >`select domain from company where company_id = ${j.company.id}`;
+          { domain: string | null; name: string | null }[]
+        >`select domain, display_name as name from company where company_id = ${j.company.id}`;
         const domain = row?.domain ?? null;
         companies.set(j.company.id, {
           id: j.company.id,
-          name: j.company.name,
+          name: row?.name ?? j.company.name,
           domain,
         });
       }),
@@ -498,15 +513,18 @@ export function pickSimilar(
   return [...firstPerCompany, ...rest].slice(0, count);
 }
 
-export async function companyDomains(
+/** The name and site we show for each employer. */
+export async function companyIdentities(
   sql: Sql,
   ids: string[],
-): Promise<Map<string, string | null>> {
+): Promise<Map<string, { name: string | null; domain: string | null }>> {
   if (!ids.length) return new Map();
   const rows = await sql<
-    { company_id: string; domain: string | null }[]
-  >`select company_id, domain from company where company_id in ${sql(ids)}`;
-  return new Map(rows.map((r) => [r.company_id, r.domain]));
+    { company_id: string; name: string | null; domain: string | null }[]
+  >`select company_id, display_name as name, domain from company where company_id in ${sql(ids)}`;
+  return new Map(
+    rows.map((r) => [r.company_id, { name: r.name, domain: r.domain }]),
+  );
 }
 export async function resolveCompany(
   sql: Sql,
@@ -515,7 +533,7 @@ export async function resolveCompany(
   const [row] = await sql<
     { company_id: string }[]
   >`select company_id from company
-    where company_id = ${value} or slug = ${value} or lower(name) = lower(${value})
+    where company_id = ${value} or slug = ${value} or lower(name) = lower(${value}) or lower(display_name) = lower(${value})
     order by (company_id = ${value}) desc, open desc limit 1`;
   return row?.company_id ?? null;
 }

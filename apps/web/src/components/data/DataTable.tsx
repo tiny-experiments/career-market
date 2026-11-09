@@ -54,8 +54,15 @@ export interface DataTableProps<Row> {
   readonly empty?: ReactNode;
   readonly stickyHeader?: boolean;
   readonly caption?: string;
+  /** Inside a card the first and last columns line up with the card's own padding. */
+  readonly inset?: "page" | "card";
   readonly className?: string;
 }
+
+const EDGE = {
+  page: "first:pl-gutter last:pr-gutter",
+  card: "first:pl-4 last:pr-4",
+} as const;
 
 const FROM = {
   sm: "hidden sm:table-cell",
@@ -84,6 +91,7 @@ export function DataTable<Row>({
   empty,
   stickyHeader = false,
   caption,
+  inset = "page",
   className,
 }: DataTableProps<Row>) {
   const alignClass = (column: Column<Row>) =>
@@ -111,7 +119,8 @@ export function DataTable<Row>({
                     : undefined
                 }
                 className={cn(
-                  "h-11 px-3 text-eyebrow font-semibold text-muted-foreground first:pl-gutter last:pr-gutter",
+                  "h-11 px-3 text-eyebrow font-semibold text-muted-foreground",
+                  EDGE[inset],
                   alignClass(column),
                   column.from && FROM[column.from],
                   column.className,
@@ -166,7 +175,8 @@ export function DataTable<Row>({
                   <TableCell
                     key={column.key}
                     className={cn(
-                      "px-3 first:pl-gutter last:pr-gutter",
+                      "px-3",
+                      EDGE[inset],
                       column.from && FROM[column.from],
                     )}
                   >
@@ -203,7 +213,8 @@ export function DataTable<Row>({
                       <TableCell
                         key={column.key}
                         className={cn(
-                          "px-3 font-medium first:pl-gutter last:pr-gutter",
+                          "px-3 font-medium",
+                          EDGE[inset],
                           alignClass(column),
                           column.from && FROM[column.from],
                           column.className,

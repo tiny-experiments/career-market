@@ -13,7 +13,10 @@ import { metaRoutes } from './modules/meta/routes/metaRoutes.ts';
 import { createProfessionsServices } from './modules/professions/services/index.ts';
 import { professionsRoutes } from './modules/professions/routes/professionsRoutes.ts';
 import { createCompaniesServices } from './modules/companies/services/index.ts';
-import { companiesRoutes } from './modules/companies/routes/companiesRoutes.ts';
+import {
+  companiesRoutes,
+  companySignalsRoutes,
+} from './modules/companies/routes/companiesRoutes.ts';
 import { createSkillsServices } from './modules/skills/services/index.ts';
 import { skillsRoutes } from './modules/skills/routes/skillsRoutes.ts';
 import { createJobsServices } from './modules/jobs/services/index.ts';
@@ -135,6 +138,7 @@ export function createApp(deps: AppDependencies) {
     professionsRoutes(createProfessionsServices({ queries })),
   );
   app.use('/api/companies', companiesRoutes(companies));
+  app.use('/api/company-signals', companySignalsRoutes(companies));
   app.use('/api/skills', skillsRoutes(createSkillsServices({ queries })));
   app.use('/api/jobs', jobsRoutes(jobs));
   app.use(

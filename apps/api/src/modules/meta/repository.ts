@@ -35,9 +35,15 @@ export async function chrome(sql: Sql): Promise<ChromePayload> {
   });
 
   const companies = await sql<
-    { company_id: string; slug: string; name: string; open: number }[]
+    {
+      company_id: string;
+      slug: string;
+      name: string;
+      display_name: string | null;
+      open: number;
+    }[]
   >`
-    select company_id, slug, name, open from company where updated_on = ${asOf} order by rank limit 50`;
+    select company_id, slug, name, display_name, open from company where updated_on = ${asOf} order by rank limit 50`;
   const picked = companies
     .filter((x) => companyTicker(x.name))
     .slice(0, 2)
@@ -52,7 +58,7 @@ export async function chrome(sql: Sql): Promise<ChromePayload> {
     const change = companyChanges.get(`cpage:${c.company_id}`) ?? null;
     ticker.push({
       code: companyTicker(c.name) as string,
-      name: c.name,
+      name: c.display_name ?? c.name,
       href: `/companies/${c.slug}`,
       open: c.open,
       change,

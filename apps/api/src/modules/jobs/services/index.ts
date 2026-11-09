@@ -2,7 +2,7 @@ import type { Queries } from '../../../database/client.ts';
 import { AppError, notFound, sourceUnavailable } from '../../../http/errors.ts';
 import {
   jobPage,
-  companyDomains,
+  companyIdentities,
   resolveCompany,
   jobFacets,
 } from '../repository.ts';
@@ -28,7 +28,7 @@ export function createJobsServices(deps: {
       const page = await deps.jobs.list({ ...query, company }).catch((err) => {
         throw err instanceof AppError ? err : sourceUnavailable();
       });
-      const domains = await companyDomains(
+      const identities = await companyIdentities(
         deps.queries,
         page.items.map((j) => j.company.id),
       );
@@ -37,7 +37,11 @@ export function createJobsServices(deps: {
         items: page.items.map((j) => ({
           id: j.id,
           title: j.title,
-          company: { ...j.company, domain: domains.get(j.company.id) ?? null },
+          company: {
+            ...j.company,
+            name: identities.get(j.company.id)?.name ?? j.company.name,
+            domain: identities.get(j.company.id)?.domain ?? null,
+          },
           location: j.places[0]?.label ?? j.locations[0] ?? null,
           workMode: j.workMode,
           level: j.level,

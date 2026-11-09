@@ -9,3 +9,10 @@ export function companiesRoutes(services: CompaniesServices) {
   router.get('/:slug', controller.detail);
   return router;
 }
+
+/** Mounted beside `/api/companies`, where the word could never be read as a company's slug. */
+export function companySignalsRoutes(services: CompaniesServices) {
+  const router = Router();
+  router.get('/', createCompaniesController(services).signals);
+  return router;
+}

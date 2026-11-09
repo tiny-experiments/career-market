@@ -50,8 +50,10 @@ export interface Company {
   careers_url: string | null;
   company_id: string;
   directory_domain: string | null;
+  display_name: string | null;
   domain: string | null;
   name: string;
+  named: boolean | null;
   open: number;
   profiled: Generated<boolean>;
   rank: number;
@@ -85,6 +87,24 @@ export interface CompanyDomainOverride {
   domain: string | null;
   note: Generated<string>;
   updated_at: Generated<Timestamp>;
+}
+
+export interface CompanyFacet {
+  company_id: string;
+  countries: Generated<Json>;
+  families: Generated<Json>;
+  levels: Generated<Json>;
+  median_days_open: number | null;
+  open: number;
+  pay_high: number | null;
+  pay_low: number | null;
+  pay_median: number | null;
+  pay_n: Generated<number>;
+  remote: number;
+  skills: Generated<Json>;
+  stated_mode: number;
+  top_family: string | null;
+  work_modes: Generated<Json>;
 }
 
 export interface CompanyOpenCount {
@@ -435,6 +455,17 @@ export interface SkillDaily {
   skill: string;
 }
 
+export interface SkillFacet {
+  open: number;
+  pay_high: number | null;
+  pay_low: number | null;
+  pay_median: number | null;
+  pay_n: Generated<number>;
+  remote: number;
+  skill: string;
+  stated_mode: number;
+}
+
 export interface SkillLatestRole {
   company_id: string;
   company_name: string;
@@ -523,6 +554,7 @@ export interface DB {
   company_daily: CompanyDaily;
   company_domain: CompanyDomain;
   company_domain_override: CompanyDomainOverride;
+  company_facet: CompanyFacet;
   company_open_count: CompanyOpenCount;
   company_profile: CompanyProfile;
   company_ref: CompanyRef;
@@ -553,6 +585,7 @@ export interface DB {
   skill_age_cut: SkillAgeCut;
   skill_company_daily: SkillCompanyDaily;
   skill_daily: SkillDaily;
+  skill_facet: SkillFacet;
   skill_latest_role: SkillLatestRole;
   skill_pair_daily: SkillPairDaily;
   skill_salary_effect: SkillSalaryEffect;

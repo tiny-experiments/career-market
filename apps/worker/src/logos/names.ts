@@ -1,0 +1,33 @@
+import { companyDisplay } from '@cm/core/companyName';
+import type { Sql } from '@cm/core/db';
+
+/**
+ * Names every company from its directory name and resolved domain, and copies
+ * the result to the tables that hold a company's name. Runs after the domains
+ * are published, so a newly resolved site improves the name at once.
+ */
+export async function applyCompanyNames(tx: Sql): Promise<void> {
+  const rows = await tx<{ company_id: string; name: string; domain: string | null; display_name: string | null; named: boolean | null }[]>`
+    select company_id, name, domain, display_name, named from company`;
+  const changed = rows.flatMap((row) => {
+    const display = companyDisplay(row.name, row.domain);
+    return display.name === row.display_name && display.named === row.named ? [] : [{ id: row.company_id, ...display }];
+  });
+  for (let i = 0; i < changed.length; i += 2000) {
+    const batch = changed.slice(i, i + 2000);
+    await tx`
+      update company c set display_name = v.name, named = v.named
+      from unnest(${tx.array(batch.map((r) => r.id))}::text[], ${tx.array(batch.map((r) => r.name))}::text[], ${tx.array(batch.map((r) => r.named))}::boolean[]) as v(id, name, named)
+      where c.company_id = v.id`;
+  }
+  await tx`update company_ref t set name = c.display_name from company c where t.company_id = c.company_id and c.display_name is not null and t.name is distinct from c.display_name`;
+  await tx`update screener_company t set name = c.display_name from company c where t.company_id = c.company_id and c.display_name is not null and t.name is distinct from c.display_name`;
+  await tx`update profession_company t set name = c.display_name from company c where t.company_id = c.company_id and c.display_name is not null and t.name is distinct from c.display_name`;
+  await tx`update profession_latest_role t set company_name = c.display_name from company c where t.company_id = c.company_id and c.display_name is not null and t.company_name is distinct from c.display_name`;
+  await tx`update skill_latest_role t set company_name = c.display_name from company c where t.company_id = c.company_id and c.display_name is not null and t.company_name is distinct from c.display_name`;
+  await tx`
+    update search_entry t set label = c.display_name,
+      keywords = case when position(lower(c.display_name) in t.keywords) > 0 then t.keywords else t.keywords || ' ' || lower(c.display_name) end
+    from company c
+    where t.kind = 'company' and t.id = c.company_id and c.display_name is not null and t.label is distinct from c.display_name`;
+}

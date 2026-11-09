@@ -5,6 +5,7 @@ import {
   companyPage,
   companyIdOf,
   companiesRamping,
+  companySignalsOverview,
 } from '../repository.ts';
 import type { CompaniesQuery } from '../domain.ts';
 import type { JobsQuery, JobsPage } from '../../jobs/domain.ts';
@@ -16,6 +17,7 @@ export function createCompaniesServices(deps: {
   return Object.freeze({
     list: (query: CompaniesQuery) =>
       companyDirectory(deps.queries, deps.db, query),
+    signals: () => companySignalsOverview(deps.queries),
     async detail(slug: string) {
       const page = await companyPage(deps.queries, slug);
       if (!page) throw notFound();

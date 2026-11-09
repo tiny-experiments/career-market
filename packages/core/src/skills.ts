@@ -162,6 +162,8 @@ const SKILL_DOMAINS: Record<string, string> = {
   'tool:confluence': 'atlassian.com',
   'tool:figma': 'figma.com',
   'api:graphql': 'graphql.org',
+  'framework:spring': 'spring.io',
+  'framework:spring-boot': 'spring.io',
 };
 
 export function skillDomain(id: string): string | null {
@@ -199,6 +201,8 @@ export interface SkillProfessionRow {
 
 export interface SkillCompanyRow {
   id: string;
+  /** null when the company has no page yet. */
+  slug: string | null;
   name: string;
   domain: string | null;
   open: number;
@@ -281,6 +285,20 @@ export interface SkillPagePayload {
   pairs: SkillPairRow[];
   salaryEffect: SkillSalaryEffect | Unavailable;
   latestRoles: SkillRoleRow[];
+  /** 1W change of the chart series. */
+  change7d: Change | null;
+  /** Position by open roles, largest first. */
+  rank: number | null;
+  remoteShare: number | null;
+  /** The middle half of listed USD pay on roles naming the skill. */
+  pay: SkillPay | null;
+}
+
+export interface SkillPay {
+  roles: number;
+  low: number;
+  median: number;
+  high: number;
 }
 
 export interface SkillIndexRow {
@@ -295,6 +313,24 @@ export interface SkillIndexRow {
   primaryName: string;
   primaryOpen: number;
   change: Change | null;
+  change7d: Change | null;
+  /** Open roles naming the skill over the last 30 days, oldest first. */
+  spark: number[];
+  remoteShare: number | null;
+  pay: SkillPay | null;
+  /** Median listed pay with the skill minus without it, when both sides have enough roles. */
+  payEffect: number | null;
+  /** The skill most often named alongside this one, and how often. */
+  topPair: SkillTopPair | null;
+}
+
+export interface SkillTopPair {
+  id: string;
+  slug: string | null;
+  label: string;
+  domain: string | null;
+  /** The share of this skill's roles that also name the other. */
+  share: number;
 }
 
 export interface SkillIndexPayload {

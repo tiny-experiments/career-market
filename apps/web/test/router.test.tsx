@@ -6,6 +6,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { clearResources } from "@/lib/api";
 import { PAGES } from "@/content";
 import { routes } from "@/router";
+import {
+  companyPayload,
+  companyRow,
+  jobItem,
+  signalsOverview,
+  skillPayload,
+} from "./support/directoryFixtures";
 import { stubFetch, type Routes } from "./support/fetchStub";
 import {
   MARKET_FIXTURE,
@@ -21,14 +28,13 @@ const API: Routes = {
   "/api/market": { body: MARKET_FIXTURE },
   "/api/professions": { body: PROFESSIONS_FIXTURE },
   "/api/professions/swe": { body: PROFESSION_FIXTURE },
-  "/api/companies?page=1&pageSize=50": page(),
-  "/api/companies?page=1&pageSize=50&signal=ramping": page(),
-  "/api/companies/stripe": {
-    body: { company: { name: "Stripe", domain: "stripe.com" } },
-  },
-  "/api/companies/stripe/jobs?page=1&pageSize=25": page(),
+  "/api/companies?page=1&pageSize=50": page([companyRow()]),
+  "/api/companies?page=1&pageSize=50&signal=ramping": page([companyRow()]),
+  "/api/company-signals": { body: signalsOverview },
+  "/api/companies/stripe": { body: companyPayload },
+  "/api/companies/stripe/jobs?page=1&pageSize=25": page([jobItem]),
   "/api/skills": { body: { skills: [] } },
-  "/api/skills/python": { body: { label: "Python", domain: null } },
+  "/api/skills/python": { body: skillPayload },
   "/api/jobs?page=1&pageSize=50": page(),
   "/api/jobs?page=1&pageSize=50&workMode=remote": page(),
   "/api/jobs/kr_open12": {

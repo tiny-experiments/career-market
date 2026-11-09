@@ -88,7 +88,13 @@ export function companiesFiltersFrom(
       "cooling",
       "freezing",
     ]),
-    sort: oneOf(search.get("sort"), ["open", "name", "change1w", "rank"]),
+    sort: oneOf(search.get("sort"), [
+      "open",
+      "name",
+      "change1w",
+      "change30d",
+      "rank",
+    ]),
     dir: oneOf(search.get("dir"), ["asc", "desc"]),
   };
 }

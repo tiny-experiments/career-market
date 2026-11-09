@@ -76,6 +76,7 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
     const setup = createSql(url!, { max: 1 });
     try {
       await migrate(setup);
+      await setup`truncate job_mirror, skill_pair_daily, skill_salary_effect restart identity cascade`;
       await setup`truncate build_run, market_daily, family_daily, profession_daily, profession_snapshot, market_change, company,
         company_daily, company_signal, search_entry, skill_tracked, skill_summary, skill_daily,
         skill_latest_role, skill_series, screener_facet restart identity cascade`;
@@ -94,7 +95,12 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       await setup`insert into market_change (as_of,subject,range,base_date,change,partial,estimated) values
         ('2026-11-09','market','1W','2026-11-02',0.1,false,false),
         ('2026-11-09','family:software','1W','2026-11-02',0.1,false,false),
-        ('2026-11-09','cpage:acme','1W','2026-11-02',0.2,false,false)`;
+        ('2026-11-09','cpage:acme','1W','2026-11-02',0.2,false,false),
+        ('2026-11-09','cpage:acme','1M','2026-11-03',0.2,true,false),
+        ('2026-11-09','cpage:beta','1W','2026-11-08',0.5,true,false),
+        ('2026-11-09','cpage:beta','1M','2026-10-10',-0.3,false,false),
+        ('2026-11-09','skillseries:lang:python','1W','2026-11-02',0.05,false,true),
+        ('2026-11-09','skillseries:lang:python','1M','2026-10-10',0.12,false,true)`;
       await setup`insert into company (company_id,slug,name,domain,open,rank,updated_on) values
         ('acme','acme','Acme','acme.example',100,1,'2026-11-09'),
         ('beta','beta','Beta',null,30,2,'2026-11-09'),
@@ -109,6 +115,18 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         ('2026-11-09','lang:python','python',70,'software'),('2026-11-08','ml:jax','jax',10,'software')`;
       await setup`insert into skill_daily (date,skill,family,country,open) values
         ('2026-11-09','lang:python','software','*',70),('2026-11-08','ml:jax','software','*',10)`;
+      await setup`insert into skill_series (skill,family,date,open,estimated) values
+        ('lang:python','software','2026-11-08',60,false),('lang:python','software','2026-11-09',70,false)`;
+      await setup`insert into skill_pair_daily (date,skill,other,open) values
+        ('2026-11-09','lang:python','cloud:aws',35),('2026-11-09','lang:python','lang:java',7)`;
+      await setup`insert into skill_salary_effect (date,skill,family,currency,n_with,n_without,median_with,median_without,sample_size) values
+        ('2026-11-09','lang:python','software','USD',60,60,180000,165000,120)`;
+      for (const [index, mode] of ['remote', 'remote', 'onsite', 'onsite', null].entries()) {
+        const payload = { skills: index < 4 ? ['lang:python', 'cloud:aws'] : ['lang:python'] };
+        await setup`insert into job_mirror (id,company_id,company_name,title,family,level,countries,work_mode,remote,opened_at,first_seen_at,last_seen_at,opened_source,salary_min,salary_max,salary_currency,repost_count,payload)
+          values (${`kr_facet${index}`},'acme','Acme','Engineer',${index < 3 ? 'software' : 'data'},${index < 4 ? 'senior' : null},${['GB']},${mode},${mode === 'remote'},'2026-11-01','2026-11-01','2026-11-09','posted',${100000 + index * 10000},${120000 + index * 10000},'USD',0,${setup.json(payload)})`;
+      }
+      await setup`select refresh_market_facets()`;
       await setup`insert into search_entry (as_of,kind,id,slug,label,open,domain,keywords) values
         ('2026-11-09','company','acme','acme','Acme',100,'acme.example','acme'),
         ('2026-11-09','skill','lang:python','python','Python',70,null,'python'),
@@ -268,6 +286,119 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       await request(app).get('/api/companies/unknown').expect(404);
     });
   });
+  describe('company facets', () => {
+    beforeAll(async () => {
+      const setup = createSql(url!, { max: 1 });
+      await setup`insert into company (company_id,slug,name,domain,open,rank,updated_on,display_name,named) values
+        ('code','code','fa-saasfaprod1','code.example',500,5,'2026-11-09','fa-saasfaprod1',false),
+        ('named','careers-at-named','Careers at Named: search jobs','named.example',500,6,'2026-11-09','Named',true)`;
+      await setup`insert into market_change (as_of,subject,range,base_date,change,partial,estimated) values
+        ('2026-11-09','cpage:code','1W','2026-11-02',0.5,false,false),
+        ('2026-11-09','cpage:named','1W','2026-11-02',0.4,false,false)`;
+      await setup.end();
+    });
+    afterAll(async () => {
+      const setup = createSql(url!, { max: 1 });
+      await setup`delete from company where company_id in ('code','named')`;
+      await setup`delete from market_change where subject in ('cpage:code','cpage:named')`;
+      await setup.end();
+    });
+    it('adds top profession, remote share and only full-window changes to the directory', async () => {
+      const res = await request(app).get('/api/companies?q=acme').expect(200);
+      expect(res.body.items[0]).toMatchObject({
+        topProfession: { family: 'software' },
+        remoteShare: 0.5,
+        change30d: null,
+      });
+      expect(res.body.items[0].change.value).toBe(0.2);
+      const beta = await request(app).get('/api/companies?q=beta').expect(200);
+      expect(beta.body.items[0].change).toBeNull();
+      expect(beta.body.items[0].change30d.value).toBe(-0.3);
+      expect(beta.body.items[0]).toMatchObject({
+        topProfession: null,
+        remoteShare: null,
+      });
+    });
+    it('shows and searches the name a visitor reads', async () => {
+      const shown = await request(app).get('/api/companies?q=named').expect(200);
+      expect(shown.body.items[0].name).toBe('Named');
+      const raw = await request(app)
+        .get('/api/companies?q=search%20jobs')
+        .expect(200);
+      expect(raw.body.items[0].name).toBe('Named');
+      const code = await request(app)
+        .get('/api/companies?q=saasfaprod')
+        .expect(200);
+      expect(code.body.items[0].name).toBe('fa-saasfaprod1');
+      const detail = await request(app)
+        .get('/api/companies/careers-at-named')
+        .expect(200);
+      expect(detail.body.company.name).toBe('Named');
+    });
+    it('sorts by 30-day change and leaves out companies with no open roles', async () => {
+      const res = await request(app)
+        .get('/api/companies?sort=change30d&dir=asc')
+        .expect(200);
+      expect(res.body.items[0].slug).toBe('beta');
+    });
+    it('sorts a window too short to show as no value, in either direction', async () => {
+      const week = await request(app)
+        .get('/api/companies?sort=change1w&dir=desc')
+        .expect(200);
+      const weekSlugs = week.body.items.map((i: { slug: string }) => i.slug);
+      expect(weekSlugs.slice(0, 3)).toEqual(['code', 'careers-at-named', 'acme']);
+      const weekAsc = await request(app)
+        .get('/api/companies?sort=change1w&dir=asc')
+        .expect(200);
+      expect(weekAsc.body.items[0].slug).toBe('acme');
+      const month = await request(app)
+        .get('/api/companies?sort=change30d&dir=desc')
+        .expect(200);
+      expect(month.body.items[0].slug).toBe('beta');
+    });
+    it('counts signals and lists the week\'s movers', async () => {
+      const res = await request(app).get('/api/company-signals').expect(200);
+      expect(res.body.counts).toEqual({
+        RAMPING: 1,
+        STEADY: 0,
+        COOLING: 0,
+        FREEZING: 0,
+      });
+      // The code is listed elsewhere but never headlines a card.
+      expect(res.body.ramping.map((m: { name: string }) => m.name)).toEqual([
+        'Named',
+        'Acme',
+      ]);
+      expect(res.body.cooling).toEqual([]);
+    });
+    it('breaks a company\'s roles down for its page', async () => {
+      const res = await request(app).get('/api/companies/acme').expect(200);
+      expect(res.body.change7d.value).toBe(0.2);
+      expect(res.body.change30d).toBeNull();
+      expect(res.body.facets).toMatchObject({
+        open: 5,
+        remoteShare: 0.5,
+        families: [
+          { value: 'software', label: 'Software', count: 3 },
+          { value: 'data', count: 2 },
+        ],
+        levels: [{ value: 'senior', count: 4 }],
+        countries: [{ code: 'GB', count: 5 }],
+        pay: { roles: 5, median: 130000 },
+      });
+      expect(res.body.facets.skills[0]).toMatchObject({
+        value: 'lang:python',
+        count: 5,
+        slug: 'python',
+        domain: 'python.org',
+      });
+      expect(JSON.stringify(res.body.facets)).not.toMatch(/krill/i);
+    });
+    it('has no facets for a company it has not counted', async () => {
+      const res = await request(app).get('/api/companies/beta').expect(200);
+      expect(res.body.facets).toBeNull();
+    });
+  });
   describe('skills', () => {
     it('serves tracked skills and preserves last-good-day fallback', async () => {
       const index = await request(app).get('/api/skills').expect(200);
@@ -282,6 +413,27 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         asOf: '2026-11-08',
         stale: true,
         totalOpen: 10,
+      });
+      expect(index.body.skills[0]).toMatchObject({
+        change7d: { value: 0.05 },
+        spark: [60, 70],
+        remoteShare: 0.5,
+        pay: { roles: 5, median: 130000 },
+        payEffect: 15000,
+        topPair: { slug: null, label: 'AWS', share: 0.5 },
+      });
+      expect(index.body.skills[1]).toMatchObject({
+        spark: [],
+        remoteShare: null,
+        pay: null,
+        payEffect: null,
+        topPair: null,
+      });
+      expect(detail.body).toMatchObject({
+        rank: 1,
+        remoteShare: 0.5,
+        change7d: { value: 0.05 },
+        pay: { median: 130000 },
       });
       await request(app).get('/api/skills/unknown').expect(404);
       expect(JSON.stringify(detail.body)).not.toMatch(/krill/i);
