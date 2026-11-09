@@ -20,14 +20,27 @@ describe("metric hints", () => {
     }
   });
 
-  it("gives the weekly change its own arithmetic and nothing else a formula", () => {
-    expect(METRICS.changeWeek.formula).toBe(
-      "open roles now ÷ open roles a week ago − 1",
+  it("never gives a formula, so no figure reveals how it is computed", () => {
+    for (const [key, hint] of Object.entries(METRICS)) {
+      expect(hint, key).not.toHaveProperty("formula");
+    }
+  });
+
+  it("says each change in one plain sentence about its window", () => {
+    expect(METRICS.changeWeek.text).toBe(
+      "How much open roles have grown or shrunk compared with a week ago.",
     );
-    const withFormula = Object.entries(METRICS).filter(
-      ([, hint]) => "formula" in hint,
-    );
-    expect(withFormula.map(([key]) => key)).toEqual(["changeWeek"]);
+    for (const key of [
+      "changeDay",
+      "changeWeek",
+      "changeMonth",
+      "changeQuarter",
+      "changeYear",
+    ] as const) {
+      expect(METRICS[key].text, key).toMatch(
+        /^How much open roles have grown or shrunk compared with .+\.$/,
+      );
+    }
   });
 
   it("returns the hint in the shape the components take", () => {

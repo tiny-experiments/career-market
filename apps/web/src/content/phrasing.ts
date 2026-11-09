@@ -27,9 +27,9 @@ export const WINDOW_HEADER: Record<Window, string> = {
 export const COMPARISON: Record<Window, string> = {
   day: "vs yesterday",
   week: "this week",
-  month: "this month",
+  month: "over 30 days",
   quarter: "over 3 months",
-  year: "this year",
+  year: "over a year",
 };
 
 /** The suffix `Delta` takes for a window. */
@@ -39,7 +39,7 @@ export function changeSuffix(window: Window): string {
 
 /**
  * A change as a sentence fragment: "up 1.3% this week", "down 4.0% vs
- * yesterday", "unchanged this month". For prose and accessible names; a cell
+ * yesterday", "unchanged over 30 days". For prose and accessible names; a cell
  * uses `Delta`.
  */
 export function describeChange(ratio: number, window: Window): string {

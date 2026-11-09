@@ -2,7 +2,7 @@
  * What each figure means, for the hover card behind it (UI-RULEBOOK.md §9).
  * One plain sentence about what the number is. Never how it is gathered,
  * where it comes from, how often it refreshes or how much history there is.
- * A formula only when it is the reader's own arithmetic.
+ * Never a formula.
  */
 
 export interface MetricHint {
@@ -10,7 +10,6 @@ export interface MetricHint {
   readonly title: string;
   /** One sentence on what the number is. */
   readonly text: string;
-  readonly formula?: string;
 }
 
 /** The approved line for the headline figure; the footer's cousin. */
@@ -42,24 +41,23 @@ export const METRICS = {
   // Changes, one per window
   changeDay: {
     title: "24-hour change",
-    text: "Change in open roles compared with yesterday.",
+    text: "How much open roles have grown or shrunk compared with yesterday.",
   },
   changeWeek: {
     title: "7-day change",
-    text: "Change in open roles compared with a week ago.",
-    formula: "open roles now ÷ open roles a week ago − 1",
+    text: "How much open roles have grown or shrunk compared with a week ago.",
   },
   changeMonth: {
     title: "30-day change",
-    text: "Change in open roles compared with 30 days ago.",
+    text: "How much open roles have grown or shrunk compared with 30 days ago.",
   },
   changeQuarter: {
     title: "3-month change",
-    text: "Change in open roles compared with three months ago.",
+    text: "How much open roles have grown or shrunk compared with three months ago.",
   },
   changeYear: {
     title: "1-year change",
-    text: "Change in open roles compared with a year ago.",
+    text: "How much open roles have grown or shrunk compared with a year ago.",
   },
   changePending: {
     title: "Change",

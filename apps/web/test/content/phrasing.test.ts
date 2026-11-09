@@ -24,7 +24,7 @@ describe("phrasing", () => {
   it("says a change as a window, never a date", () => {
     expect(describeChange(0.013, "week")).toBe("up 1.3% this week");
     expect(describeChange(-0.04, "day")).toBe("down 4.0% vs yesterday");
-    expect(describeChange(0.0002, "month")).toBe("unchanged this month");
+    expect(describeChange(0.0002, "month")).toBe("unchanged over 30 days");
     expect(describeChange(0.21, "quarter")).toBe("up 21.0% over 3 months");
     expect(sentence(describeChange(0, "week"))).toBe("Unchanged this week");
   });

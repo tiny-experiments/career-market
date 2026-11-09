@@ -171,7 +171,7 @@ shadcn owns **behaviour**: overlays, focus, keyboard, portals, form controls. We
 The feedback that shaped these rules: "1.3% since November 3" sounds machine-written, footnotes and method text clutter the page, and a visitor should hover to learn how a number is made.
 
 - **A change is a caret, a number and the comparison in words**: `▲ 1.3% this week`. Never a date as a qualifier ("since 3 Nov"), never an asterisk, never a footnote.
-- **The method lives in the hover card, in one sentence, about what the number is**: "Change in open roles compared with a week ago." A formula only when it is the reader's own arithmetic. Never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
+- **The method lives in the hover card, in one sentence, about what the number is**: "How much open roles have grown or shrunk compared with a week ago." Never a formula, never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
 - **No timestamps in the chrome.** No "Updated 06:14 UTC", no "as of", no refresh rhythm. The footer's line is the only sentence about freshness.
 - **Never state the total number of companies.** Per-profession and per-signal counts are fine; a grand total is not.
 - **A series is one solid line.** No estimated-history styling and no caveat sentence under the chart.
