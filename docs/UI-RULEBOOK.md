@@ -109,8 +109,8 @@ apps/web/src/
     companies/ the Companies and Company pages' tables, market cards and panels
     skills/    the Skills and Skill pages' tables, market cards and panels
   content/     every customer-facing sentence: metrics (hover cards), phrasing, site (titles, About, footer), states
-  hooks/       useResource, usePagedList, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
-  lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, redirects, prefetch
+  hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
+  lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, skillViews, redirects, prefetch
   lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
   layouts/     RootLayout
   pages/       route components: assembly only. pages/design holds the /design chapters.

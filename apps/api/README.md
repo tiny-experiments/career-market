@@ -40,9 +40,10 @@ companies and the 1-month change come back `null`.
 
 Companies accept `q` (literal case-insensitive name substring), `signal`
 (`ramping`, `steady`, `cooling`, `freezing`), `sort` (`open`, `name`, `change1w`,
-`rank`) and `dir` (`asc`, `desc`). `dir` defaults to `asc` for `name` and `rank`
-and `desc` for `open` and `change1w`; the default ordering is open roles descending,
-with a stable company-id tie-break. Missing changes sort last.
+`change30d`, `rank`) and `dir` (`asc`, `desc`). `dir` defaults to `asc` for `name`
+and `rank` and `desc` for the rest; the default ordering is open roles descending,
+with a stable company-id tie-break. Missing changes, and changes whose window is
+too short to show (`fullWindow` in `@cm/core/changes`), sort last.
 
 Jobs and company roles accept `q`, `company` (id, slug or exact name), `family`,
 `specialty`, `skill`, `region`, `country`, `workMode`, `level`, `postedWithin`
