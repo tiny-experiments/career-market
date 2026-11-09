@@ -57,7 +57,7 @@ describe("MarketPage", () => {
 
   it("makes the whole row a link to the profession", async () => {
     renderWithRouter(<MarketPage />);
-    const link = await screen.findByRole("link", { name: "Software" });
+    const link = await screen.findByRole("link", { name: /^Software/ });
     expect(link).toHaveAttribute("href", "/professions/swe");
   });
 
@@ -122,7 +122,7 @@ describe("ProfessionPage", () => {
   it("sends a job row to our own job page, never the employer", async () => {
     const { container } = open();
     const job = await screen.findByRole("link", {
-      name: "Staff Engineer at Stripe",
+      name: /Staff Engineer/,
     });
     expect(job).toHaveAttribute("href", "/jobs/kr_1");
     await waitFor(() =>

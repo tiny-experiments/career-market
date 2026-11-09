@@ -114,7 +114,6 @@ export function JobsTable({
       rows={rows}
       rowKey={(row) => row.id}
       rowHref={(row) => row.href}
-      rowLabel={(row) => `${row.title} at ${row.companyName}`}
       linkColumn="job"
       loading={loading}
       skeletonRows={10}

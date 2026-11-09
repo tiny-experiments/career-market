@@ -9,7 +9,7 @@ import type { Page } from '../../database/paging.ts';
 import type { jobsQuerySchema } from './schemas.ts';
 
 export type JobsQuery = z.infer<typeof jobsQuerySchema> & {
-  /** Part of an employer's name, when the words typed match no company exactly. */
+  /** Part of an employer's name, when the words typed are not a company's id or slug. */
   companyContains?: string | undefined;
 };
 /** Roles only the closing record remembers have no posting dates or profession. */
@@ -58,6 +58,9 @@ export interface JobListItem {
   repostCount: number;
   href: string;
 }
-export type JobsPage = Page<JobListItem>;
+export type JobsPage = Page<JobListItem> & {
+  /** The employer the list is narrowed to, when the address named one by id or slug. */
+  filterCompany?: { id: string; slug: string; name: string } | null;
+};
 
 export { jobsQuerySchema } from './schemas.ts';

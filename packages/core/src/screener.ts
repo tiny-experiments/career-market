@@ -364,6 +364,8 @@ export type SearchKind = 'profession' | 'company' | 'skill';
 export interface SearchHit {
   kind: SearchKind;
   id: string;
+  /** The address segment of the hit's own page. */
+  slug: string;
   label: string;
   sublabel: string | null;
   href: string;

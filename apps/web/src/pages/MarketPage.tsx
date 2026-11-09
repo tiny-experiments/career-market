@@ -14,7 +14,7 @@ import { marketOverview, professionsIndex } from "@/lib/api";
 import { formatCount } from "@/lib/format";
 import { gainingProfessions, professionViewFrom } from "@/lib/professions";
 
-const skeleton = <PageSkeleton withHeader={false} />;
+const skeleton = <PageSkeleton variant="market" withHeader={false} />;
 
 export function MarketPage() {
   const market = useResource(marketOverview());

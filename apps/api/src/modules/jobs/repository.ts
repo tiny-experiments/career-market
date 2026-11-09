@@ -571,13 +571,13 @@ export async function companyIdentities(
 export async function resolveCompany(
   sql: Sql,
   value: string,
-): Promise<string | null> {
+): Promise<{ id: string; slug: string; name: string } | null> {
   const [row] = await sql<
-    { company_id: string }[]
-  >`select company_id from company
-    where company_id = ${value} or slug = ${value} or lower(name) = lower(${value}) or lower(display_name) = lower(${value})
-    order by (company_id = ${value}) desc, open desc limit 1`;
-  return row?.company_id ?? null;
+    { id: string; slug: string; name: string }[]
+  >`select company_id as id, slug, coalesce(display_name, name) as name from company
+    where company_id = ${value} or slug = ${value}
+    order by (company_id = ${value}) desc limit 1`;
+  return row ?? null;
 }
 export async function jobFacets(sql: Sql) {
   const build = await latestBuild(sql);

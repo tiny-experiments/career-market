@@ -140,7 +140,6 @@ export function SkillsTable({
       rows={rows}
       rowKey={(row) => row.id}
       rowHref={(row) => `/skills/${row.slug}`}
-      rowLabel={(row) => row.label}
       linkColumn="label"
       sort={sort}
       onSort={onSort}

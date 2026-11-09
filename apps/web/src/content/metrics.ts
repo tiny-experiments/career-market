@@ -46,6 +46,10 @@ export const METRICS = {
     title: "New this week",
     text: "Roles first posted in the last seven days.",
   },
+  hiringIndex: {
+    title: "Tech Hiring Index",
+    text: "Every tech role open right now; the dial shows how many professions have more open roles than a week ago.",
+  },
   professionsGrowing: {
     title: "Professions growing",
     text: "How many professions have more open roles than a week ago.",

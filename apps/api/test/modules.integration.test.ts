@@ -448,10 +448,15 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
     it('filters and paginates via the injected repository, with local company names and logos', async () => {
       const res = await request(app)
         .get(
-          '/api/jobs?company=Acme&workMode=remote&postedWithin=7&hasPay=true&page=2&pageSize=10',
+          '/api/jobs?company=acme&workMode=remote&postedWithin=7&hasPay=true&page=2&pageSize=10',
         )
         .expect(200);
-      expect(res.body).toMatchObject({ page: 2, pageSize: 10, total: 1 });
+      expect(res.body).toMatchObject({
+        page: 2,
+        pageSize: 10,
+        total: 1,
+        filterCompany: { id: 'acme', slug: 'acme', name: 'Acme' },
+      });
       expect(res.body.items[0]).toMatchObject({
         href: '/jobs/kr_aaaaaaaaaaaaaaaa',
         company: { domain: 'acme.example' },
@@ -463,6 +468,16 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
           workMode: ['remote'],
           postedWithin: 7,
           hasPay: 'true',
+        }),
+      );
+      const byName = await request(app)
+        .get('/api/jobs?company=Acme')
+        .expect(200);
+      expect(byName.body.filterCompany).toBeNull();
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          company: undefined,
+          companyContains: 'Acme',
         }),
       );
       await request(app).get('/api/jobs?company=Not-a-company').expect(200);

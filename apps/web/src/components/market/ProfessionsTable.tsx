@@ -193,7 +193,6 @@ export function ProfessionsTable({
         rows={sorted}
         rowKey={(row) => row.family}
         rowHref={(row) => professionHref(row.code)}
-        rowLabel={(row) => row.name}
         linkColumn="name"
         sort={sort}
         onSort={(key) =>

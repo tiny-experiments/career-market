@@ -90,7 +90,7 @@ export function SearchBox({
     <>
       <Button
         variant="outline"
-        aria-label="Search"
+        aria-label={PLACEHOLDER}
         onClick={() => setOpen(true)}
         className={cn(
           "h-control w-full justify-start gap-2 pr-1.5 pl-2.5 font-normal text-muted-foreground",

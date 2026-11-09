@@ -37,6 +37,15 @@ export interface Page<T> extends PageQuery {
   readonly totalIsEstimate?: boolean;
 }
 
+/** A jobs list, with the employer it is narrowed to when the address names one. */
+export interface JobsListing extends Page<JobListItem> {
+  readonly filterCompany?: {
+    readonly id: string;
+    readonly slug: string;
+    readonly name: string;
+  } | null;
+}
+
 export interface JobListItem {
   readonly id: string;
   readonly title: string;

@@ -51,7 +51,13 @@ export function JobsPage() {
   const facets = useResource(jobFacets()).data?.facets;
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const chips = filterChips(params, facets);
+  const named = jobs.data?.filterCompany;
+  const companyParam = params.get("company");
+  const companyName =
+    named && (named.slug === companyParam || named.id === companyParam)
+      ? named.name
+      : null;
+  const chips = filterChips(params, facets, companyName);
   const rows = useMemo(() => jobs.items.map(jobRowFromList), [jobs.items]);
   const first = jobs.data === null && jobs.error === null;
   const sort = params.get("sort") ?? "newest";
@@ -83,7 +89,11 @@ export function JobsPage() {
           aria-label="Filters"
           className="hidden w-68 shrink-0 lg:sticky lg:top-chrome lg:-m-2 lg:block lg:max-h-rail-h lg:overflow-y-auto lg:p-2"
         >
-          <JobFiltersRail filters={filters} facets={facets} />
+          <JobFiltersRail
+            filters={filters}
+            facets={facets}
+            companyName={companyName}
+          />
         </aside>
         <section
           aria-label="Results"
@@ -125,7 +135,11 @@ export function JobsPage() {
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="px-4 pb-6">
-                    <JobFiltersRail filters={filters} facets={facets} />
+                    <JobFiltersRail
+                      filters={filters}
+                      facets={facets}
+                      companyName={companyName}
+                    />
                   </div>
                 </SheetContent>
               </Sheet>

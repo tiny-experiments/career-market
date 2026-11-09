@@ -31,7 +31,7 @@ function tableNames(): string[] {
   const table = screen.getByRole("table");
   return within(table)
     .getAllByRole("link")
-    .map((link) => link.getAttribute("aria-label") ?? "");
+    .map((link) => link.getAttribute("href")?.replace("/skills/", "") ?? "");
 }
 
 describe("SkillsPage", () => {
@@ -43,22 +43,21 @@ describe("SkillsPage", () => {
   it("links the whole row to the skill", async () => {
     renderWithRouter(<SkillsPage />, { path: "/skills" });
     const table = await screen.findByRole("table");
-    expect(within(table).getByRole("link", { name: "Python" })).toHaveAttribute(
-      "href",
-      "/skills/python",
-    );
+    expect(
+      within(table).getByRole("link", { name: /^Python/ }),
+    ).toHaveAttribute("href", "/skills/python");
   });
 
   it("orders the highest paid tab by pay and drops skills with none", async () => {
     renderWithRouter(<SkillsPage />, { path: "/skills?view=best-paid" });
     await screen.findByRole("table");
-    expect(tableNames()).toEqual(["PyTorch", "Python"]);
+    expect(tableNames()).toEqual(["pytorch", "python"]);
   });
 
   it("narrows by name from the address", async () => {
     renderWithRouter(<SkillsPage />, { path: "/skills?q=pyt" });
     await screen.findByRole("table");
-    expect(tableNames()).toEqual(["Python", "PyTorch"]);
+    expect(tableNames()).toEqual(["python", "pytorch"]);
   });
 
   it("says so when nothing matches", async () => {

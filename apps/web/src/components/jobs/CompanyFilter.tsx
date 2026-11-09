@@ -25,9 +25,13 @@ const TYPING_PAUSE_MS = 150;
 /** Pick an employer by name; anything typed that names none still filters by those words. */
 export function CompanyFilter({
   value,
+  label,
   onChange,
 }: {
+  /** What the address holds: a company's slug, or words typed. */
   readonly value: string | null;
+  /** How the reader knows the selected company. */
+  readonly label: string | null;
   readonly onChange: (company: string | null) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -56,14 +60,14 @@ export function CompanyFilter({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          aria-label={value ? `Company: ${value}` : "Choose a company"}
+          aria-label={value ? `Company: ${label ?? value}` : "Choose a company"}
           className="w-full justify-start font-normal"
         >
           <Building2 className="text-muted-foreground" aria-hidden />
           <span
             className={value ? "truncate" : "truncate text-muted-foreground"}
           >
-            {value ?? "Search company name"}
+            {value ? (label ?? value) : "Search company name"}
           </span>
         </Button>
       </PopoverTrigger>
@@ -91,7 +95,7 @@ export function CompanyFilter({
                   <CommandItem
                     key={hit.id}
                     value={hit.id}
-                    onSelect={() => choose(hit.label)}
+                    onSelect={() => choose(hit.slug)}
                   >
                     <Logo name={hit.label} domain={hit.domain} size="sm" />
                     <span className="min-w-0 flex-1 truncate font-medium">
@@ -100,7 +104,7 @@ export function CompanyFilter({
                     <span className="text-xs text-muted-foreground">
                       {formatCount(hit.open)}
                     </span>
-                    {value === hit.label ? <Check aria-hidden /> : null}
+                    {value === hit.slug ? <Check aria-hidden /> : null}
                   </CommandItem>
                 ))}
               </CommandGroup>

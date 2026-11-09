@@ -40,8 +40,6 @@ export interface DataTableProps<Row> {
   readonly rowKey: (row: Row) => string;
   /** Where a row goes. The whole row is the target; the first cell carries the link. */
   readonly rowHref?: (row: Row) => string;
-  /** The link's name for assistive tech, e.g. the profession's name. */
-  readonly rowLabel?: (row: Row) => string;
   /** Which column carries the row's link; the first column by default. */
   readonly linkColumn?: string;
   readonly sort?: { readonly key: string; readonly direction: SortDirection };
@@ -75,14 +73,14 @@ const FROM = {
 /**
  * The market table: full width, 44 px header, 52 px rows, every number
  * right-aligned in tabular figures, the row a single link that tints on hover
- * and outlines on focus. Sorting and hints live in the header.
+ * and outlines on focus. Sorting and hints live in the header. The link is
+ * named by what it shows, so what a screen reader says matches what is seen.
  */
 export function DataTable<Row>({
   columns,
   rows,
   rowKey,
   rowHref,
-  rowLabel,
   linkColumn,
   sort,
   onSort,
@@ -224,7 +222,6 @@ export function DataTable<Row>({
                         {carriesLink ? (
                           <Link
                             to={href}
-                            aria-label={rowLabel?.(row)}
                             className="outline-none after:absolute after:inset-0 after:rounded-sm focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
                           >
                             {column.cell(row, index)}

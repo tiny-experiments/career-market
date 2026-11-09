@@ -29,8 +29,9 @@ function title(text: string, hint: { title: string; text: string }) {
   );
 }
 
-function jobsAt(slug: string, filter: string): string {
-  return `/jobs?company=${encodeURIComponent(slug)}&${filter}`;
+/** The Jobs page filtered to this company by its slug, which no other company shares. */
+function jobsAt(companySlug: string, filter: string): string {
+  return `/jobs?company=${encodeURIComponent(companySlug)}&${filter}`;
 }
 
 /** What a company is hiring for, at what level and where: three panels on one row. */
@@ -41,7 +42,7 @@ export function CompanyBreakdowns({
   readonly page: CompanyPage;
   readonly facets: CompanyFacets;
 }) {
-  const slug = page.company.slug;
+  const companySlug = page.company.slug;
   const teams = new Map(page.teams.map((team) => [team.family, team]));
   const families: BreakdownItem[] = facets.families
     .slice(0, SHOWN)
@@ -56,7 +57,7 @@ export function CompanyBreakdowns({
         ...(change && !change.partial
           ? { trailing: <Delta value={change.value} size="sm" /> }
           : {}),
-        to: jobsAt(slug, `family=${family.value}`),
+        to: jobsAt(companySlug, `family=${family.value}`),
       };
     });
   const levels: BreakdownItem[] = facets.levels.map((level) => ({
@@ -65,7 +66,7 @@ export function CompanyBreakdowns({
     value: formatCount(level.count),
     share: level.count / facets.open,
     trailing: formatShare(level.count / facets.open),
-    to: jobsAt(slug, `level=${level.value}`),
+    to: jobsAt(companySlug, `level=${level.value}`),
   }));
   const countries: BreakdownItem[] = facets.countries
     .slice(0, SHOWN)
@@ -75,7 +76,7 @@ export function CompanyBreakdowns({
       value: formatCount(country.count),
       share: country.count / facets.open,
       trailing: formatShare(country.count / facets.open),
-      to: jobsAt(slug, `country=${country.code}`),
+      to: jobsAt(companySlug, `country=${country.code}`),
     }));
   const stated = facets.workModes.reduce((sum, mode) => sum + mode.count, 0);
   const modes: Segment[] = facets.workModes.map((mode) => ({

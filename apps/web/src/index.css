@@ -9,7 +9,8 @@
 /*
   Career Market tokens (docs/UI-RULEBOOK.md). Two themes from one sheet: dark
   is its own near-black scale, not an inversion. Only the surfaces, lines and
-  greys change between them; the one blue and the up/down colours stay put.
+  greys change between them; the one blue stays put and up, down and warn are
+  tuned per theme so each reads at AA on the surfaces it sits on.
 
   shadcn reads the standard names (--background, --card, --primary, --muted…);
   the market semantics (--up, --down, --flat, --warn, --tile, --subtle) are ours.
@@ -126,7 +127,7 @@
   --secondary: #f4f6f9;
   --secondary-foreground: #0f172a;
   --muted: #f4f6f9;
-  --muted-foreground: #6b7686;
+  --muted-foreground: #5f6b7c;
   --accent: #f4f6f9;
   --accent-foreground: #0f172a;
   --destructive: #dc2626;
@@ -137,10 +138,10 @@
 
   --tile: #f4f6f9;
 
-  --up: #16a34a;
-  --down: #dc2626;
-  --flat: #6b7686;
-  --warn: #d97706;
+  --up: #107a3a;
+  --down: #b91c1c;
+  --flat: #5f6b7c;
+  --warn: #9a5205;
   --up-soft: color-mix(in oklab, var(--up) 12%, var(--card));
   --down-soft: color-mix(in oklab, var(--down) 12%, var(--card));
   --flat-soft: color-mix(in oklab, var(--flat) 12%, var(--card));
@@ -173,7 +174,7 @@
   --secondary: #171d26;
   --secondary-foreground: #eef2f7;
   --muted: #171d26;
-  --muted-foreground: #74808f;
+  --muted-foreground: #808c9c;
   --accent: #171d26;
   --accent-foreground: #eef2f7;
   --destructive: #ef4444;
@@ -184,8 +185,8 @@
   --tile: #171d26;
 
   --up: #22c55e;
-  --down: #ef4444;
-  --flat: #74808f;
+  --down: #f87171;
+  --flat: #808c9c;
   --warn: #f59e0b;
   --up-soft: color-mix(in oklab, var(--up) 16%, var(--card));
   --down-soft: color-mix(in oklab, var(--down) 16%, var(--card));
@@ -285,5 +286,20 @@
     .ticker-track {
       animation: none;
     }
+  }
+}
+
+/*
+ * Reduced motion: every transition and animation on the site (the sliding
+ * underline, hover cards, sheets, the ticker) settles at once.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

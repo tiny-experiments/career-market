@@ -5,10 +5,10 @@ import type { Failure } from "@/lib/failure";
 import { LIST_PAGE_SIZE, pageFrom } from "@/lib/listFilters";
 import { useResource } from "./useResource";
 
-export interface PagedListState<T> {
+export interface PagedListState<P extends Page<unknown>> {
   /** The page on screen, kept while the next one loads; null on first load. */
-  readonly data: Page<T> | null;
-  readonly items: readonly T[];
+  readonly data: P | null;
+  readonly items: P["items"];
   readonly total: number;
   readonly page: number;
   readonly pageSize: number;
@@ -25,15 +25,15 @@ export interface PagedListState<T> {
  * links share it and back and forward return to it. `list` builds the read
  * for a page; a link that changes the filters simply omits `page`.
  */
-export function usePagedList<T, F extends object>(
-  list: (query: F & PageQuery) => Resource<Page<T>>,
+export function usePagedList<P extends Page<unknown>, F extends object>(
+  list: (query: F & PageQuery) => Resource<P>,
   filters: F,
   pageSize: number = LIST_PAGE_SIZE,
-): PagedListState<T> {
+): PagedListState<P> {
   const [params, setParams] = useSearchParams();
   const page = pageFrom(params);
   const state = useResource(list({ ...filters, page, pageSize }));
-  const [shown, setShown] = useState<Page<T> | null>(null);
+  const [shown, setShown] = useState<P | null>(null);
 
   // Adjusting during render rather than in an effect: one render, not two.
   if (state.data !== null && state.data !== shown) setShown(state.data);

@@ -280,7 +280,6 @@ export function TablesSection() {
             rows={professions}
             rowKey={(row) => row.code}
             rowHref={(row) => `/professions/${row.code.toLowerCase()}`}
-            rowLabel={(row) => row.name}
             linkColumn="name"
             sort={sort}
             onSort={onSort}
@@ -307,7 +306,6 @@ export function TablesSection() {
             rows={COMPANIES}
             rowKey={(row) => row.slug}
             rowHref={(row) => `/companies/${row.slug}`}
-            rowLabel={(row) => row.name}
             linkColumn="name"
           />
           <div className="px-gutter">

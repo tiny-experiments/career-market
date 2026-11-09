@@ -151,7 +151,6 @@ export function SkillCompaniesTable({
       rows={companies}
       rowKey={(row) => row.id}
       rowHref={(row) => `/companies/${row.slug ?? row.id}`}
-      rowLabel={(row) => row.name}
       caption={DIRECTORY_COPY.skillCompaniesCaption}
       inset="card"
     />
