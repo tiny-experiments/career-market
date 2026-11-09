@@ -100,9 +100,9 @@ Elevation is one token, two themes:
 apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
-    layout/    SiteHeader, TopNav, SubBar, SearchBox, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
+    layout/    SiteHeader, TopNav, SubBar, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
     data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, RangeTabs
-    common/    EmptyState, ErrorState, MetricHoverCard, Chip
+    common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
     jobs/      VerdictCard (and the job page's parts to come)
   hooks/       useResource, usePagedList, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
   lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, redirects, prefetch
