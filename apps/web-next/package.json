@@ -1,5 +1,5 @@
 {
-  "name": "@cm/web",
+  "name": "@cm/web-next",
   "private": true,
   "type": "module",
   "scripts": {
