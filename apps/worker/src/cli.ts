@@ -14,10 +14,12 @@ import { resolveCompanyDomains, type LogoDeps } from './logos/resolve.ts';
 const USAGE = `career-market worker
 
   migrate              apply SQL migrations to DATABASE_URL
-  build [--force] [--full]
+  build [--force] [--full] [--assume-exported]
                        build the read model for krill's latest snapshot day
                        --force  rebuild a day that was already built
                        --full   refetch every grouped day since 2026-11-02
+                       --assume-exported  build though krill has not marked the
+                                day's export as written; check it exists first
   sweep                apply the persisted change feed cursor
   logos [--limit N]    resolve company website domains for logos; N caps paid
                        lookups in this run (the daily budget still applies)
@@ -68,7 +70,7 @@ async function main(argv: string[]): Promise<number> {
     }
 
     if (command === 'build') {
-      const result = await runBuild({ sql, api, config, log }, { force: flags.includes('--force'), full: flags.includes('--full') });
+      const result = await runBuild({ sql, api, config, log }, { force: flags.includes('--force'), full: flags.includes('--full'), assumeExported: flags.includes('--assume-exported') });
       log.info(result.status === 'skipped' ? result : { status: result.status, snapshotDate: result.snapshotDate }, 'done');
       return 0;
     }

@@ -42,6 +42,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated 
     expect(await runBuild(deps)).toMatchObject({ status: 'skipped', reason: 'snapshot already built' });
     expect(calls).toEqual(['/v1/meta', '/v1/meta']);
   });
+  it('lets an operator pass the export check, and only that check', async () => {
+    const api = apiWith(() => ({ taxonomy: { version: 1, hash: 'x' }, lastSnapshotDate: '2026-11-09', exportedAt: null,
+      openJobs: 1, companies: 1, boards: 1, ats: [] }));
+    const deps = { sql, api, log: pino({ level: 'silent' }), config: parseConfig({ DATABASE_URL: process.env.TEST_DATABASE_URL }) };
+    await sql`insert into build_run(snapshot_date, status) values ('2026-11-09', 'ok')`;
+    expect(await runBuild(deps)).toMatchObject({ status: 'skipped', reason: 'snapshot not complete' });
+    expect(await runBuild(deps, { assumeExported: true })).toMatchObject({ status: 'skipped', reason: 'snapshot already built' });
+  });
   it('serializes worker processes and releases its lock after a failed operation', async () => {
     await withWorkerLock(sql, async () => { expect(await withWorkerLock(sql, async () => 1)).toBeNull(); });
     await expect(withWorkerLock(sql, async () => { throw new Error('failed'); })).rejects.toThrow('failed');
