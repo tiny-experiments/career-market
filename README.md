@@ -45,8 +45,8 @@ krill.kurso.sh                       apps/worker   (plain SQL migrations)    app
 - **packages/core**: the one config module that reads the environment, logging (pino), the Postgres
   client (postgres.js), migrations, display codes and the shared payload types.
 
-Hosting: the web app deploys to Vercel; the read API, worker and Postgres run on the VPS behind
-`https://api.careers.market`. Nothing in this repository deploys anything.
+Hosting: the web app deploys to Vercel at `https://careermarket.app`; the read API, worker and Postgres run
+on the VPS behind `https://api.careermarket.app` (see [Production](#production)).
 
 ## Run it locally
 
@@ -141,22 +141,41 @@ pnpm test
 The API integration tests need a scratch Postgres that may be wiped: set `TEST_DATABASE_URL` to run them
 (CI does); without it they are skipped. See `apps/api/README.md`.
 
-## Deploy shape (VPS)
+## Production
 
-`Dockerfile` builds one server image for the read API and the worker.
-`deploy/docker-compose.yml` runs both on the external `infra` network next to the shared Postgres; it
-publishes no ports, and the reverse proxy routes `https://api.careers.market` to `read-api:4100`.
-The proxy is the sole ingress, so the compose file sets `API_TRUST_PROXY=1` (override it in `deploy/.env`).
+The web app (`apps/web`) deploys to Vercel with the root directory `apps/web`; `apps/web/vercel.json` rewrites
+every path but the hashed `assets/` to `index.html`, and `VITE_API_URL` is set to `https://api.careermarket.app`.
+
+The VPS runs the compose project `career-market` from `/srv/projects/career-market`, a clone of this repository.
+`Dockerfile` builds one server image for the API and the worker.
+
+| Service    | What it does                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `postgres` | The read model, on its own volume (`career-market_pgdata`) and the project's private network  |
+| `api`      | The read API on port 4100, reachable only on `kurso_default` as `cm-api`                      |
+| `worker`   | Snapshot builds, 15-minute change sweeps, description backfill and logo resolution            |
+| `migrate`  | One-off: applies SQL migrations (profile `ops`)                                               |
+
+No service publishes a port. The host's Caddy is the sole ingress and routes `api.careermarket.app` to
+`cm-api:4100`, so `API_TRUST_PROXY` is `1`. CORS allows `https://careermarket.app`, `https://www.careermarket.app`
+and Vercel preview origins.
+
+First deploy, on the VPS:
 
 ```sh
-cp deploy/.env.example deploy/.env
-docker compose -f deploy/docker-compose.yml up -d --build
+git clone https://github.com/tiny-experiments/career-market.git /srv/projects/career-market
+cd /srv/projects/career-market
+cp deploy/.env.example deploy/.env && chmod 600 deploy/.env   # fill in the required values
+docker compose -f deploy/docker-compose.yml build
+docker compose -f deploy/docker-compose.yml up -d --wait postgres
+docker compose -f deploy/docker-compose.yml run --rm migrate
+docker compose -f deploy/docker-compose.yml up -d api worker
 ```
 
-On Vercel the project root `apps/web` now holds the Vite app (`apps/web/vercel.json` rewrites every path but
-the hashed `assets/` to `index.html`); set `VITE_API_URL` there to the API's origin. Until the new pages
-replace it, the Next.js app at `apps/web-next` can be deployed instead; it needs `READ_API_URL` pointing at the
-API.
+The worker's first build takes about ten minutes; until it finishes the API has no market data to serve.
+
+Each later release, from a machine that can `ssh mide-cloud`: `deploy/deploy-main.sh` fast-forwards the VPS clone
+to `origin/main`, builds, migrates, restarts the API and worker, and checks the API from inside Caddy's container.
 
 ## Data
 

@@ -1,11 +1,21 @@
-# VPS side of Career Market: the read-only API and the worker.
-# Both join the shared external 'infra' network, where the shared Postgres
-# (DATABASE_URL) and the reverse proxy live. No port is published: the
-# reverse proxy routes https://api.careers.market to read-api:4100.
+# Production on the VPS: Postgres, the read API and the worker.
+# Nothing publishes a port. The host's Caddy (on the kurso_default network)
+# routes https://api.careermarket.app to cm-api:4100.
 #
-#   cp deploy/.env.example deploy/.env   # fill in DATABASE_URL, ...
+# Run from the repository root; deploy/deploy-main.sh does this for a release:
 #   docker compose -f deploy/docker-compose.yml up -d --build
+# Variables live in deploy/.env (mode 600, ignored by git; see deploy/.env.example).
 name: career-market
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+# postgres:5432 resolves on this project's own network only.
+x-database: &database
+  DATABASE_URL: postgres://career_market:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@postgres:5432/career_market
 
 x-server: &server
   build:
@@ -14,35 +24,104 @@ x-server: &server
   image: career-market-server:latest
   env_file: .env
   restart: unless-stopped
-  networks: [infra]
+  logging: *logging
+  depends_on:
+    postgres:
+      condition: service_healthy
 
 services:
-  read-api:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_USER: career_market
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: career_market
+    command:
+      - postgres
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+    # Parallel queries allocate from /dev/shm; Docker's default is 64 MB.
+    shm_size: 256mb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U career_market -d career_market"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2G
+
+  api:
     <<: *server
     environment:
+      <<: *database
       READ_API_HOST: 0.0.0.0
       READ_API_PORT: "4100"
-      # The reverse proxy is the sole ingress; trust its one hop so rate limits are per client.
-      API_TRUST_PROXY: "${API_TRUST_PROXY:-1}"
+      # Caddy is the sole ingress and replaces X-Forwarded-For, so one hop is the real client.
+      API_TRUST_PROXY: ${API_TRUST_PROXY:-1}
     expose: ["4100"]
+    networks:
+      default: {}
+      caddy:
+        aliases: [cm-api]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
 
+  # Watches for each completed snapshot day, sweeps the change feed, backfills
+  # descriptions and resolves company logos. A stop mid-build is picked up by
+  # the next poll.
   worker:
     <<: *server
-    # Applies migrations, then polls krill /v1/meta every BUILDER_POLL_MINUTES, builds
-    # each completed snapshot day and sweeps the change feed every WORKER_SWEEP_MINUTES.
     working_dir: /app/apps/worker
     command: ["node", "--import", "tsx", "src/cli.ts", "watch"]
+    environment:
+      <<: *database
+      NODE_OPTIONS: --max-old-space-size=1536
+    stop_grace_period: 20s
     volumes:
       - krill-cache:/var/cache/krill
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2G
+
+  # One-off: docker compose -f deploy/docker-compose.yml run --rm migrate
+  migrate:
+    <<: *server
+    profiles: [ops]
+    restart: "no"
+    working_dir: /app/apps/worker
+    command: ["node", "--import", "tsx", "src/cli.ts", "migrate"]
+    environment:
+      <<: *database
 
 volumes:
+  pgdata:
   krill-cache:
 
 networks:
-  infra:
+  caddy:
+    name: kurso_default
     external: true

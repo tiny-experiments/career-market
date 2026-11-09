@@ -2,8 +2,9 @@
 **/.next
 **/.cache
 .git
-.env
-.env.*
+**/.env
+**/.env.*
+deploy
 apps/web
 apps/web-next
 **/test
