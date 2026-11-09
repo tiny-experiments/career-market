@@ -2,7 +2,7 @@ import { Menu } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router";
 import { BrandLockup } from "@/components/layout/BrandMark";
-import { SearchBox, type SearchGroup } from "@/components/layout/SearchBox";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { UnderlineIndicator } from "@/components/layout/UnderlineIndicator";
 import { Button } from "@/components/ui/button";
@@ -17,16 +17,12 @@ import { useSlidingIndicator } from "@/hooks";
 import { SECTIONS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
-export interface TopNavProps {
-  readonly searchGroups?: readonly SearchGroup[];
-}
-
 /**
  * The 56 px bar across the whole width: mark, the five sections, search and
  * the theme toggle. The active section is ink with a 2 px underline that
  * slides; nothing is filled. Under `md` the sections move into a sheet.
  */
-export function TopNav({ searchGroups }: TopNavProps) {
+export function TopNav() {
   const location = useLocation();
   const row = useRef<HTMLElement>(null);
   const indicator = useSlidingIndicator(
@@ -70,10 +66,7 @@ export function TopNav({ searchGroups }: TopNavProps) {
       </nav>
 
       <div className="ml-auto flex items-center gap-2">
-        <SearchBox
-          className="w-9 md:w-72 lg:w-96"
-          {...(searchGroups ? { groups: searchGroups } : {})}
-        />
+        <GlobalSearch className="w-9 md:w-72 lg:w-96" />
         <ThemeToggle />
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetTrigger asChild>

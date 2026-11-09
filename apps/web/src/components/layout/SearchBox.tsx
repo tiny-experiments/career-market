@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
   Command,
@@ -33,6 +33,11 @@ export interface SearchBoxProps {
   readonly groups?: readonly SearchGroup[];
   readonly query?: string;
   readonly onQueryChange?: (query: string) => void;
+  /** Results are on their way. */
+  readonly loading?: boolean;
+  /** Narrow `groups` by the query here; off when the server already matched them. */
+  readonly filter?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
   readonly className?: string;
 }
 
@@ -46,10 +51,18 @@ export function SearchBox({
   groups = [],
   query,
   onQueryChange,
+  loading = false,
+  filter = true,
+  onOpenChange,
   className,
 }: SearchBoxProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const announceOpen = useEffectEvent((next: boolean) => onOpenChange?.(next));
+
+  useEffect(() => {
+    announceOpen(open);
+  }, [open]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -71,6 +84,7 @@ export function SearchBox({
   }, []);
 
   const hasResults = groups.some((group) => group.items.length > 0);
+  const asked = hasResults || (query ?? "").trim() !== "";
 
   return (
     <>
@@ -95,7 +109,7 @@ export function SearchBox({
         title="Search"
         description={PLACEHOLDER}
       >
-        <Command>
+        <Command shouldFilter={filter}>
           <CommandInput
             placeholder={PLACEHOLDER}
             {...(query === undefined ? {} : { value: query })}
@@ -103,9 +117,11 @@ export function SearchBox({
           />
           <CommandList>
             <CommandEmpty>
-              {hasResults
-                ? "Nothing matches that yet."
-                : "Start typing to search professions, companies, skills and jobs."}
+              {!asked
+                ? "Start typing to search professions, companies, skills and jobs."
+                : loading
+                  ? "Searching…"
+                  : "Nothing matches that yet."}
             </CommandEmpty>
             {groups.map((group) =>
               group.items.length === 0 ? null : (
@@ -120,9 +136,11 @@ export function SearchBox({
                       }}
                     >
                       {item.logo}
-                      <span className="truncate font-medium">{item.label}</span>
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {item.label}
+                      </span>
                       {item.hint === undefined ? null : (
-                        <span className="ml-auto truncate text-xs text-muted-foreground">
+                        <span className="max-w-1/2 truncate text-xs text-muted-foreground">
                           {item.hint}
                         </span>
                       )}

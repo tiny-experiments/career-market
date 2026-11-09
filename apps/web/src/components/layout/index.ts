@@ -1,5 +1,6 @@
 export { BrandLockup, BrandMark } from "./BrandMark";
 export { FOOTER_LINE, Footer } from "./Footer";
+export { GlobalSearch } from "./GlobalSearch";
 export { PageContainer } from "./PageContainer";
 export { PageHeader, type Crumb, type PageHeaderProps } from "./PageHeader";
 export {
@@ -16,5 +17,5 @@ export {
   type TickerItem,
   type TickerStripProps,
 } from "./TickerStrip";
-export { TopNav, type TopNavProps } from "./TopNav";
+export { TopNav } from "./TopNav";
 export { UnderlineIndicator } from "./UnderlineIndicator";

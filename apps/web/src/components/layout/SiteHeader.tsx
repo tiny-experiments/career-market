@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMatches } from "react-router";
-import { TopNav, type TopNavProps } from "@/components/layout/TopNav";
+import { TopNav } from "@/components/layout/TopNav";
 import { SubBar } from "@/components/layout/SubBar";
 import type { RouteHandle } from "@/lib/nav";
 
@@ -10,7 +10,7 @@ const SITE = "Career Market";
  * Nav and sub-bar as one sticky unit. The deepest matched route decides the
  * sub-bar and the title through its `handle`; a page never draws either.
  */
-export function SiteHeader(props: TopNavProps) {
+export function SiteHeader() {
   const matches = useMatches();
   const handles = matches
     .map((match) => match.handle as RouteHandle | undefined)
@@ -25,7 +25,7 @@ export function SiteHeader(props: TopNavProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <div className="mx-auto w-full max-w-page">
-        <TopNav {...props} />
+        <TopNav />
         {subBar ? (
           <div className="border-t">
             <SubBar tabs={subBar} />

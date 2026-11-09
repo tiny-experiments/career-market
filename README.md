@@ -138,8 +138,8 @@ cp deploy/.env.example deploy/.env
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
-On Vercel the project root `apps/web` now holds the Vite app (`apps/web/vercel.json` rewrites every path to
-`index.html`). Until the new pages replace it, the Next.js app at `apps/web-next` can be deployed instead; it
+On Vercel the project root `apps/web` now holds the Vite app (`apps/web/vercel.json` rewrites every path but
+the hashed `assets/` to `index.html`); set `VITE_API_URL` there to the API's origin. Until the new pages replace it, the Next.js app at `apps/web-next` can be deployed instead; it
 needs `READ_API_URL` pointing at the API.
 
 ## Data
