@@ -15,12 +15,15 @@ export function createWatchTick(deps: {
   build: () => Promise<unknown>;
   sweep: () => Promise<unknown>;
   backfill?: (now: number) => Promise<unknown>;
+  logos?: () => Promise<unknown>;
+  logosMs?: number;
   onError: (error: unknown) => void;
   pollMs: number;
   sweepMs: number;
 }) {
   let nextBuild = 0;
   let nextSweep = 0;
+  let nextLogos = 0;
   let running = false;
   return async (now: number): Promise<void> => {
     if (running) return;
@@ -36,6 +39,11 @@ export function createWatchTick(deps: {
         priorityWork = true;
         nextSweep = now + deps.sweepMs;
         try { await deps.sweep(); } catch (error) { deps.onError(error); }
+      }
+      if (deps.logos && now >= nextLogos) {
+        priorityWork = true;
+        nextLogos = now + (deps.logosMs ?? deps.pollMs);
+        try { await deps.logos(); } catch (error) { deps.onError(error); }
       }
       if (!priorityWork && deps.backfill) {
         try { await deps.backfill(now); } catch (error) { deps.onError(error); }

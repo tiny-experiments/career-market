@@ -153,7 +153,14 @@ export function MarketSection() {
           <RankedList
             items={SKILLS_RISING.map((skill, index) => ({
               rank: index + 1,
-              logo: <Logo name={skill.name} shape="square" size="sm" />,
+              logo: (
+                <Logo
+                  name={skill.name}
+                  domain={skill.domain}
+                  shape="square"
+                  size="sm"
+                />
+              ),
               name: skill.name,
               value: formatCount(skill.openRoles),
               change: skill.change7d,

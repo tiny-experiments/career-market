@@ -254,21 +254,41 @@ export const COMPANIES: readonly CompanyRow[] = [
 ];
 
 export const SKILLS_RISING = [
-  { slug: "python", name: "Python", openRoles: 83_626, change7d: 0.021 },
+  {
+    slug: "python",
+    name: "Python",
+    domain: "python.org",
+    openRoles: 83_626,
+    change7d: 0.021,
+  },
   {
     slug: "kubernetes",
     name: "Kubernetes",
+    domain: "kubernetes.io",
     openRoles: 32_251,
     change7d: 0.018,
   },
-  { slug: "llms", name: "LLMs", openRoles: 28_951, change7d: 0.064 },
+  {
+    slug: "llms",
+    name: "LLMs",
+    domain: null,
+    openRoles: 28_951,
+    change7d: 0.064,
+  },
   {
     slug: "typescript",
     name: "TypeScript",
+    domain: null,
     openRoles: 41_370,
     change7d: 0.012,
   },
-  { slug: "rust", name: "Rust", openRoles: 6_204, change7d: 0.043 },
+  {
+    slug: "rust",
+    name: "Rust",
+    domain: "rust-lang.org",
+    openRoles: 6_204,
+    change7d: 0.043,
+  },
 ] as const;
 
 export const SPECIALTIES = [

@@ -47,7 +47,12 @@ export function LogosSection() {
                 key={skill.slug}
                 className="flex flex-col items-center gap-1.5"
               >
-                <Logo name={skill.name} shape="square" size="lg" />
+                <Logo
+                  name={skill.name}
+                  domain={skill.domain}
+                  shape="square"
+                  size="lg"
+                />
                 <span className="text-xs text-muted-foreground">
                   {skill.name}
                 </span>

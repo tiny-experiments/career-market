@@ -7,7 +7,8 @@ const LOGO_ORIGIN = "https://logos.context.dev/";
 export function logoUrl(
   domain: string | null | undefined,
   theme: "light" | "dark",
-  clientId: string | undefined = import.meta.env.VITE_LOGO_LINK_ID || undefined,
+  clientId: string | undefined = import.meta.env
+    .VITE_CONTEXT_DEV_PUBLIC_CLIENT_ID || undefined,
 ): string | null {
   if (!clientId || !domain) return null;
   const url = new URL(LOGO_ORIGIN);

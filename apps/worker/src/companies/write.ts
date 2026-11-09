@@ -52,6 +52,7 @@ export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void>
       slug,
       name: c.name,
       domain: c.domain,
+      directory_domain: c.domain,
       careers_url: profile?.detail ? careersUrl(profile.detail.boards) : null,
       ats: c.ats,
       open: c.openJobs,
@@ -66,7 +67,7 @@ export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void>
     await tx`
       insert into company ${tx(rows.slice(i, i + 500) as never)}
       on conflict (company_id) do update set
-        slug = excluded.slug, name = excluded.name, domain = coalesce(excluded.domain, company.domain), careers_url = coalesce(excluded.careers_url, company.careers_url), ats = excluded.ats,
+        slug = excluded.slug, name = excluded.name, directory_domain = coalesce(excluded.directory_domain, company.directory_domain), careers_url = coalesce(excluded.careers_url, company.careers_url), ats = excluded.ats,
         open = excluded.open, rank = excluded.rank, profiled = excluded.profiled, updated_on = excluded.updated_on`;
   }
 

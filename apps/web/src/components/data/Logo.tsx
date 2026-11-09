@@ -1,12 +1,13 @@
+import { useState } from "react";
 import { useTheme } from "next-themes";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { monogram } from "@/lib/format";
 import { logoUrl } from "@/lib/logo";
 import { cn } from "@/lib/utils";
 
 export interface LogoProps {
   readonly name: string;
-  /** The company's own domain; skills and professions carry none and show a monogram. */
+  /** The website the mark belongs to; without one the monogram shows. */
   readonly domain?: string | null;
   /** Companies are round, professions and skills are square tiles. */
   readonly shape?: "round" | "square";
@@ -16,6 +17,39 @@ export interface LogoProps {
 }
 
 const SIZE = { sm: "sm", md: "default", lg: "lg" } as const;
+
+/**
+ * A plain lazy image over the monogram. Avatar's own image preloads every mark
+ * up front, which a long table cannot afford, and it would ignore lazy loading.
+ */
+function LogoMark({
+  src,
+  square,
+}: {
+  readonly src: string;
+  readonly square: boolean;
+}) {
+  const [state, setState] = useState<"loading" | "loaded" | "failed">(
+    "loading",
+  );
+  if (state === "failed") return null;
+  return (
+    <img
+      data-slot="logo-mark"
+      src={src}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setState("loaded")}
+      onError={() => setState("failed")}
+      className={cn(
+        "absolute inset-0 size-full bg-card object-contain p-px",
+        square ? "rounded-lg" : "rounded-full",
+        state === "loaded" ? "opacity-100" : "opacity-0",
+      )}
+    />
+  );
+}
 
 /**
  * One logo component for companies, professions and skills: the real mark
@@ -40,16 +74,7 @@ export function Logo({
       data-shape={shape}
       className={cn("bg-tile", radius, className)}
     >
-      {src ? (
-        <AvatarImage
-          src={src}
-          alt=""
-          loading="lazy"
-          className={cn("bg-card p-px", square && "rounded-lg")}
-        />
-      ) : null}
       <AvatarFallback
-        delayMs={src ? 300 : 0}
         className={cn(
           "bg-tile font-semibold text-subtle",
           "text-eyebrow",
@@ -58,6 +83,7 @@ export function Logo({
       >
         {monogram(name)}
       </AvatarFallback>
+      {src ? <LogoMark key={src} src={src} square={square} /> : null}
     </Avatar>
   );
 }
