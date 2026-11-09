@@ -115,10 +115,12 @@ function PausedInput({
 export function JobFiltersRail({
   filters,
   facets,
+  companyName,
   className,
 }: {
   readonly filters: JobFiltersState;
   readonly facets: readonly JobFacet[] | undefined;
+  readonly companyName: string | null;
   readonly className?: string;
 }) {
   const { params, update } = filters;
@@ -163,6 +165,7 @@ export function JobFiltersRail({
         <Group title="Company">
           <CompanyFilter
             value={params.get("company")}
+            label={companyName}
             onChange={(company) => update({ company })}
           />
         </Group>

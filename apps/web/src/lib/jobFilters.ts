@@ -89,6 +89,7 @@ const labelOf = (
 export function filterChips(
   params: URLSearchParams,
   facets: readonly JobFacet[] | undefined,
+  companyName: string | null = null,
 ): readonly FilterChip[] {
   const chips: FilterChip[] = [];
   const families = facetsOf(facets, "family");
@@ -106,7 +107,7 @@ export function filterChips(
   const q = params.get("q");
   if (q) add("q", `“${q}”`, { q: null });
   const company = params.get("company");
-  if (company) add("company", company, { company: null });
+  if (company) add("company", companyName ?? company, { company: null });
   eachOf(
     "family",
     (value) => families.find((f) => f.value === value)?.label ?? value,

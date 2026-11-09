@@ -89,6 +89,7 @@ export async function search(
       ?.push({
         kind: r.kind,
         id: r.id,
+        slug: r.slug,
         label: r.label,
         sublabel: r.sublabel,
         href: hrefOf(r),

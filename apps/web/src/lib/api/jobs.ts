@@ -2,10 +2,9 @@ import { read } from "./resource";
 import type {
   ClosedJobPayload,
   JobFacets,
-  JobListItem,
   JobPagePayload,
+  JobsListing,
   JobsPulse,
-  Page,
   PageQuery,
 } from "./types";
 
@@ -30,7 +29,7 @@ export interface JobsQuery {
 }
 
 export const jobsList = (query: JobsQuery & PageQuery) =>
-  read<Page<JobListItem>>("/api/jobs", { ...query });
+  read<JobsListing>("/api/jobs", { ...query });
 
 export const jobFacets = () => read<JobFacets>("/api/jobs/facets");
 

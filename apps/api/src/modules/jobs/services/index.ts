@@ -27,8 +27,8 @@ export function createJobsServices(deps: {
       const page = await deps.jobs
         .list({
           ...query,
-          company: resolved ?? undefined,
-          // Words that name no employer exactly still match inside a name.
+          company: resolved?.id,
+          // Words that are no company's id or slug match inside employer names.
           companyContains: resolved ? undefined : query.company,
         })
         .catch((err) => {
@@ -40,6 +40,7 @@ export function createJobsServices(deps: {
       );
       return {
         ...page,
+        filterCompany: resolved ?? null,
         items: page.items.map((j) => {
           const places = splitLocations(
             j.locations.length > 0 ? j.locations : j.places.map((p) => p.label),

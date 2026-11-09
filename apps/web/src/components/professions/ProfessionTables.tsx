@@ -185,7 +185,7 @@ export function ProfessionTables({ page }: { readonly page: ProfessionPage }) {
             rowHref={(row) =>
               row.slug
                 ? `/companies/${row.slug}`
-                : `/jobs?company=${encodeURIComponent(row.name)}`
+                : `/jobs?company=${encodeURIComponent(row.id)}`
             }
             linkColumn="name"
           />

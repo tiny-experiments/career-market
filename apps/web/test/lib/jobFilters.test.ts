@@ -34,6 +34,14 @@ describe("countryName", () => {
 });
 
 describe("filterChips", () => {
+  it("names the company by the name it resolved, not by the slug in the address", () => {
+    const [chip] = filterChips(params("company=mercury-2"), FACETS, "Mercury");
+    expect(chip).toMatchObject({ label: "Mercury", patch: { company: null } });
+    expect(filterChips(params("company=mercury-2"), FACETS)[0]?.label).toBe(
+      "mercury-2",
+    );
+  });
+
   it("makes no chips for a bare list or the sort", () => {
     expect(filterChips(params("sort=salary&page=3"), FACETS)).toEqual([]);
   });

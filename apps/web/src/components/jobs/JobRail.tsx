@@ -113,7 +113,7 @@ export function CompanyPanel({
   readonly company: Job["company"];
   readonly trend: Context["companyTrend"];
 }) {
-  const jobsHref = `/jobs?company=${encodeURIComponent(company.name)}`;
+  const jobsHref = `/jobs?company=${encodeURIComponent(company.slug ?? company.id)}`;
   return (
     <Panel title="Company">
       <div className="flex flex-col gap-4">
