@@ -88,10 +88,3 @@ function normaliseQuery(search: string): string {
   const pairs = [...params.entries()].sort(([a], [b]) => a.localeCompare(b));
   return new URLSearchParams(pairs).toString();
 }
-
-/** The section a pathname belongs to: `/professions/swe` is Professions. */
-export function sectionFor(pathname: string): NavItem | undefined {
-  return SECTIONS.find((item) =>
-    item.to === "/" ? pathname === "/" : pathname.startsWith(item.to),
-  );
-}

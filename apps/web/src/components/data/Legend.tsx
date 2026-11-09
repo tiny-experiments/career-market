@@ -4,7 +4,6 @@ export interface LegendItem {
   readonly label: string;
   /** A background class from the series tokens: bg-chart-1, bg-primary/50. */
   readonly swatch: string;
-  readonly dashed?: boolean;
 }
 
 /** Swatches with their names, under a chart or a stacked bar. */
@@ -29,7 +28,6 @@ export function Legend({
             className={cn(
               "inline-block h-2.5 w-2.5 rounded-sm",
               item.swatch,
-              item.dashed && "opacity-50",
             )}
           />
           {item.label}

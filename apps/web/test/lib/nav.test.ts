@@ -3,7 +3,6 @@ import {
   isTabActive,
   MARKET_TABS,
   PROFESSIONS_TABS,
-  sectionFor,
 } from "@/lib/nav";
 
 const at = (pathname: string, search = "") => ({ pathname, search });
@@ -27,11 +26,5 @@ describe("nav", () => {
     expect(isTabActive(gaining, at("/professions", "?view=gaining"))).toBe(
       true,
     );
-  });
-
-  it("finds the section a path belongs to", () => {
-    expect(sectionFor("/professions/swe")?.label).toBe("Professions");
-    expect(sectionFor("/")?.label).toBe("Market");
-    expect(sectionFor("/design")).toBeUndefined();
   });
 });

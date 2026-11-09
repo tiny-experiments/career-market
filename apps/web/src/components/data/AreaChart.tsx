@@ -11,8 +11,6 @@ export interface AreaPoint {
 
 export interface AreaChartProps {
   readonly series: readonly AreaPoint[];
-  /** Points before this index are estimated and drawn dashed. */
-  readonly estimatedUntil?: number;
   readonly height?: number;
   readonly label: string;
   readonly className?: string;
@@ -22,12 +20,11 @@ const MONTH = new Intl.DateTimeFormat("en-US", { month: "short" });
 
 /**
  * One series over time, filling the width it is given: three faint grid
- * lines, a soft fill under the line, month labels along the bottom, and a
- * dashed stretch where the history is estimated. Drawn by hand, no library.
+ * lines, a soft fill under the line and month labels along the bottom. Drawn
+ * by hand, no library.
  */
 export function AreaChart({
   series,
-  estimatedUntil = 0,
   height = 220,
   label,
   className,
@@ -52,9 +49,6 @@ export function AreaChart({
     x: i * stepX,
     y: padTop + innerH * (1 - (p.value - min) / span),
   }));
-  const cut = Math.min(Math.max(estimatedUntil, 0), points.length);
-  const estimated = cut > 1 ? points.slice(0, cut) : [];
-  const actual = cut > 0 ? points.slice(cut - 1) : points;
   const area =
     points.length > 1
       ? `${linePath(points)} L${width} ${padTop + innerH} L0 ${padTop + innerH} Z`
@@ -107,24 +101,13 @@ export function AreaChart({
             />
           ))}
           {area ? <path d={area} fill={`url(#${gradient})`} /> : null}
-          {estimated.length > 1 ? (
+          {points.length > 1 ? (
             <path
-              d={linePath(estimated)}
-              fill="none"
-              className="stroke-primary"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              data-segment="estimated"
-            />
-          ) : null}
-          {actual.length > 1 ? (
-            <path
-              d={linePath(actual)}
+              d={linePath(points)}
               fill="none"
               className="stroke-primary"
               strokeWidth={2.4}
               strokeLinejoin="round"
-              data-segment="actual"
             />
           ) : null}
           {labels.map((item) => (

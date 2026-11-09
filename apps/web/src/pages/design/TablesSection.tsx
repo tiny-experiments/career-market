@@ -125,7 +125,7 @@ const PROFESSION_COLUMNS: readonly Column<ProfessionRow>[] = [
     header: "30 days",
     align: "right",
     from: "sm",
-    cell: (row) => <Sparkline values={row.trend} estimatedUntil={8} />,
+    cell: (row) => <Sparkline values={row.trend} />,
   },
 ];
 
@@ -255,7 +255,7 @@ export function TablesSection() {
     >
       <Example
         title="Professions"
-        note="Chips filter, headers sort, the dashed start of a sparkline is estimated history."
+        note="Chips filter, headers sort."
       >
         <div className="-mx-gutter flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2 px-gutter">

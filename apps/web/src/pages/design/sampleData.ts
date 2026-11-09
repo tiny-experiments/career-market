@@ -295,14 +295,13 @@ export const WHERE = [
   { name: "Canada", openRoles: 2_511 },
 ] as const;
 
-/** Ninety days of open Software roles, the first sixty estimated. */
+/** Ninety days of open Software roles. */
 export const SWE_SERIES = Array.from({ length: 90 }, (_, i) => {
   const date = new Date(Date.UTC(2026, 7, 10 + i));
   const t = i / 89;
   const value = Math.round(83_000 + 16_923 * t * t + Math.sin(i / 3) * 700);
   return { date: date.toISOString().slice(0, 10), value };
 });
-export const SWE_ESTIMATED_UNTIL = 60;
 
 export const TICKER: readonly TickerItem[] = [
   { label: "Open roles", value: "262,845", change: 0.013, to: "/" },

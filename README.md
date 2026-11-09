@@ -35,7 +35,7 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   payload `degraded`. A closed role answers 410 with its tombstone.
 - **web app** (`apps/web`, Vite + React 19 + react-router 7 + Tailwind 4 + shadcn/ui) is the single-page
   app being built page by page on the design system in `apps/web/src/components` (see
-  `docs/UI-RULEBOOK.md`; `/design` shows every token and component in both themes). It reads the public
+  `docs/UI-RULEBOOK.md`; `/design`, in development builds only, shows every token and component in both themes). It reads the public
   API from the browser and never connects to Postgres.
 - **previous web app** (`apps/web-next`, Next.js App Router) stays runnable until the new pages replace
   it. It renders pages on the server from the read API only and never connects to Postgres.
@@ -74,7 +74,7 @@ few hundred calls (about 10 minutes unkeyed); later builds fetch only the recent
 
 ```sh
 pnpm api                      # read API on READ_API_HOST:READ_API_PORT (default 127.0.0.1:4100)
-pnpm web:dev                  # web app (Vite) on http://localhost:3000; /design shows the design system
+pnpm web:dev                  # web app (Vite) on http://localhost:3000; /design shows the design system (dev only)
 pnpm web:build                # production build to apps/web/dist
 PORT=3001 pnpm web-next:dev   # previous Next.js app in development
 pnpm web-next:build && PORT=3001 pnpm web-next:start

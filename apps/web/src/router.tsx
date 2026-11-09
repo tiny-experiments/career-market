@@ -82,15 +82,18 @@ export const router = createBrowserRouter([
           />
         ),
       },
-      {
-        // The living reference is heavy and for us; it loads only when opened.
-        path: "design",
-        handle: handle({ title: "Design system" }),
-        lazy: async () => ({
-          Component: (await import("./pages/DesignSystemPage.tsx"))
-            .DesignSystemPage,
-        }),
-      },
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: "design",
+              handle: handle({ title: "Design system" }),
+              lazy: async () => ({
+                Component: (await import("./pages/DesignSystemPage.tsx"))
+                  .DesignSystemPage,
+              }),
+            },
+          ]
+        : []),
       { path: "*", Component: NotFoundPage },
     ],
   },

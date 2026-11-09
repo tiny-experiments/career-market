@@ -20,14 +20,13 @@ describe("Sparkline", () => {
     expect(falling.querySelector("svg")).toHaveClass("stroke-down");
   });
 
-  it("draws the estimated start dashed and the rest solid", () => {
+  it("draws one solid line", () => {
     const { container } = render(
-      <Sparkline values={[10, 11, 12, 13, 14, 15]} estimatedUntil={3} />,
+      <Sparkline values={[10, 11, 12, 13, 14, 15]} />,
     );
-    const estimated = container.querySelector('path[data-segment="estimated"]');
-    const actual = container.querySelector('path[data-segment="actual"]');
-    expect(estimated).toHaveAttribute("stroke-dasharray", "3 3");
-    expect(actual).not.toHaveAttribute("stroke-dasharray");
+    const paths = container.querySelectorAll("path");
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).not.toHaveAttribute("stroke-dasharray");
   });
 
   it("is decorative: the number beside it carries the meaning", () => {

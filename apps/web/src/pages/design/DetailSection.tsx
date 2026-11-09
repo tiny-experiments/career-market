@@ -20,7 +20,6 @@ import { DesignSection, Example } from "@/pages/design/DesignSection";
 import {
   SENIORITY,
   SPECIALTIES,
-  SWE_ESTIMATED_UNTIL,
   SWE_SERIES,
   WHERE,
 } from "@/pages/design/sampleData";
@@ -116,18 +115,10 @@ export function DetailSection() {
           >
             <AreaChart
               series={SWE_SERIES}
-              estimatedUntil={SWE_ESTIMATED_UNTIL}
               label="Open Software roles over the last 90 days"
             />
             <Legend
-              items={[
-                { label: "Open roles", swatch: "bg-primary" },
-                {
-                  label: "Estimated history",
-                  swatch: "bg-primary",
-                  dashed: true,
-                },
-              ]}
+              items={[{ label: "Open roles", swatch: "bg-primary" }]}
             />
           </Panel>
           <div className="grid gap-4 lg:grid-cols-3">
