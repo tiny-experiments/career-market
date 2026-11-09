@@ -5,23 +5,24 @@ import type { Sql } from './db.ts';
 
 const MIGRATIONS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../migrations');
 
-/** Applies plain SQL migrations in file-name order, each in its own transaction. */
+/** One ordered migration set, atomically applied and serialized across API/worker startup. */
 export async function migrate(sql: Sql, dir = MIGRATIONS_DIR): Promise<string[]> {
-  await sql`create table if not exists schema_migration (
-    name text primary key,
-    applied_at timestamptz not null default now()
-  )`;
-  const done = new Set((await sql<{ name: string }[]>`select name from schema_migration`).map((r) => r.name));
-  const files = (await readdir(dir)).filter((f) => f.endsWith('.sql')).sort();
+  const files = (await readdir(dir)).filter((file) => file.endsWith('.sql')).sort();
+  const migrations = await Promise.all(files.map(async (name) => ({ name, text: await readFile(path.join(dir, name), 'utf8') })));
   const applied: string[] = [];
-  for (const file of files) {
-    if (done.has(file)) continue;
-    const text = await readFile(path.join(dir, file), 'utf8');
-    await sql.begin(async (tx) => {
-      await tx.unsafe(text);
-      await tx`insert into schema_migration (name) values (${file})`;
-    });
-    applied.push(file);
-  }
+  await sql.begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(712903, 1)`;
+    await tx`create table if not exists schema_migration (
+      name text primary key,
+      applied_at timestamptz not null default now()
+    )`;
+    const done = new Set((await tx<{ name: string }[]>`select name from schema_migration`).map((row) => row.name));
+    for (const migration of migrations) {
+      if (done.has(migration.name)) continue;
+      await tx.unsafe(migration.text);
+      await tx`insert into schema_migration (name) values (${migration.name})`;
+      applied.push(migration.name);
+    }
+  });
   return applied;
 }

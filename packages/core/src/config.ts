@@ -24,7 +24,11 @@ const schema = z.object({
   KRILL_CACHE_DIR: z.string().default('.cache/krill'),
   KRILL_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
 
-  BUILDER_POLL_MINUTES: z.coerce.number().int().positive().default(60),
+  WORKER_BACKFILL_PER_MIN: z.coerce.number().int().min(0).max(500).default(120),
+  WORKER_SWEEP_MINUTES: z.coerce.number().int().positive().default(15),
+  WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(12),
+  GROWTH_MODE: z.enum(['like-for-like', 'raw']).default('like-for-like'),
+  BUILDER_POLL_MINUTES: z.coerce.number().int().positive().default(5),
   BUILDER_CLOSING_SAMPLE_PER_DAY: z.coerce.number().int().min(0).default(60),
   BUILDER_GROUPED_REFRESH_DAYS: z.coerce.number().int().min(1).default(7),
   BUILDER_SKILL_PAGES: z.coerce.number().int().min(0).default(60),
@@ -55,6 +59,7 @@ export interface Config {
     cacheDir: string;
     timeoutMs: number;
   };
+  worker: { backfillPerMinute: number; sweepMinutes: number; concurrency: number; growthMode: 'like-for-like' | 'raw' };
   builder: {
     pollMinutes: number;
     closingSamplePerDay: number;
@@ -90,10 +95,11 @@ export function parseConfig(env: Record<string, string | undefined>, cwd = proce
     krill: {
       baseUrl: raw.KRILL_API_URL.replace(/\/+$/, ''),
       apiKey: raw.KRILL_API_KEY,
-      ratePerMinute: raw.KRILL_RATE_PER_MIN ?? (raw.KRILL_API_KEY ? KEYED_RATE : ANON_RATE),
+      ratePerMinute: Math.min(raw.KRILL_RATE_PER_MIN ?? (raw.KRILL_API_KEY ? KEYED_RATE : ANON_RATE), raw.KRILL_API_KEY ? KEYED_RATE : ANON_RATE),
       cacheDir: path.resolve(cwd, raw.KRILL_CACHE_DIR),
       timeoutMs: raw.KRILL_TIMEOUT_MS,
     },
+    worker: { backfillPerMinute: raw.WORKER_BACKFILL_PER_MIN, sweepMinutes: raw.WORKER_SWEEP_MINUTES, concurrency: raw.WORKER_CONCURRENCY, growthMode: raw.GROWTH_MODE },
     builder: {
       pollMinutes: raw.BUILDER_POLL_MINUTES,
       closingSamplePerDay: raw.BUILDER_CLOSING_SAMPLE_PER_DAY,
