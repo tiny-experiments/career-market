@@ -5,7 +5,7 @@ export const companiesQuerySchema = z
     ...pagingShape,
     q: z.string().trim().max(160).optional(),
     signal: z.enum(['ramping', 'steady', 'cooling', 'freezing']).optional(),
-    sort: z.enum(['open', 'name', 'change1w', 'rank']).default('open'),
+    sort: z.enum(['open', 'name', 'change1w', 'change30d', 'rank']).default('open'),
     dir: z.enum(['asc', 'desc']).optional(),
   })
   .transform((query) => ({

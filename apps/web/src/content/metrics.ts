@@ -179,6 +179,48 @@ export const METRICS = {
     title: "Professions",
     text: "The professions whose open roles name this skill, and the share of each that does.",
   },
+
+  // Companies and skills
+  topProfession: {
+    title: "Top profession",
+    text: "The profession with the most of this company's open roles.",
+  },
+  companyPay: {
+    title: "Pay range",
+    text: "The middle half of the pay this company lists, in US dollars.",
+  },
+  skillPay: {
+    title: "Typical pay",
+    text: "The middle of the pay listed on roles that name this skill, in US dollars.",
+  },
+  skillPayRange: {
+    title: "Pay range",
+    text: "The middle half of the pay listed on roles that name this skill, in US dollars.",
+  },
+  payLift: {
+    title: "Pay lift",
+    text: "How much more roles naming this skill list than similar roles that don't.",
+  },
+  pairedShare: {
+    title: "Paired with",
+    text: "The skill most often named alongside this one, and the share of its roles that name both.",
+  },
+  professionShare: {
+    title: "Share of profession",
+    text: "The share of this profession's open roles that name this skill.",
+  },
+  hiringSignals: {
+    title: "Hiring signals",
+    text: "How companies are moving: ramping means clearly more openings than closings, cooling and freezing the reverse.",
+  },
+  peers: {
+    title: "Compared with",
+    text: "Open roles naming this skill beside the closest alternatives in the same profession.",
+  },
+  skillChart: {
+    title: "Open roles",
+    text: "Open roles naming this skill in its largest profession.",
+  },
 } as const satisfies Record<string, MetricHint>;
 
 export type MetricKey = keyof typeof METRICS;

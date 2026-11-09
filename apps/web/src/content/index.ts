@@ -5,6 +5,16 @@
  * rules: no provider, no method, no dates as qualifiers, no company totals.
  */
 export {
+  DIRECTORY_COPY,
+  lastDays,
+  latestJobsNaming,
+  openRolesAt,
+  openRolesAtOverTime,
+  openRolesNamingOverTime,
+  rankByOpenRoles,
+  shareOf,
+} from "./directories";
+export {
   METRICS,
   SIGNALS,
   metricHint,

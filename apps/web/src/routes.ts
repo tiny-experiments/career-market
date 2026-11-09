@@ -5,6 +5,7 @@ import {
   companiesList,
   companyDetail,
   companyJobs,
+  companySignals,
   jobDetail,
   jobsList,
   marketOverview,
@@ -105,6 +106,7 @@ export const pageRoutes: readonly PageRoute[] = [
         page: pageFrom(search),
         pageSize: LIST_PAGE_SIZE,
       }),
+      companySignals(),
     ],
   },
   {

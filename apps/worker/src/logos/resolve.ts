@@ -2,6 +2,7 @@ import type { Sql } from '@cm/core/db';
 import type { Logger } from '@cm/core/logger';
 import { concurrentMap } from '../concurrent.ts';
 import { ContextDevError, type BrandSearch, type LogoProbe } from './contextDev.ts';
+import { applyCompanyNames } from './names.ts';
 import { brandName, canSearchBrand, freeDomain, matchBrand, type DomainSource } from './domain.ts';
 
 export interface LogoSettings {
@@ -260,7 +261,10 @@ export async function resolveCompanyDomains(deps: LogoDeps): Promise<LogoStats> 
 
   // Brand results are new domains; check them in the same pass when the budget allows.
   if (!logoStepStopped) await runLogoChecks(deps, checksLeft(), stats, failed);
-  await sql.begin((tx) => applyCompanyDomains(tx as unknown as Sql));
+  await sql.begin(async (tx) => {
+    await applyCompanyDomains(tx as unknown as Sql);
+    await applyCompanyNames(tx as unknown as Sql);
+  });
   log.info(stats, 'company domains resolved');
   return stats;
 }

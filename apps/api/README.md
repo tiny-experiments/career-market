@@ -15,6 +15,7 @@ continues to own migrations; this app never migrates on startup.
 | `GET /api/professions`          | Profession index; optional `region` scopes it to a region  |
 | `GET /api/professions/:code`    | Profession detail                                          |
 | `GET /api/companies`            | Paginated directory over every current company             |
+| `GET /api/company-signals`      | Counts by hiring signal and the week's biggest movers      |
 | `GET /api/companies/:slug`      | Company detail (also accepts company id)                   |
 | `GET /api/companies/:slug/jobs` | Paginated roles at that company                            |
 | `GET /api/skills`               | Tracked skill index, with last-good-day fallback           |

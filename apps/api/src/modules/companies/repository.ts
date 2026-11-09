@@ -6,11 +6,14 @@ import {
   companySeries,
   LEVEL_ORDER,
   STACK_GROUPS,
+  type CompanyFacets,
   type CompanyMover,
   type CompanyPage,
   type CompanyProfileBlock,
   type CompanySignal,
   type CompanySignalState,
+  type CompanySignalsOverview,
+  type CompanySkillCount,
   type CompanyTeam,
   type CountValue,
 } from '@cm/core/company';
@@ -21,6 +24,8 @@ import {
   type IsoDay,
   type Range,
 } from '@cm/core/dates';
+import { fullWindow, MIN_FULL_WEEK_DAYS } from '@cm/core/changes';
+import { skillDomain } from '@cm/core/skills';
 import type { Queries as Sql } from '../../database/client.ts';
 import type { Change, Unavailable } from '@cm/core/types';
 import { latestBuild, NotReadyError } from '../../database/readModel.ts';
@@ -116,6 +121,8 @@ interface CompanyRow {
   company_id: string;
   slug: string;
   name: string;
+  display_name: string | null;
+  named: boolean | null;
   domain: string | null;
   careers_url: string | null;
   open: number;
@@ -141,6 +148,7 @@ export async function companiesRamping(
     select c.*, m.change, m.base_date, m.partial, m.estimated
     from company c join market_change m on m.subject = 'cpage:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
     where c.updated_on = ${asOf} and c.open >= ${MIN_RAMPING_OPEN} and m.change > 0
+      and coalesce(c.named, c.domain is not null)
       and (c.open - c.open / (1 + m.change)) >= ${MIN_RAMPING_DELTA}
     order by m.change desc limit ${limit}`;
   const spark = await sparks(
@@ -150,7 +158,7 @@ export async function companiesRamping(
   );
   return rows.map((r) => ({
     slug: r.slug,
-    name: r.name,
+    name: r.display_name ?? r.name,
     domain: r.domain,
     open: r.open,
     change: {
@@ -162,6 +170,110 @@ export async function companiesRamping(
     },
     spark: spark.get(r.company_id) ?? [],
   }));
+}
+
+/** A company needs this many open roles to appear among the week's biggest movers. */
+const MIN_MOVER_OPEN = 100;
+/** How many movers each card pages through. */
+const MOVERS_PER_CARD = 15;
+
+/** Biggest moves in one direction this week, among companies large enough and named clearly enough to show. */
+async function movers(
+  sql: Sql,
+  asOf: IsoDay,
+  direction: 'up' | 'down',
+): Promise<CompanyMover[]> {
+  const sign = direction === 'up' ? 1 : -1;
+  const rows = await sql<
+    (CompanyRow & {
+      change: number;
+      base_date: IsoDay;
+      partial: boolean;
+      estimated: boolean;
+    })[]
+  >`
+    select c.*, m.change, m.base_date, m.partial, m.estimated
+    from company c join market_change m on m.subject = 'cpage:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
+    where c.updated_on = ${asOf} and c.open >= ${MIN_MOVER_OPEN} and c.domain is not null
+      and coalesce(c.named, true)
+      and m.change * ${sign}::int > 0 and m.base_date <= ${addDays(asOf, -MIN_FULL_WEEK_DAYS)}
+      and abs(c.open - c.open / (1 + m.change)) >= ${MIN_RAMPING_DELTA}
+    order by m.change * ${sign}::int desc, c.company_id
+    limit ${MOVERS_PER_CARD}`;
+  const spark = await sparks(
+    sql,
+    asOf,
+    rows.map((r) => r.company_id),
+  );
+  return rows.map((r) => ({
+    slug: r.slug,
+    name: r.display_name ?? r.name,
+    domain: r.domain,
+    open: r.open,
+    change: {
+      range: '1W',
+      value: r.change,
+      baseDate: r.base_date,
+      partial: r.partial,
+      estimated: r.estimated,
+    },
+    spark: spark.get(r.company_id) ?? [],
+  }));
+}
+
+/** The read behind the Companies page's market cards. */
+export async function companySignalsOverview(
+  sql: Sql,
+): Promise<CompanySignalsOverview> {
+  const build = await latestBuild(sql);
+  if (!build) throw new NotReadyError();
+  const { asOf } = build;
+  const stateRows = await sql<{ state: CompanySignalState; n: number }[]>`
+    select s.state, count(*)::int as n from company_signal s
+    join company c on c.company_id = s.company_id and c.updated_on = ${asOf} and c.open > 0
+    where s.as_of = ${asOf} group by s.state`;
+  const counts: Record<CompanySignalState, number> = {
+    RAMPING: 0,
+    STEADY: 0,
+    COOLING: 0,
+    FREEZING: 0,
+  };
+  for (const row of stateRows) counts[row.state] = row.n;
+  const [ramping, cooling] = await Promise.all([
+    movers(sql, asOf, 'up'),
+    movers(sql, asOf, 'down'),
+  ]);
+  return { counts, ramping, cooling };
+}
+
+interface FacetCount {
+  value: string;
+  count: number;
+}
+
+interface CompanyFacetRow {
+  company_id: string;
+  open: number;
+  top_family: string | null;
+  remote: number;
+  stated_mode: number;
+  families: FacetCount[];
+  levels: FacetCount[];
+  countries: FacetCount[];
+  work_modes: FacetCount[];
+  skills: FacetCount[];
+  median_days_open: number | null;
+  pay_n: number;
+  pay_low: number | null;
+  pay_median: number | null;
+  pay_high: number | null;
+}
+
+/** Fewer roles listing pay than this and a pay range would describe a handful of postings. */
+const MIN_PAY_ROLES = 5;
+
+function remoteShareOf(row: { remote: number; stated_mode: number }): number | null {
+  return row.stated_mode > 0 ? row.remote / row.stated_mode : null;
 }
 
 /** The largest companies, for the Companies page and the ticker. */
@@ -185,13 +297,22 @@ export async function companyDirectory(
         .on('m.as_of', '=', build.asOf)
         .on('m.range', '=', '1W'),
     )
-    .where('c.updated_on', '=', build.asOf);
+    .leftJoin('market_change as month', (join) =>
+      join
+        .on('month.subject', '=', ksql<string>`'cpage:' || c.company_id`)
+        .on('month.as_of', '=', build.asOf)
+        .on('month.range', '=', '1M'),
+    )
+    .where('c.updated_on', '=', build.asOf)
+    .where('c.open', '>', 0);
   if (query.q)
-    base = base.where(
-      'c.name',
-      'ilike',
-      `%${query.q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`,
-    );
+    base = base.where((eb) => {
+      const pattern = `%${query.q?.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+      return eb.or([
+        eb('c.name', 'ilike', pattern),
+        eb('c.display_name', 'ilike', pattern),
+      ]);
+    });
   if (query.signal)
     base = base.where('s.state', '=', query.signal.toUpperCase());
   const count = await base
@@ -199,9 +320,10 @@ export async function companyDirectory(
     .executeTakeFirstOrThrow();
   const order = {
     open: 'c.open',
-    name: 'c.name',
+    name: ksql`lower(coalesce(c.display_name, c.name))`,
     rank: 'c.rank',
     change1w: 'm.change',
+    change30d: 'month.change',
   } as const;
   const rows = await base
     .selectAll('c')
@@ -213,28 +335,43 @@ export async function companyDirectory(
     .offset((query.page - 1) * query.pageSize)
     .execute();
   const ids = rows.map((r) => r.company_id);
-  const changes = await changesFor(
-    sql,
-    build.asOf,
-    ids.map((id) => `cpage:${id}`),
-    '1W',
-  );
-  const spark = await sparks(sql, build.asOf, ids);
+  const subjects = ids.map((id) => `cpage:${id}`);
+  const [changes, monthChanges, spark, facetRows] = await Promise.all([
+    changesFor(sql, build.asOf, subjects, '1W'),
+    changesFor(sql, build.asOf, subjects, '1M'),
+    sparks(sql, build.asOf, ids),
+    ids.length
+      ? sql<Pick<CompanyFacetRow, 'company_id' | 'top_family' | 'remote' | 'stated_mode'>[]>`
+          select company_id, top_family, remote, stated_mode from company_facet where company_id in ${sql(ids)}`
+      : Promise.resolve([]),
+  ]);
+  const facets = new Map(facetRows.map((f) => [f.company_id, f]));
   const signals = ids.length
     ? await sql<{ company_id: string; state: CompanySignalState }[]>`
         select company_id, state from company_signal where as_of = ${build.asOf} and company_id in ${sql(ids)}`
     : [];
   const state = new Map(signals.map((s) => [s.company_id, s.state]));
-  const items = rows.map((r) => ({
-    slug: r.slug,
-    name: r.name,
-    domain: r.domain,
-    open: r.open,
-    rank: r.rank,
-    change: changes.get(`cpage:${r.company_id}`) ?? null,
-    spark: spark.get(r.company_id) ?? [],
-    state: state.get(r.company_id) ?? null,
-  }));
+  const items = rows.map((r) => {
+    const facet = facets.get(r.company_id);
+    return {
+      slug: r.slug,
+      name: r.display_name ?? r.name,
+      domain: r.domain,
+      open: r.open,
+      rank: r.rank,
+      change: fullWindow(changes.get(`cpage:${r.company_id}`), build.asOf),
+      change30d: fullWindow(monthChanges.get(`cpage:${r.company_id}`), build.asOf),
+      spark: spark.get(r.company_id) ?? [],
+      state: state.get(r.company_id) ?? null,
+      topProfession: facet?.top_family
+        ? {
+            family: facet.top_family,
+            name: familyInfo(facet.top_family).name,
+          }
+        : null,
+      remoteShare: facet ? remoteShareOf(facet) : null,
+    };
+  });
   return {
     items,
     page: query.page,
@@ -253,6 +390,54 @@ export async function companySlugs(
     { company_id: string; slug: string }[]
   >`select company_id, slug from company where company_id in ${sql(ids)}`;
   return new Map(rows.map((r) => [r.company_id, r.slug]));
+}
+
+/** The latest build's skills that have a page, for linking a company's skills. */
+async function trackedSkillSlugs(sql: Sql): Promise<Map<string, string>> {
+  const rows = await sql<{ skill: string; slug: string }[]>`
+    select distinct on (s.skill) s.skill, s.slug
+    from skill_summary s
+    join skill_tracked t on t.skill = s.skill and t.date = (select max(date) from skill_tracked)
+    order by s.skill, s.date desc`;
+  return new Map(rows.map((r) => [r.skill, r.slug]));
+}
+
+function facetsOf(row: CompanyFacetRow, slugs: Map<string, string>): CompanyFacets {
+  const count = (f: FacetCount, label: string) => ({
+    value: f.value,
+    label,
+    count: f.count,
+  });
+  const skills: CompanySkillCount[] = row.skills.map((s) => ({
+    ...count(s, skillLabel(s.value)),
+    slug: slugs.get(s.value) ?? null,
+    domain: skillDomain(s.value),
+  }));
+  return {
+    open: row.open,
+    remoteShare: remoteShareOf(row),
+    families: row.families.map((f) => count(f, familyInfo(f.value).name)),
+    levels: row.levels.map((l) => count(l, levelLabel(l.value))),
+    countries: row.countries.map((c) => ({
+      ...count(c, countryName(c.value)),
+      code: c.value,
+    })),
+    workModes: row.work_modes.map((m) => count(m, titleCase(m.value))),
+    skills,
+    medianDaysOpen: row.median_days_open,
+    pay:
+      row.pay_n >= MIN_PAY_ROLES &&
+      row.pay_low !== null &&
+      row.pay_median !== null &&
+      row.pay_high !== null
+        ? {
+            roles: row.pay_n,
+            low: row.pay_low,
+            median: row.pay_median,
+            high: row.pay_high,
+          }
+        : null,
+  };
 }
 
 function levelLabel(level: string): string {
@@ -348,7 +533,12 @@ export async function companyPage(
     }[]
   >`select state, window_from, window_days, opened, closed, open_base, partial, explainer from company_signal
     where as_of = ${asOf} and company_id = ${id}`;
-  const changes = await changesFor(sql, asOf, [`cpage:${id}`], '1M');
+  const [changes, weekChanges, facetRows, skillSlugs] = await Promise.all([
+    changesFor(sql, asOf, [`cpage:${id}`], '1M'),
+    changesFor(sql, asOf, [`cpage:${id}`], '1W'),
+    sql<CompanyFacetRow[]>`select * from company_facet where company_id = ${id}`,
+    trackedSkillSlugs(sql),
+  ]);
   const signal: CompanySignal | null = signalRow
     ? {
         state: signalRow.state,
@@ -422,7 +612,7 @@ export async function companyPage(
     company: {
       id,
       slug: co.slug,
-      name: co.name,
+      name: co.display_name ?? co.name,
       domain: co.domain,
       careersUrl: co.careers_url,
       open: co.open,
@@ -468,6 +658,9 @@ export async function companyPage(
       remote: prof ? profileBlock(prof).remote : null,
     },
     peers: PEERS_COMING_SOON,
+    change7d: fullWindow(weekChanges.get(`cpage:${id}`), asOf),
+    change30d: fullWindow(changes.get(`cpage:${id}`), asOf),
+    facets: facetRows[0] ? facetsOf(facetRows[0], skillSlugs) : null,
   };
 }
 

@@ -8,6 +8,9 @@ export function createCompaniesController(services: CompaniesServices) {
     list: async (req: Request, res: Response) => {
       res.json(await services.list(parse(companiesQuerySchema, req.query)));
     },
+    signals: async (_req: Request, res: Response) => {
+      res.json(await services.signals());
+    },
     detail: async (req: Request, res: Response) => {
       const { slug } = parse(companyParamsSchema, req.params);
       res.json(await services.detail(slug));

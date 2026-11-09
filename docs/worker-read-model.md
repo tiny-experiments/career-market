@@ -27,6 +27,12 @@ the SPA or the public read API.
   placeholder slug `company-<company_id>` (`placeholderSlug`); the next build
   replaces exactly that slug with the normal name-derived one.
 
+`0015` adds `company_facet` and `skill_facet`: per-company and per-tracked-skill counts
+of profession, level, country, work mode and skills, plus time open and the middle half
+of listed USD pay. `refresh_market_facets()` rebuilds both from `job_mirror` inside the
+snapshot transaction, so a page of companies never scans the mirror. Sweeps do not
+refresh them: shares move slowly and the next build corrects them.
+
 Jobs filters use B-tree indexes for profession, employer, seniority, work mode,
 posting/opening date and pay; GIN indexes cover country arrays, full-text search
 and company-name substring search. A remote partial index supports remote-only

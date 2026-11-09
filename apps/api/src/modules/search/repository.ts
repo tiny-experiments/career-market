@@ -73,8 +73,8 @@ export async function search(
         select kind, id, slug, label, sublabel, open, domain, keywords
         from search_entry where as_of = ${build.asOf} and kind <> 'company'
         union all
-        select 'company' as kind, company_id as id, slug, name as label, null as sublabel, open, domain,
-          lower(name || ' ' || slug) as keywords
+        select 'company' as kind, company_id as id, slug, coalesce(display_name, name) as label, null as sublabel, open, domain,
+          lower(coalesce(display_name, '') || ' ' || name || ' ' || slug) as keywords
         from company where updated_on = ${build.asOf}
       ) entries
       where true
