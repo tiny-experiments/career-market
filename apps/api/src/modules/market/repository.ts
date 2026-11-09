@@ -27,6 +27,8 @@ import {
 /** Read-only queries over the read model. Nothing here calls krill. */
 
 const SPARK_DAYS = 30;
+/** How many companies the home card pages through. */
+const RAMPING_ROWS = 10;
 
 export async function marketOverview(
   sql: Sql,
@@ -125,6 +127,16 @@ export async function marketOverview(
       share: r.open / totalOpen,
     }));
 
+  const [modes] = await sql<
+    { remote: number | null; stated: number | null }[]
+  >`select sum(remote)::int as remote, sum(remote + hybrid + onsite)::int as stated
+    from profession_snapshot where date = ${asOf}`;
+  const signalRows = await sql<{ state: string; companies: number }[]>`
+    select state, count(*)::int as companies from company_signal
+    where as_of = ${asOf} group by state`;
+  const signalCount = (state: string) =>
+    signalRows.find((r) => r.state === state)?.companies ?? 0;
+
   const notes = await sql<{ rule: string; text: string }[]>`
     select rule, text from market_note where date = ${asOf} order by rank limit 3`;
 
@@ -150,6 +162,14 @@ export async function marketOverview(
       newToday: today.opened,
       closedToday: today.closed,
       medianDaysOpen: today.median_days_open,
+      remoteShare:
+        modes && modes.stated ? (modes.remote ?? 0) / modes.stated : null,
+    },
+    signalCounts: {
+      ramping: signalCount('RAMPING'),
+      steady: signalCount('STEADY'),
+      cooling: signalCount('COOLING'),
+      freezing: signalCount('FREEZING'),
     },
     professionsGaining,
     companiesRamping: await rampingColumn(companyReaders, asOf),
@@ -169,7 +189,7 @@ async function rampingColumn(
   companyReaders: CompanyReaders,
   asOf: IsoDay,
 ): Promise<MarketOverview['companiesRamping']> {
-  const rows = await companyReaders.ramping(asOf, 3);
+  const rows = await companyReaders.ramping(asOf, RAMPING_ROWS);
   if (rows.length > 0) return { available: true, rows };
   return {
     available: false,

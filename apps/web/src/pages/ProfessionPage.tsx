@@ -1,9 +1,14 @@
 import { useParams } from "react-router";
 import { NotFoundState, PageSkeleton, ResourceView } from "@/components/common";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import {
+  ProfessionChartPanel,
+  ProfessionHeader,
+  ProfessionPanels,
+  ProfessionTables,
+} from "@/components/professions";
 import { useResource } from "@/hooks";
 import { professionDetail } from "@/lib/api";
-import { PageBodyPlaceholder } from "./PageBodyPlaceholder";
 
 export function ProfessionPage() {
   const { code = "" } = useParams();
@@ -19,12 +24,10 @@ export function ProfessionPage() {
       >
         {(page) => (
           <>
-            <PageHeader
-              crumbs={[{ label: "Professions", to: "/professions" }]}
-              title={page.name}
-              code={page.code}
-            />
-            <PageBodyPlaceholder />
+            <ProfessionHeader page={page} />
+            <ProfessionChartPanel page={page} />
+            <ProfessionPanels page={page} />
+            <ProfessionTables page={page} />
           </>
         )}
       </ResourceView>

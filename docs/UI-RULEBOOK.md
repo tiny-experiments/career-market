@@ -101,7 +101,9 @@ apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
     layout/    SiteHeader, TopNav, SubBar, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
-    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, RangeTabs
+    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs
+    market/    the Market and Professions pieces: MarketStatusCard, ProfessionListCard, CompaniesRampingCard, ProfessionsTable, WhereJobsPanel, WorldMap
+    professions/  the profession detail page: ProfessionHeader, ProfessionChartPanel, ProfessionPanels, ProfessionTables
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
     jobs/      VerdictCard (and the job page's parts to come)
   content/     every customer-facing sentence: metrics (hover cards), phrasing, site (titles, About, footer), states
@@ -146,6 +148,8 @@ apps/web/src/
 | Many pages of rows                             | `Pager`, 50 a page, every control a link                   |
 | A home-page door into a section                | `MarketCard` (header is the link, optional pager)          |
 | A section of a detail page                     | `Panel`                                                    |
+| A full-width table on a detail page            | `TablePanel` around a `DataTable`                          |
+| The parts of something, with a bar each        | `BreakdownList`                                            |
 | A fact on a detail page's rail                 | `StatCard`                                                 |
 | A small fact inside a market card              | `KpiTile`                                                  |
 | A change                                       | `Delta` (text in a cell, pill beside a headline)           |
@@ -200,5 +204,6 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 ## Changelog
 
 - **2026-11-09** — First version, with the design system: tokens in `index.css` (dark default, light), shadcn/ui vendored and customised through variants, the shell (`SiteHeader` with sliding underline, `SubBar` from route handles, `SearchBox`, `Footer`, `TickerStrip`), the market components (`DataTable`, `MarketCard`, `KpiTile`, `Gauge`, `RankedList`, `Sparkline`, `AreaChart`, `Delta`, `SignalBadge`, `MetricHoverCard`, `Logo`, `Pager`, `StatCard`, `Panel`), `/design`, and `check:ui`.
+- **2026-11-09** — Market and Professions pages. `AreaChart` follows the pointer when given `formatValue`; `RankedList` has a `comfortable` density and an optional `trend`; `DataTable` reports row hover; sub-bar tabs carry `region` along.
 - **2026-11-09** — `/design` is development builds only; a series is one solid line (estimated-history styling removed).
 - **2026-11-09** — Copy module `src/content` (hover-card sentences, comparison phrasing, page titles and meta, states, About, footer line); time and money formatters in `lib/format.ts`; `check:ui` gains the retired-word rule.

@@ -71,6 +71,41 @@ export function levelLabel(id: string): string {
 
 export type CompanySignal = 'HOT' | 'STRONG' | 'RISING' | 'STEADY' | 'COOLING';
 
+/** The regions the Professions table can be scoped to; ids match the Jobs region filter. */
+export const PROFESSION_REGIONS = [
+  { id: 'north-america', countries: ['US', 'CA', 'MX'] },
+  {
+    id: 'europe',
+    countries: [
+      'AL', 'AT', 'BA', 'BE', 'BG', 'BY', 'CH', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GB',
+      'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LT', 'LU', 'LV', 'MD', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL',
+      'PT', 'RO', 'RS', 'SE', 'SI', 'SK', 'UA',
+    ],
+  },
+  {
+    id: 'apac',
+    countries: [
+      'AU', 'BD', 'CN', 'HK', 'ID', 'IN', 'JP', 'KH', 'KR', 'LK', 'MM', 'MY', 'NP', 'NZ', 'PH', 'PK',
+      'SG', 'TH', 'TW', 'VN',
+    ],
+  },
+  {
+    id: 'latam',
+    countries: [
+      'AR', 'BO', 'BR', 'CL', 'CO', 'CR', 'DO', 'EC', 'GT', 'HN', 'NI', 'PA', 'PE', 'PR', 'PY', 'SV',
+      'UY', 'VE',
+    ],
+  },
+  {
+    id: 'mena',
+    countries: [
+      'AE', 'BH', 'DZ', 'EG', 'IL', 'IQ', 'JO', 'KW', 'LB', 'MA', 'OM', 'QA', 'SA', 'TN', 'TR',
+    ],
+  },
+] as const;
+
+export type ProfessionRegionId = (typeof PROFESSION_REGIONS)[number]['id'];
+
 export interface ProfessionSpecialty {
   id: string;
   label: string;
@@ -80,6 +115,8 @@ export interface ProfessionSpecialty {
 export interface ProfessionCompanyRow {
   rank: number;
   id: string;
+  /** The company's page; null when the company has none of its own yet. */
+  slug: string | null;
   name: string;
   /** Registrable domain for the Context.dev logo; null when krill has none. */
   domain: string | null;
@@ -89,6 +126,8 @@ export interface ProfessionCompanyRow {
   /** Open roles moved by more than half in under a week: krill's board coverage changed, not hiring. */
   coverageJump: boolean;
   signal: CompanySignal | null;
+  /** The company's hiring signal, the same one its own page and the Companies list show. */
+  state: 'RAMPING' | 'STEADY' | 'COOLING' | 'FREEZING' | null;
 }
 
 export interface ProfessionLatestRole {
@@ -117,6 +156,8 @@ export interface ProfessionPage {
   open: number;
   /** 1W, 1M and 3M change of open roles; null when no comparable day exists yet. */
   changes: { '1W': Change | null; '1M': Change | null; '3M': Change | null };
+  /** Like-for-like change against the previous day; null when there is no comparable day. */
+  change1d: number | null;
   specialties: ProfessionSpecialty[];
   /** Daily series, oldest first: estimated days first, then observed days. */
   series: SeriesPoint[];
@@ -134,7 +175,16 @@ export interface ProfessionPage {
   countries: CountryRow[];
   countriesNotLocated: number;
   topCompanies: ProfessionCompanyRow[] | Unavailable;
-  skills: { id: string; label: string; open: number }[];
+  skills: {
+    id: string;
+    slug: string;
+    label: string;
+    open: number;
+    /** Share of this profession's open roles that name the skill. */
+    share: number;
+    /** Change in that share over the last week; null when there is no comparable day. */
+    change: number | null;
+  }[];
   latestRoles: ProfessionLatestRole[];
 }
 
@@ -145,11 +195,25 @@ export interface ProfessionIndexRow {
   longName: string;
   open: number;
   change: Change | null;
+  /** Like-for-like change against the previous day. */
+  change1d: number | null;
+  /** Like-for-like change over 30 days. */
+  change1m: number | null;
+  /** Roles first opened in the last seven days. */
+  newThisWeek: number;
+  /** Companies hiring; null when scoped to a region. */
+  companies: number | null;
+  /** The middle half of listed pay for senior US roles; null when too few list it. */
+  pay: { low: number; median: number; high: number } | null;
+  /** Remote share among roles stating a work mode; null when scoped to a region. */
+  remoteShare: number | null;
   spark: number[];
 }
 
 export interface ProfessionIndex {
   asOf: IsoDay;
   builtAt: string;
+  /** The region the rows are scoped to; null for the whole world. */
+  region: ProfessionRegionId | null;
   rows: ProfessionIndexRow[];
 }

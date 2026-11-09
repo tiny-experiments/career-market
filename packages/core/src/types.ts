@@ -102,7 +102,11 @@ export interface MarketOverview {
     newToday: number;
     closedToday: number;
     medianDaysOpen: number | null;
+    /** Remote share among roles stating a work mode, across all professions. */
+    remoteShare: number | null;
   };
+  /** How many companies carry each hiring signal. */
+  signalCounts: { ramping: number; steady: number; cooling: number; freezing: number };
   professionsGaining: ProfessionMover[];
   /** Companies with the largest one-week gain; an honest empty state until a week of company history exists. */
   companiesRamping: { available: true; rows: CompanyMover[] } | Unavailable;

@@ -12,9 +12,12 @@ export function renderWithRouter(
   ui: ReactNode,
   {
     path = "/",
+    routePath,
     extraRoutes = [],
   }: {
     path?: string;
+    /** The route's own pattern when the page reads params, e.g. `/professions/:code`. */
+    routePath?: string;
     extraRoutes?: { path: string; element: ReactNode }[];
   } = {},
 ) {
@@ -22,7 +25,7 @@ export function renderWithRouter(
   const router = createMemoryRouter(
     [
       {
-        path: pathname,
+        path: routePath ?? pathname,
         element: (
           <>
             {ui}

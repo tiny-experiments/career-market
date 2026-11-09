@@ -46,6 +46,8 @@ export interface DataTableProps<Row> {
   readonly linkColumn?: string;
   readonly sort?: { readonly key: string; readonly direction: SortDirection };
   readonly onSort?: (key: string) => void;
+  /** Told which row the pointer is over, null when it leaves. */
+  readonly onRowHover?: (row: Row | null) => void;
   readonly loading?: boolean;
   readonly skeletonRows?: number;
   /** Shown in place of rows when there are none. */
@@ -76,6 +78,7 @@ export function DataTable<Row>({
   linkColumn,
   sort,
   onSort,
+  onRowHover,
   loading = false,
   skeletonRows = 5,
   empty,
@@ -182,6 +185,12 @@ export function DataTable<Row>({
               return (
                 <TableRow
                   key={rowKey(row)}
+                  onPointerEnter={
+                    onRowHover ? () => onRowHover(row) : undefined
+                  }
+                  onPointerLeave={
+                    onRowHover ? () => onRowHover(null) : undefined
+                  }
                   className={cn(
                     "relative h-row transition-colors",
                     href && "hover:bg-accent has-[a:focus-visible]:bg-accent",

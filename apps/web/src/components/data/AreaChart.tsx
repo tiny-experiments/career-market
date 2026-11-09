@@ -1,4 +1,4 @@
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 import { useElementWidth } from "@/hooks";
 import { linePath } from "@/lib/charts";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,8 @@ export interface AreaChartProps {
   readonly series: readonly AreaPoint[];
   readonly height?: number;
   readonly label: string;
+  /** Formats a value; given one, the chart labels its grid and follows the pointer. */
+  readonly formatValue?: (value: number) => string;
   readonly className?: string;
 }
 
@@ -20,6 +22,22 @@ const MONTH = new Intl.DateTimeFormat("en-US", {
   month: "short",
   timeZone: "UTC",
 });
+const DAY = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+const FULL_DAY = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** Under two months a month label says nothing: day labels instead. */
+const DAY_AXIS_POINTS = 62;
+const DAY_AXIS_LABELS = 6;
+const GRID_LINES = [0.25, 0.5, 0.75];
 
 /**
  * One series over time, filling the width it is given: three faint grid
@@ -30,11 +48,13 @@ export function AreaChart({
   series,
   height = 220,
   label,
+  formatValue,
   className,
 }: AreaChartProps) {
   const box = useRef<HTMLDivElement>(null);
   const width = useElementWidth(box);
   const gradient = useId();
+  const [hover, setHover] = useState<number | null>(null);
   const padBottom = 22;
   const padTop = 8;
   const innerH = height - padBottom - padTop;
@@ -58,17 +78,42 @@ export function AreaChart({
       : "";
 
   const labels: { x: number; text: string }[] = [];
-  let lastMonth = "";
-  series.forEach((p, i) => {
-    const month = MONTH.format(new Date(p.date));
-    if (month !== lastMonth) {
-      labels.push({ x: i * stepX, text: month });
-      lastMonth = month;
-    }
-  });
+  if (series.length <= DAY_AXIS_POINTS) {
+    const every = Math.max(1, Math.ceil(series.length / DAY_AXIS_LABELS));
+    series.forEach((p, i) => {
+      if (i % every === 0) {
+        labels.push({ x: i * stepX, text: DAY.format(new Date(p.date)) });
+      }
+    });
+  } else {
+    let lastMonth = "";
+    series.forEach((p, i) => {
+      const month = MONTH.format(new Date(p.date));
+      if (month !== lastMonth) {
+        labels.push({ x: i * stepX, text: month });
+        lastMonth = month;
+      }
+    });
+  }
+
+  const hovered = hover === null ? undefined : series[hover];
+  const hoveredPoint = hover === null ? undefined : points[hover];
 
   return (
-    <div ref={box} className={cn("w-full", className)}>
+    <div
+      ref={box}
+      className={cn("relative w-full", className)}
+      onPointerLeave={() => setHover(null)}
+      onPointerMove={
+        formatValue && stepX > 0
+          ? (event) => {
+              const left = event.currentTarget.getBoundingClientRect().left;
+              const index = Math.round((event.clientX - left) / stepX);
+              setHover(Math.min(Math.max(index, 0), series.length - 1));
+            }
+          : undefined
+      }
+    >
       {width > 0 ? (
         <svg
           width={width}
@@ -92,7 +137,7 @@ export function AreaChart({
               />
             </linearGradient>
           </defs>
-          {[0.25, 0.5, 0.75].map((t) => (
+          {GRID_LINES.map((t) => (
             <line
               key={t}
               x1={0}
@@ -103,6 +148,18 @@ export function AreaChart({
               strokeWidth={1}
             />
           ))}
+          {formatValue
+            ? GRID_LINES.map((t) => (
+                <text
+                  key={t}
+                  x={0}
+                  y={padTop + innerH * t - 4}
+                  className="fill-muted-foreground text-eyebrow"
+                >
+                  {formatValue(max - span * t)}
+                </text>
+              ))
+            : null}
           {area ? <path d={area} fill={`url(#${gradient})`} /> : null}
           {points.length > 1 ? (
             <path
@@ -123,10 +180,45 @@ export function AreaChart({
               {item.text}
             </text>
           ))}
+          {hoveredPoint ? (
+            <>
+              <line
+                x1={hoveredPoint.x}
+                x2={hoveredPoint.x}
+                y1={padTop}
+                y2={padTop + innerH}
+                className="stroke-muted-foreground"
+                strokeWidth={1}
+                strokeDasharray="3 3"
+              />
+              <circle
+                cx={hoveredPoint.x}
+                cy={hoveredPoint.y}
+                r={4}
+                className="fill-primary stroke-card"
+                strokeWidth={2}
+              />
+            </>
+          ) : null}
         </svg>
       ) : (
         <div style={{ height }} />
       )}
+      {hovered && hoveredPoint && formatValue ? (
+        <div
+          role="status"
+          className={cn(
+            "pointer-events-none absolute top-0 z-10 flex flex-col gap-0.5 rounded-lg bg-popover px-3 py-2 text-small shadow-float",
+            hoveredPoint.x > width / 2 ? "-translate-x-full -ml-3" : "ml-3",
+          )}
+          style={{ left: hoveredPoint.x }}
+        >
+          <span className="text-muted-foreground">
+            {FULL_DAY.format(new Date(hovered.date))}
+          </span>
+          <span className="font-semibold">{formatValue(hovered.value)}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,0 +1,185 @@
+import type {
+  MarketOverview,
+  ProfessionIndex,
+  ProfessionPage,
+} from "@/lib/api";
+
+const week = (value: number) => ({
+  range: "1W" as const,
+  value,
+  baseDate: "2026-11-02",
+  partial: false,
+  estimated: false,
+});
+
+const row = (
+  family: string,
+  code: string,
+  name: string,
+  open: number,
+  change: number,
+): ProfessionIndex["rows"][number] => ({
+  family,
+  code,
+  name,
+  longName: name,
+  open,
+  change: week(change),
+  change1d: 0.001,
+  change1m: 0.02,
+  newThisWeek: 40,
+  companies: 300,
+  pay: { low: 100_000, median: 120_000, high: 150_000 },
+  remoteShare: 0.25,
+  spark: [90, 95, 100],
+});
+
+export const PROFESSIONS_FIXTURE: ProfessionIndex = {
+  asOf: "2026-11-09",
+  builtAt: "2026-11-09T06:15:00Z",
+  region: null,
+  rows: [
+    row("software", "SWE", "Software", 1000, 0.05),
+    row("data", "DATA", "Data", 500, -0.03),
+  ],
+};
+
+export const MARKET_FIXTURE: MarketOverview = {
+  asOf: "2026-11-09",
+  builtAt: "2026-11-09T06:15:00Z",
+  headline: { open: 1500, change: week(0.02) },
+  series: [
+    {
+      date: "2026-11-08",
+      open: 1490,
+      new: 20,
+      closed: 15,
+      estimated: false,
+      bootstrap: false,
+    },
+    {
+      date: "2026-11-09",
+      open: 1500,
+      new: 25,
+      closed: 15,
+      estimated: false,
+      bootstrap: false,
+    },
+  ],
+  firstObservedDay: "2026-11-02",
+  backcast: { available: false, note: "" },
+  stats: {
+    companies: 18580,
+    newToday: 25,
+    closedToday: 15,
+    medianDaysOpen: 38,
+    remoteShare: 0.26,
+  },
+  signalCounts: { ramping: 10, steady: 20, cooling: 5, freezing: 2 },
+  professionsGaining: [],
+  companiesRamping: {
+    available: true,
+    rows: [
+      {
+        slug: "stripe",
+        name: "Stripe",
+        domain: "stripe.com",
+        open: 400,
+        change: week(0.1),
+        spark: [1, 2, 3],
+      },
+    ],
+  },
+  biggestFreezes: { available: false, reason: "" },
+  hottestSkills: [],
+  countries: [{ code: "US", name: "US", open: 900, share: 0.6 }],
+  totalOpen: 1500,
+  notes: [],
+};
+
+export const PROFESSION_FIXTURE: ProfessionPage = {
+  asOf: "2026-11-09",
+  builtAt: "2026-11-09T06:15:00Z",
+  family: "software",
+  code: "SWE",
+  name: "Software",
+  longName: "Software Engineering",
+  open: 1000,
+  changes: { "1W": week(0.05), "1M": null, "3M": null },
+  change1d: 0.001,
+  specialties: [{ id: "backend", label: "Backend", open: 400 }],
+  series: [
+    {
+      date: "2026-11-08",
+      open: 990,
+      new: 10,
+      closed: 5,
+      estimated: false,
+      bootstrap: false,
+    },
+    {
+      date: "2026-11-09",
+      open: 1000,
+      new: 15,
+      closed: 5,
+      estimated: false,
+      bootstrap: false,
+    },
+  ],
+  firstObservedDay: "2026-11-02",
+  backcast: { available: false, note: "" },
+  salary: {
+    available: true,
+    p25: 100_000,
+    p50: 120_000,
+    p75: 150_000,
+    n: 300,
+    currency: "USD",
+    scope: "US, senior",
+  },
+  workMode: { remote: 25, hybrid: 25, onsite: 50, notStated: 0 },
+  medianDaysOpen: 40,
+  companiesHiring: 300,
+  seniority: [{ id: "senior", label: "Senior", open: 500, share: 0.5 }],
+  seniorityNotStated: 0,
+  countries: [{ code: "US", name: "US", open: 600, share: 0.6 }],
+  countriesNotLocated: 0,
+  topCompanies: [
+    {
+      rank: 1,
+      id: "co_1",
+      slug: "stripe",
+      name: "Stripe",
+      domain: "stripe.com",
+      open: 50,
+      change: week(0.1),
+      coverageJump: false,
+      signal: null,
+      state: "RAMPING",
+    },
+  ],
+  skills: [
+    {
+      id: "lang:python",
+      slug: "python",
+      label: "Python",
+      open: 300,
+      share: 0.3,
+      change: null,
+    },
+  ],
+  latestRoles: [
+    {
+      id: "kr_1",
+      title: "Staff Engineer",
+      companyId: "co_1",
+      company: "Stripe",
+      companyDomain: "stripe.com",
+      location: "London",
+      workMode: "Remote",
+      salary: "$200K – $250K",
+      openedOn: "2026-11-09",
+      ageDays: 0,
+    },
+  ],
+};

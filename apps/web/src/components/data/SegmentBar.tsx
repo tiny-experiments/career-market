@@ -13,9 +13,12 @@ export interface Segment {
 /** Parts of a whole as one bar, with the legend carrying each part's share. */
 export function SegmentBar({
   segments,
+  legend = true,
   className,
 }: {
   readonly segments: readonly Segment[];
+  /** Leave the legend out when a list beside the bar already names the parts. */
+  readonly legend?: boolean;
   readonly className?: string;
 }) {
   return (
@@ -32,12 +35,14 @@ export function SegmentBar({
           />
         ))}
       </div>
-      <Legend
-        items={segments.map((segment) => ({
-          label: `${segment.label} ${formatShare(segment.share)}`,
-          swatch: segment.swatch,
-        }))}
-      />
+      {legend ? (
+        <Legend
+          items={segments.map((segment) => ({
+            label: `${segment.label} ${formatShare(segment.share)}`,
+            swatch: segment.swatch,
+          }))}
+        />
+      ) : null}
     </div>
   );
 }
