@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { careersUrl } from '../src/companies/write.ts';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { createSql, type Sql } from '@cm/core/db';
+import { migrate } from '@cm/core/migrate';
+import { careersUrl, placeholderSlug, writeCompanyInputs } from '../src/companies/write.ts';
+import type { CompanyPull } from '../src/companies/pull.ts';
 import { planCompanyDays } from '../src/companies/pull.ts';
 import { companySeries } from '@cm/core/company';
 import { changePoints, companySignal, explainer, signalState } from '../src/companies/compute.ts';
@@ -138,4 +141,24 @@ it('keeps one-role companies and follows the directory beyond the old 150-page c
     }) as typeof fetch,
   }));
   expect(await api.directory(1)).toHaveLength(151);
+});
+
+describe.skipIf(!process.env.TEST_DATABASE_URL)('writeCompanyInputs slugs (dedicated test database)', () => {
+  let sql: Sql;
+  beforeAll(async () => { sql = createSql(process.env.TEST_DATABASE_URL!); await migrate(sql); });
+  afterAll(async () => { await sql.end(); });
+  beforeEach(async () => { await sql`truncate company, company_daily, company_slice_daily, company_profile`; });
+
+  const listing = (id: string, name: string) => ({ id, name, domain: null, ats: [], openJobs: 12 });
+  const pull = (directory: ReturnType<typeof listing>[]) =>
+    ({ asOf: '2026-11-09', days: [], directory, stats: [], slices: [], profiles: new Map() }) as unknown as CompanyPull;
+
+  it('names a sweep-created company on the build and leaves a real company- slug alone', async () => {
+    await sql`insert into company(company_id, slug, name, open, rank, updated_on) values
+      ('cmp_swept', ${placeholderSlug('cmp_swept')}, 'Swept Co', 3, 1000000, '2026-11-08'),
+      ('cmp_real', 'company-forge', 'Company Forge', 3, 1, '2026-11-08')`;
+    await sql.begin((tx) => writeCompanyInputs(tx as unknown as Sql, pull([listing('cmp_real', 'Company Forge'), listing('cmp_swept', 'Swept Co')])));
+    const slugs = Object.fromEntries((await sql`select company_id, slug from company`).map((r) => [r.company_id, r.slug]));
+    expect(slugs).toEqual({ cmp_swept: 'swept-co', cmp_real: 'company-forge' });
+  });
 });

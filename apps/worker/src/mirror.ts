@@ -6,6 +6,7 @@ import { concurrentMap } from './concurrent.ts';
 import type { KrillApi } from './krill/api.ts';
 import { KrillHttpError } from './krill/client.ts';
 import { changePageSchema, facetsSchema, type KrillChangePage, type KrillFacets } from './krill/schemas.ts';
+import { placeholderSlug } from './companies/write.ts';
 import { withWorkerLock } from './lock.ts';
 
 const mirrorJobSchema = krillJobSchema.extend({ description: z.string().nullable().optional() });
@@ -153,7 +154,7 @@ export async function applyChangePage(sql: Sql, api: KrillApi, page: KrillChange
       const job = [...jobs.values()].find((j) => j?.company.id === id);
       if (job) {
         await tx`insert into company(company_id, slug, name, open, rank, updated_on)
-          select ${id}, ${`company-${id}`}, ${job.company.name}, open, 1000000, current_date from company_open_count where company_id = ${id}
+          select ${id}, ${placeholderSlug(id)}, ${job.company.name}, open, 1000000, current_date from company_open_count where company_id = ${id}
           on conflict(company_id) do update set name = excluded.name, open = excluded.open`;
       }
     }

@@ -21,6 +21,9 @@ async function insertRows(tx: Sql, table: string, rows: Record<string, unknown>[
   }
 }
 
+/** The slug the change sweep gives a company it creates before the build has named it. */
+export const placeholderSlug = (companyId: string): string => `company-${companyId}`;
+
 /** Raw company facts from krill, stored as krill served them (rebuildable). */
 export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void> {
   const T = p.asOf;
@@ -32,6 +35,10 @@ export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void>
   const rows: Record<string, unknown>[] = [];
   for (const [i, c] of p.directory.entries()) {
     let slug = slugOf.get(c.id);
+    if (slug === placeholderSlug(c.id)) {
+      taken.delete(slug);
+      slug = undefined;
+    }
     if (!slug) {
       // The same rule as the Screener's company slugs: the name, then the name and the id tail on a clash.
       const base = slugify(c.name) || 'company';
@@ -59,7 +66,7 @@ export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void>
     await tx`
       insert into company ${tx(rows.slice(i, i + 500) as never)}
       on conflict (company_id) do update set
-        name = excluded.name, domain = coalesce(excluded.domain, company.domain), careers_url = coalesce(excluded.careers_url, company.careers_url), ats = excluded.ats,
+        slug = excluded.slug, name = excluded.name, domain = coalesce(excluded.domain, company.domain), careers_url = coalesce(excluded.careers_url, company.careers_url), ats = excluded.ats,
         open = excluded.open, rank = excluded.rank, profiled = excluded.profiled, updated_on = excluded.updated_on`;
   }
 
