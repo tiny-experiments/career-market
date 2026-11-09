@@ -19,6 +19,7 @@ export interface KrillClientOptions {
   baseUrl: string;
   apiKey?: string | undefined;
   ratePerMinute: number;
+  concurrency?: number;
   /** Disk cache root; responses are cached per namespace (the snapshot day). */
   cacheDir?: string | undefined;
   timeoutMs: number;
@@ -39,7 +40,7 @@ const RETRYABLE = new Set([429, 502, 503, 504]);
 const MAX_ATTEMPTS = 5;
 
 /**
- * Read-only krill client. One request at a time, paced under the rate limit
+ * Read-only krill client. Concurrent requests with serialized start times under the rate limit
  * (60/min anonymous, 600/min with a key), honouring RateLimit-* headers and
  * Retry-After. Successful responses are cached on disk per snapshot day so a
  * rerun of the same day costs no krill calls.
@@ -48,6 +49,8 @@ export class KrillClient {
   private readonly minIntervalMs: number;
   private nextSlot = 0;
   private queue: Promise<unknown> = Promise.resolve();
+  private active = 0;
+  private readonly waiters: (() => void)[] = [];
   private namespace: string | undefined;
   private readonly fetchImpl: typeof fetch;
   private readonly sleep: (ms: number) => Promise<void>;
@@ -107,24 +110,44 @@ export class KrillClient {
     return { status: response.status, data: parsed.data };
   }
 
-  private enqueue<T>(task: () => Promise<T>): Promise<T> {
-    const run = this.queue.then(task, task);
+  private async enqueue<T>(task: () => Promise<T>): Promise<T> {
+    if (this.active >= (this.opts.concurrency ?? 12)) {
+      await new Promise<void>((resolve) => this.waiters.push(resolve));
+    } else this.active++;
+    try { return await task(); }
+    finally {
+      const next = this.waiters.shift();
+      if (next) next();
+      else this.active--;
+    }
+  }
+
+  private async pace(): Promise<void> {
+    const run = this.queue.then(async () => {
+      // Recheck after sleep: another response may have extended a rate-limit hold.
+      const slot = this.nextSlot;
+      const wait = slot - Date.now();
+      if (wait > 0) await this.sleep(wait);
+      if (this.nextSlot > slot) {
+        const extra = this.nextSlot - Date.now();
+        if (extra > 0) await this.sleep(extra);
+      }
+      this.nextSlot = Date.now() + this.minIntervalMs;
+    });
     this.queue = run.catch(() => undefined);
-    return run;
+    await run;
   }
 
   private async fetchWithRetry(url: string): Promise<CachedResponse> {
     let lastError: unknown;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const wait = this.nextSlot - Date.now();
-      if (wait > 0) await this.sleep(wait);
-      this.nextSlot = Date.now() + this.minIntervalMs;
+      await this.pace();
       this.calls++;
       try {
         const res = await this.fetchImpl(url, {
           headers: {
             accept: 'application/json',
-            'user-agent': this.opts.userAgent ?? 'career-market-builder',
+            'user-agent': this.opts.userAgent ?? 'career-market-worker',
             ...(this.opts.apiKey ? { authorization: `Bearer ${this.opts.apiKey}` } : {}),
           },
           signal: AbortSignal.timeout(this.opts.timeoutMs),
@@ -134,6 +157,7 @@ export class KrillClient {
         if (RETRYABLE.has(res.status) && attempt < MAX_ATTEMPTS) {
           const delay = retryDelayMs(res.headers, attempt);
           this.opts.logger.warn({ url, status: res.status, delay }, 'krill busy, retrying');
+          this.nextSlot = Math.max(this.nextSlot, Date.now() + delay);
           await this.sleep(delay);
           continue;
         }

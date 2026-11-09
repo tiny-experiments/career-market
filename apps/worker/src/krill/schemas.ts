@@ -11,10 +11,11 @@ const count = z.number().int().nonnegative();
 export const metaSchema = z.object({
   taxonomy: z.object({ version: z.number().int(), hash: z.string() }),
   lastSnapshotDate: day.nullable(),
+  exportedAt: z.string().datetime({ offset: true }).nullable().optional(),
   openJobs: count,
   companies: count,
   boards: count,
-  ats: z.array(z.object({ ats: z.string(), openJobs: count })),
+  ats: z.array(z.object({ ats: z.string(), openJobs: count, enabled: z.boolean().optional(), lastRun: z.object({ date: day.nullable() }).nullable().optional() })),
 });
 export type KrillMeta = z.infer<typeof metaSchema>;
 
@@ -100,6 +101,7 @@ export const changePageSchema = z.object({
   ),
   pageSize: z.number().int(),
   nextCursor: z.string().nullable(),
+  syncCursor: z.string(),
 });
 export type KrillChangePage = z.infer<typeof changePageSchema>;
 

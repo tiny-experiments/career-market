@@ -59,7 +59,7 @@ export async function writeCompanyInputs(tx: Sql, p: CompanyPull): Promise<void>
     await tx`
       insert into company ${tx(rows.slice(i, i + 500) as never)}
       on conflict (company_id) do update set
-        name = excluded.name, domain = excluded.domain, careers_url = excluded.careers_url, ats = excluded.ats,
+        name = excluded.name, domain = coalesce(excluded.domain, company.domain), careers_url = coalesce(excluded.careers_url, company.careers_url), ats = excluded.ats,
         open = excluded.open, rank = excluded.rank, profiled = excluded.profiled, updated_on = excluded.updated_on`;
   }
 

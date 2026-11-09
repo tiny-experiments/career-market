@@ -87,7 +87,7 @@ export class KrillCompanyApi {
   constructor(private readonly client: KrillClient) {}
 
   /** Companies by open roles, largest first, until one has fewer than `minOpen` roles. */
-  async directory(minOpen: number, maxPages = 150): Promise<KrillCompanyListing[]> {
+  async directory(minOpen: number, maxPages = Number.POSITIVE_INFINITY): Promise<KrillCompanyListing[]> {
     const out: KrillCompanyListing[] = [];
     let cursor: string | undefined;
     for (let page = 0; page < maxPages; page++) {

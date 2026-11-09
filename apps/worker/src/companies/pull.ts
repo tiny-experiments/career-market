@@ -1,3 +1,4 @@
+import { concurrentMap } from '../concurrent.ts';
 import { addDays, FIRST_OBSERVED_DAY, type IsoDay } from '@cm/core/dates';
 import type { Logger } from '@cm/core/logger';
 import { KrillHttpError } from '../krill/client.ts';
@@ -11,7 +12,7 @@ import {
 } from '../krill/companyApi.ts';
 
 /** Companies need this many open tech roles to get a page. */
-export const MIN_DIRECTORY_OPEN = 10;
+export const MIN_DIRECTORY_OPEN = 1;
 /** Cut ages (days) for a company's median days open. */
 export const COMPANY_AGE_EDGES = [7, 14, 30, 60, 120, 240] as const;
 
@@ -77,7 +78,7 @@ export async function pullCompanies(
   }
 
   const profiles = new Map<string, ProfilePull>();
-  for (const [i, c] of profiled.entries()) {
+  await concurrentMap(profiled, async (c, i) => {
     try {
       profiles.set(c.id, await pullProfile(api, c, asOf));
     } catch (err) {
@@ -85,7 +86,7 @@ export async function pullCompanies(
       log.warn({ company: c.name }, 'krill failed for this company profile; it is skipped today');
     }
     if ((i + 1) % 25 === 0) log.info({ done: i + 1, of: profiled.length }, 'company profiles pulled');
-  }
+  });
   return { asOf, days: plan.days, directory, stats, slices, profiles };
 }
 

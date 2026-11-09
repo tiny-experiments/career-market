@@ -135,3 +135,21 @@ describe('KrillApi.facetTotal', () => {
     expect((await api.closedOn('2026-11-04')).map((i) => i.jobId)).toEqual(['kr_1', 'kr_2']);
   });
 });
+
+describe('concurrent keyed client', () => {
+  it('overlaps responses while spacing starts and respecting its concurrency bound', async () => {
+    let active = 0;
+    let peak = 0;
+    const starts: number[] = [];
+    const impl = (async () => {
+      starts.push(Date.now()); active++; peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 90));
+      active--;
+      return new Response('{}');
+    }) as typeof fetch;
+    const c = client(impl, { concurrency: 2, ratePerMinute: 6000, sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)) });
+    await Promise.all(Array.from({ length: 5 }, (_, i) => c.get(`/job/${i}`, {}, z.object({}))));
+    expect(peak).toBe(2);
+    for (let i = 1; i < starts.length; i++) expect(starts[i]! - starts[i - 1]!).toBeGreaterThanOrEqual(8);
+  });
+});

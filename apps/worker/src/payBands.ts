@@ -1,3 +1,4 @@
+import { concurrentMap } from './concurrent.ts';
 import type { IsoDay } from '@cm/core/dates';
 import type { Logger } from '@cm/core/logger';
 import { krillJobPageSchema, type KrillJob } from '@cm/core/krillJob';
@@ -23,7 +24,7 @@ export interface PulledPay {
  */
 export async function pullPayBands(api: KrillApi, families: readonly string[], log: Logger, pages = PAY_SAMPLE_PAGES): Promise<PulledPay> {
   const samples: PaySample[] = [];
-  for (const family of families) {
+  await concurrentMap(families, async (family) => {
     try {
       for (const job of await fetchPayJobs(api, family, pages)) {
         const s = toPaySample(job);
@@ -32,7 +33,7 @@ export async function pullPayBands(api: KrillApi, families: readonly string[], l
     } catch (err) {
       log.warn({ family, err: String(err) }, 'pay sample failed for profession; it gets no band today');
     }
-  }
+  });
   const bands = computePayBands(samples);
   log.info({ samples: samples.length, bands: bands.length }, 'pay bands computed');
   return { samples: samples.length, bands };

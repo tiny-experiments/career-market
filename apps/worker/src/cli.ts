@@ -1,3 +1,5 @@
+import { createWatchTick } from './watch.ts';
+import { sweepChanges } from './mirror.ts';
 import { loadConfig } from '@cm/core/config';
 import { createSql } from '@cm/core/db';
 import { createLogger } from '@cm/core/logger';
@@ -6,20 +8,21 @@ import { runBuild } from './build.ts';
 import { KrillApi } from './krill/api.ts';
 import { KrillClient } from './krill/client.ts';
 
-const USAGE = `career-market builder
+const USAGE = `career-market worker
 
   migrate              apply SQL migrations to DATABASE_URL
   build [--force] [--full]
                        build the read model for krill's latest snapshot day
                        --force  rebuild a day that was already built
                        --full   refetch every grouped day since 2026-11-02
+  sweep                apply the persisted change feed cursor
   watch                poll krill /v1/meta every BUILDER_POLL_MINUTES and
                        build each new snapshot day`;
 
 async function main(argv: string[]): Promise<number> {
   const [command, ...flags] = argv;
   const config = loadConfig();
-  const log = createLogger('builder');
+  const log = createLogger('worker');
   if (!command || command === '--help' || command === 'help') {
     console.log(USAGE);
     return command ? 0 : 1;
@@ -38,6 +41,7 @@ async function main(argv: string[]): Promise<number> {
         ratePerMinute: config.krill.ratePerMinute,
         cacheDir: config.krill.cacheDir,
         timeoutMs: config.krill.timeoutMs,
+        concurrency: config.worker.concurrency,
         logger: log,
       }),
     );
@@ -45,6 +49,11 @@ async function main(argv: string[]): Promise<number> {
     if (command === 'build') {
       const result = await runBuild({ sql, api, config, log }, { force: flags.includes('--force'), full: flags.includes('--full') });
       log.info(result.status === 'skipped' ? result : { status: result.status, snapshotDate: result.snapshotDate }, 'done');
+      return 0;
+    }
+
+    if (command === 'sweep') {
+      log.info(await sweepChanges(sql, api), 'change sweep finished');
       return 0;
     }
 
@@ -57,15 +66,15 @@ async function main(argv: string[]): Promise<number> {
       process.once('SIGINT', stop);
       process.once('SIGTERM', stop);
       log.info({ pollMinutes: config.builder.pollMinutes }, 'watching krill for new snapshot days');
+      const tick = createWatchTick({
+        pollMs: intervalMs, sweepMs: config.worker.sweepMinutes * 60_000,
+        build: () => runBuild({ sql, api, config, log }),
+        sweep: () => sweepChanges(sql, api),
+        onError: (err) => log.error({ err: String(err) }, 'worker tick failed; retrying at next interval'),
+      });
       while (!stopping) {
-        try {
-          const result = await runBuild({ sql, api, config, log });
-          if (result.status === 'skipped') log.info({ reason: result.reason, snapshotDate: result.snapshotDate }, 'nothing to build');
-        } catch (err) {
-          log.error({ err: String(err) }, 'build failed; retrying at the next poll');
-        }
-        const until = Date.now() + intervalMs;
-        while (!stopping && Date.now() < until) await new Promise((r) => setTimeout(r, 1_000));
+        await tick(Date.now());
+        if (!stopping) await new Promise((resolve) => setTimeout(resolve, 1_000));
       }
       return 0;
     }

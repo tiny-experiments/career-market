@@ -124,3 +124,18 @@ describe('careersUrl', () => {
     expect(careersUrl([])).toBeNull();
   });
 });
+
+it('keeps one-role companies and follows the directory beyond the old 150-page cap', async () => {
+  const { KrillCompanyApi } = await import('../src/krill/companyApi.ts');
+  const { KrillClient } = await import('../src/krill/client.ts');
+  const { pino } = await import('pino');
+  const api = new KrillCompanyApi(new KrillClient({ baseUrl: 'https://source.test', ratePerMinute: 500,
+    timeoutMs: 1000, logger: pino({ level: 'silent' }), sleep: async () => {},
+    fetchImpl: (async (input) => {
+      const index = Number(new URL(String(input)).searchParams.get('cursor') ?? 0);
+      return new Response(JSON.stringify({ items: [{ id: `co_${String(index).padStart(16, '0')}`, name: `Company ${index}`, domain: null, openJobs: 1, ats: [] }], pageSize: 100,
+        nextCursor: index < 150 ? String(index + 1) : null }));
+    }) as typeof fetch,
+  }));
+  expect(await api.directory(1)).toHaveLength(151);
+});

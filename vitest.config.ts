@@ -4,6 +4,8 @@ import { defineConfig } from 'vitest/config';
 // own config (jsdom + Testing Library) for its components. `pnpm test` runs both.
 export default defineConfig({
   test: {
+    // Database suites reset shared read-model fixtures.
+    fileParallelism: !process.env.TEST_DATABASE_URL,
     projects: [
       {
         test: {

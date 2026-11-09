@@ -1,3 +1,4 @@
+import { concurrentMap } from '../concurrent.ts';
 import { isTileSkill } from '@cm/core/codes';
 import type { IsoDay } from '@cm/core/dates';
 import type { Logger } from '@cm/core/logger';
@@ -36,7 +37,7 @@ export async function pullScreener(api: KrillApi, T: IsoDay, families: readonly 
   if (!overall) throw new Error('krill /v1/facets answered 500 without filters');
 
   const perFamily = new Map<string, WideFacets | null>();
-  for (const family of families) perFamily.set(family, await krill.facets({ family, limit: 300 }));
+  await concurrentMap(families, async (family) => { perFamily.set(family, await krill.facets({ family, limit: 300 })); });
 
   const skillIds = overall.facets.skill
     .filter((s) => isTileSkill(s.value))
@@ -44,11 +45,11 @@ export async function pullScreener(api: KrillApi, T: IsoDay, families: readonly 
     .map((s) => s.value);
   log.info({ skills: skillIds.length }, 'screener: pulling facets per skill');
   const perSkill = new Map<string, WideFacets | null>();
-  for (const id of skillIds) perSkill.set(id, await krill.facets({ skills: id, limit: 5 }));
+  await concurrentMap(skillIds, async (id) => { perSkill.set(id, await krill.facets({ skills: id, limit: 5 })); });
 
   log.info({ companies: ids.length }, 'screener: pulling facets per company');
   const perCompany = new Map<string, WideFacets | null>();
-  for (const id of ids) perCompany.set(id, await krill.facets({ company: id, limit: 25 }));
+  await concurrentMap(ids, async (id) => { perCompany.set(id, await krill.facets({ company: id, limit: 25 })); });
 
   return { taxonomy, companies, companyDays, perCompany, overall, perFamily, perSkill, skillIds };
 }

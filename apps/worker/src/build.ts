@@ -1,3 +1,11 @@
+import { SnapshotClient } from './snapshotClient.ts';
+import { KrillApi } from './krill/api.ts';
+import type { MirrorJob } from './mirror.ts';
+import { allResults } from './concurrent.ts';
+import { snapshotReady } from './watch.ts';
+import { withWorkerLock } from './lock.ts';
+import { captureCursor, stageMirror, promoteMirror } from './mirror.ts';
+import { writeGrowth } from './growth.ts';
 import { familyInfo, rankFamilies } from '@cm/core/codes';
 import type { Config } from '@cm/core/config';
 import {
@@ -20,7 +28,6 @@ import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
 import { planCompanyDays, pullCompanies, type CompanyPlan, type CompanyPull } from './companies/pull.ts';
 import { computeCompanyTables, writeCompanyInputs } from './companies/write.ts';
-import type { KrillApi } from './krill/api.ts';
 import { KrillCompanyApi } from './krill/companyApi.ts';
 import { payBandRows, pullPayBands } from './payBands.ts';
 import { computeProfessions, writeProfessionInputs } from './professions/build.ts';
@@ -28,7 +35,7 @@ import { pullProfessions } from './professions/pull.ts';
 import { observedDays, pull, type Pulled } from './pull.ts';
 import { pullScreener } from './screener/pull.ts';
 import { writeScreener } from './screener/write.ts';
-import { pullSkillPages, type SkillPulled } from './skills/pull.ts';
+import { pullSkillPages } from './skills/pull.ts';
 import { computeSkillPages, writeSkillInputs } from './skills/write.ts';
 
 /** How far the back-cast reaches before today (report: reliable to about 6 months). */
@@ -57,10 +64,16 @@ export type BuildResult =
   | { status: 'built'; snapshotDate: IsoDay; stats: Record<string, unknown> };
 
 export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Promise<BuildResult> {
+  return await withWorkerLock(deps.sql, (sql) => buildUnlocked({ ...deps, sql }, options)) ?? { status: 'skipped', reason: 'worker already running', snapshotDate: null };
+}
+
+async function buildUnlocked(deps: BuildDeps, options: BuildOptions): Promise<BuildResult> {
   const { sql, api, config, log } = deps;
   const meta = await api.meta();
   const T = meta.lastSnapshotDate;
   if (!T) return { status: 'skipped', reason: 'krill has no snapshot yet', snapshotDate: null };
+
+  if (!snapshotReady(meta)) return { status: 'skipped', reason: 'snapshot not complete', snapshotDate: T };
 
   if (!options.force) {
     const [done] = await sql`select 1 from build_run where snapshot_date = ${T} and status = 'ok' limit 1`;
@@ -74,25 +87,35 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
   const runId = (run as { id: string }).id;
   log.info({ snapshotDate: T, runId }, 'build started');
 
+  const started = Date.now();
   try {
     const plan = await planPull(sql, T, config, options);
-    const pulled = await pull(api, { ...meta, lastSnapshotDate: T }, plan, log);
+    const cursor = await captureCursor(api);
+    const snapshot = allResults([
+      stageMirror(sql, api, meta.ats.filter((a) => a.openJobs > 0).map((a) => a.ats)),
+      new KrillCompanyApi(api.client).directory(1),
+    ]).then(async ([, directory]) => {
+      const jobs = await sql<{ payload: MirrorJob }[]>`select payload from job_mirror_stage`;
+      return new KrillApi(new SnapshotClient(api.client, jobs.map((row) => row.payload), directory, log));
+    });
+    void snapshot.catch(() => undefined);
+    let pulled: Pulled;
+    try { pulled = await pull(api, { ...meta, lastSnapshotDate: T }, plan, log, snapshot); }
+    catch (error) { await snapshot.catch(() => undefined); throw error; }
+    const snapshotApi = await snapshot;
     const atsList = meta.ats.filter((a) => a.openJobs > 0).map((a) => a.ats);
-    const professions = await pullProfessions(api, T, pulled.families, atsList, log);
-    const screener = await pullScreener(api, T, pulled.families, log);
-    const pay = await pullPayBands(api, pulled.families, log);
-    // The Skill pages must not take the market build down with them: when krill
-    // fails them, today's skill rows are skipped and the pages keep their last good day.
-    let skillsPulled: SkillPulled | null = null;
-    if (config.builder.skillPages > 0) {
-      try {
-        skillsPulled = await pullSkillPages({ api, sql, log, limit: config.builder.skillPages }, T, pulled.familySkills);
-      } catch (err) {
-        log.error({ err: String(err) }, 'skill page pull failed; skill pages keep the previous day');
-      }
-    }
     const companyPlan = await planCompanies(sql, T, config, options);
-    const companies = await pullCompanies(new KrillCompanyApi(api.client), T, companyPlan, log);
+    const [professions, screener, pay, skillsPulled, companies, mirrorJobs] = await allResults([
+      pullProfessions(snapshotApi, T, pulled.families, atsList, log),
+      pullScreener(snapshotApi, T, pulled.families, log),
+      pullPayBands(snapshotApi, pulled.families, log),
+      config.builder.skillPages > 0
+        ? pullSkillPages({ api: snapshotApi, sql, log, limit: config.builder.skillPages }, T, pulled.familySkills)
+          .catch((err): null => { log.error({ err: String(err) }, 'skill page pull failed'); return null; })
+        : Promise.resolve(null),
+      pullCompanies(new KrillCompanyApi(snapshotApi.client), T, companyPlan, log),
+      sql`select count(*)::int as n from job_mirror_stage`.then((rows) => rows[0]?.n as number),
+    ]);
     const stats = await sql.begin(async (tx) => {
       await writeInputs(tx as unknown as Sql, pulled);
       await writeProfessionInputs(tx as unknown as Sql, T, professions);
@@ -103,9 +126,13 @@ export async function runBuild(deps: BuildDeps, options: BuildOptions = {}): Pro
       const profession = await computeProfessions(tx as unknown as Sql, professions, { T, fit: fit?.fit ?? null, log });
       const skills = skillsPulled ? { ...(await computeSkillPages(tx as unknown as Sql, T, log)), skillsFailed: skillsPulled.failed } : {};
       const company = await writeAndComputeCompanies(tx as unknown as Sql, companies, T, log);
+      await writeGrowth(tx as unknown as Sql, T, config.worker.growthMode);
+      await promoteMirror(tx as unknown as Sql, T, cursor, meta.exportedAt);
+      const today = pulled.market.find((row) => row.date === T);
+      await tx`insert into job_counter_daily(date, new_today, closed_today) values (${T}, ${today?.new ?? 0}, ${today?.closed ?? 0}) on conflict(date) do nothing`;
       return { ...market, ...profession, ...company, ...skills, paySamples: pay.samples, payBands: pay.bands.length, ...(await writeScreener(tx as unknown as Sql, screener, T, log)) };
     });
-    const finalStats = { ...stats, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
+    const finalStats = { ...stats, mirrorJobs, durationMs: Date.now() - started, krillCalls: api.client.calls, krillCacheHits: api.client.cacheHits };
     await sql`
       update build_run set status = 'ok', finished_at = now(), stats = ${sql.json(finalStats as never)}
       where id = ${runId}`;

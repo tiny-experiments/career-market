@@ -1,3 +1,4 @@
+import { concurrentMap } from '../concurrent.ts';
 import { addDays, FIRST_OBSERVED_DAY, type IsoDay } from '@cm/core/dates';
 import type { Logger } from '@cm/core/logger';
 import { DEFAULT_AGE_EDGES } from '../compute/backcast.ts';
@@ -95,11 +96,11 @@ export async function pullProfessions(
     for (const c of top) wanted.add(c.companyId);
   }
   log.info({ companies: wanted.size }, 'pulling top company details and history');
-  for (const id of wanted) {
+  await concurrentMap([...wanted], async (id) => {
     const detail = await api.company(id);
     out.companyInfo.set(id, { name: detail?.name ?? id, domain: detail?.domain ?? null });
     out.companyHistory.set(id, await api.companyDaily({ from: FIRST_OBSERVED_DAY, to: T, groupBy: 'family', company: id }));
-  }
+  });
 
   // Pay and newest roles per family (live job lists; krill dates are days).
   log.info('pulling pay samples and latest roles');

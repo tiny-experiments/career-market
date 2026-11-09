@@ -8,11 +8,11 @@ A [Tiny Experiments](https://github.com/tiny-experiments) project.
 
 ```
 krill API (/v1)  ──nightly──▶  builder  ──▶  Postgres read model  ──▶  read API  ──▶  web app
-krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api       apps/web
+krill.kurso.sh                 apps/worker   (plain SQL migrations)    apps/api       apps/web
 ```
 
 - **krill** collects every board each day and captures the facts that exist only on their day.
-- **builder** (`apps/builder`) polls krill `/v1/meta`; on a new snapshot day it pulls
+- **builder** (`apps/worker`) polls krill `/v1/meta`; on a new snapshot day it pulls
   `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies`, a sample of the
   day's closings and, per profession, the newest open US roles that list pay (the Job page's pay bands),
   then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
@@ -62,7 +62,7 @@ pnpm migrate                  # apply packages/core/migrations/*.sql
 pnpm builder                  # build krill's latest snapshot day once (skips a day already built)
 pnpm builder -- --force       # rebuild the latest day
 pnpm builder -- --full        # refetch every grouped day since 2026-11-02, then rebuild
-pnpm builder:watch            # poll krill every BUILDER_POLL_MINUTES (default 60) and build new days
+pnpm builder:watch            # poll krill every BUILDER_POLL_MINUTES (default 5) and build completed new days; sweep changes every 15 minutes
 ```
 
 Without `KRILL_API_KEY` krill allows 60 calls a minute per address; the builder paces itself under that
@@ -96,7 +96,7 @@ The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company
 ### Company page
 
 `/companies/<slug>` shows one company. The builder keeps a `company` directory (every company with at
-least 10 open tech roles), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
+least one open tech roles), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
 and a full profile for the largest `BUILDER_COMPANY_PROFILES` (default 100): facets for skills, countries,
 levels and work modes, the careers-site url, a median age from six facet cuts and family-by-level history.
 Peers are not in v1 and show a coming-soon state.
@@ -147,3 +147,5 @@ needs `READ_API_URL` pointing at the API.
 Every number comes from [krill](https://krill.kurso.sh), which reads public company career boards
 (Greenhouse, Ashby, Lever, Workday, SmartRecruiters and more). See the Methodology and Data pages in the
 app for how each number is made.
+
+Worker scheduling, mirror columns, indexes and bootstrap limits: [worker read model](docs/worker-read-model.md).

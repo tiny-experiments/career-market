@@ -1,0 +1,124 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { pino } from 'pino';
+import { createSql, type Sql } from '@cm/core/db';
+import { migrate } from '@cm/core/migrate';
+import { parseConfig } from '@cm/core/config';
+import { runBuild } from '../src/build.ts';
+import { withWorkerLock } from '../src/lock.ts';
+import { KrillApi } from '../src/krill/api.ts';
+import { KrillClient } from '../src/krill/client.ts';
+import { applyChangePage, mirrorRow, promoteMirror, stageMirror, sweepChanges, upsertJobs, type MirrorJob } from '../src/mirror.ts';
+import type { KrillChangePage } from '../src/krill/schemas.ts';
+
+const job = (id = 'j1', extra: Partial<MirrorJob> = {}): MirrorJob => ({
+  id, status: 'open', title: 'Software Engineer', company: { id: 'c1', name: 'Acme' }, url: 'https://example.com/job', applyUrl: null,
+  employmentType: 'full-time', workMode: 'remote', locations: ['London'], places: [{ label: 'London', countryCode: 'GB' }],
+  salary: { min: 100, max: 200, currency: 'GBP', period: 'year', annualMin: 100, annualMax: 200 },
+  postedAt: '2026-11-09T00:00:00Z', openedAt: '2026-11-09', openedSource: 'posted', firstSeenAt: '2026-11-09', lastSeenAt: '2026-11-09',
+  family: 'software-engineering', specialty: 'backend', level: 'senior', skills: ['lang:typescript'], languages: [], tools: [],
+  ageDays: 1, repostCount: 2, staleScore: 0.4, description: 'Build useful software.', ...extra,
+});
+const apiWith = (handler: (url: URL) => unknown) => new KrillApi(new KrillClient({
+  baseUrl: 'https://source.test', ratePerMinute: 500, timeoutMs: 1000, sleep: async () => {}, logger: pino({ level: 'silent' }),
+  fetchImpl: (async (input) => new Response(JSON.stringify(handler(new URL(String(input)))))) as typeof fetch,
+}));
+const page = (kind: 'opened' | 'closed' | 'updated' | 'reopened', cursor = 'after1'): KrillChangePage => ({
+  items: [{ jobId: 'j1', kind, date: '2026-11-09', closeReason: null }], pageSize: 100, nextCursor: null, syncCursor: cursor,
+});
+
+it('maps every Jobs filter and verdict input without discarding the original record', () => {
+  expect(mirrorRow(job())).toMatchObject({ countries: ['GB'], remote: true, company_name: 'Acme', level: 'senior', salary_min: 100,
+    repost_count: 2, stale_score: 0.4, opened_source: 'posted', description: 'Build useful software.' });
+});
+
+describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated test database)', () => {
+  let sql: Sql;
+  beforeAll(async () => { sql = createSql(process.env.TEST_DATABASE_URL!); await migrate(sql); });
+  afterAll(async () => { await sql.end(); });
+  beforeEach(async () => {
+    await sql`delete from build_run`;
+    await sql`truncate job_mirror, job_mirror_stage, worker_state, worker_change, job_counter_daily, company_open_count, company`;
+    await sql`insert into worker_state(name, cursor) values ('changes', 'start')`;
+  });
+  it('skips unfinished snapshots and successful dates without starting another pull', async () => {
+    const calls: string[] = [];
+    let complete = false;
+    const api = apiWith((url) => {
+      calls.push(url.pathname);
+      return { taxonomy: { version: 1, hash: 'x' }, lastSnapshotDate: '2026-11-09', exportedAt: complete ? '2026-11-09T06:00:00Z' : null,
+        openJobs: 1, companies: 1, boards: 1, ats: [] };
+    });
+    const deps = { sql, api, log: pino({ level: 'silent' }), config: parseConfig({ DATABASE_URL: process.env.TEST_DATABASE_URL }) };
+    expect(await runBuild(deps)).toMatchObject({ status: 'skipped', reason: 'snapshot not complete' });
+    complete = true;
+    await sql`insert into build_run(snapshot_date, status) values ('2026-11-09', 'ok')`;
+    expect(await runBuild(deps)).toMatchObject({ status: 'skipped', reason: 'snapshot already built' });
+    expect(calls).toEqual(['/v1/meta', '/v1/meta']);
+  });
+  it('serializes worker processes and releases its lock after a failed operation', async () => {
+    await withWorkerLock(sql, async () => { expect(await withWorkerLock(sql, async () => 1)).toBeNull(); });
+    await expect(withWorkerLock(sql, async () => { throw new Error('failed'); })).rejects.toThrow('failed');
+    expect(await withWorkerLock(sql, async () => 2)).toBe(2);
+  });
+  it('applies the ordered migrations safely when API and worker start together', async () => {
+    expect(await Promise.all([migrate(sql), migrate(sql)])).toEqual([[], []]);
+  });
+  it('stages every page and atomically replaces stale jobs, keeping descriptions', async () => {
+    await upsertJobs(sql, [job('old'), job()]);
+    const calls: string[] = [];
+    const api = apiWith((url) => { calls.push(url.search); return { items: [job(url.searchParams.has('cursor') ? 'j2' : 'j1', { description: undefined })], nextCursor: url.searchParams.has('cursor') ? null : 'next' }; });
+    expect(await stageMirror(sql, api, ['a'])).toBe(2);
+    expect((await sql`select id from job_mirror`).map((r) => r.id).sort()).toEqual(['j1', 'old']);
+    await sql.begin(async (tx) => { await promoteMirror(tx as unknown as Sql, '2026-11-09', 'new'); });
+    expect((await sql`select id from job_mirror order by id`).map((r) => r.id)).toEqual(['j1', 'j2']);
+    expect((await sql`select description from job_mirror where id = 'j1'`)[0]?.description).toBe('Build useful software.');
+    expect((await sql`select payload->>'description' as description from job_mirror where id = 'j1'`)[0]?.description).toBe('Build useful software.');
+    expect((await sql`select open from company_open_count`)[0]?.open).toBe(2);
+    expect(calls).toHaveLength(2);
+  });
+  it('applies opened, updated, closed and reopened with replay-safe counters', async () => {
+    const open = apiWith(() => job());
+    await applyChangePage(sql, open, page('opened'), 'start');
+    await applyChangePage(sql, open, page('opened'), 'start');
+    expect((await sql`select new_today from job_counter_daily`)[0]?.new_today).toBe(1);
+    await applyChangePage(sql, apiWith(() => job('j1', { title: 'Staff Engineer', level: 'staff' })), page('updated', 'after2'), 'after1');
+    expect((await sql`select title, level from job_mirror`)[0]).toMatchObject({ title: 'Staff Engineer', level: 'staff' });
+    await applyChangePage(sql, apiWith(() => ({ id: 'j1', status: 'closed', closedAt: '2026-11-09', openedAt: '2026-11-09', openedSource: 'posted', family: null })), page('closed', 'after3'), 'after2');
+    expect(await sql`select id from job_mirror`).toHaveLength(0);
+    expect((await sql`select open from company_open_count`)[0]?.open).toBe(0);
+    await applyChangePage(sql, open, page('reopened', 'after4'), 'after3');
+    expect((await sql`select new_today, closed_today from job_counter_daily`)[0]).toMatchObject({ new_today: 2, closed_today: 1 });
+    expect((await sql`select cursor from worker_state`)[0]?.cursor).toBe('after4');
+    expect((await sql`select open from company`)[0]?.open).toBe(1);
+  });
+  it('does not advance the cursor or mutate jobs when hydration fails', async () => {
+    await upsertJobs(sql, [job()]);
+    await expect(applyChangePage(sql, apiWith(() => ({ invalid: true })), page('updated'), 'start')).rejects.toThrow();
+    expect((await sql`select cursor from worker_state`)[0]?.cursor).toBe('start');
+    expect(await sql`select id from job_mirror`).toHaveLength(1);
+  });
+  it('rolls back jobs and counters when the page transaction fails', async () => {
+    await upsertJobs(sql, [job('j1', { title: 'Original' })]);
+    await sql`create function fail_worker_event() returns trigger language plpgsql as 'begin raise exception ''write failed''; end'`;
+    await sql`create trigger fail_worker_event before insert on worker_change for each row execute function fail_worker_event()`;
+    try {
+      await expect(applyChangePage(sql, apiWith(() => job()), page('opened'), 'start')).rejects.toThrow('write failed');
+      expect((await sql`select title from job_mirror`)[0]?.title).toBe('Original');
+      expect((await sql`select cursor from worker_state`)[0]?.cursor).toBe('start');
+      expect(await sql`select * from job_counter_daily`).toHaveLength(0);
+    } finally {
+      await sql`drop trigger fail_worker_event on worker_change`;
+      await sql`drop function fail_worker_event()`;
+    }
+  });
+  it('restarts from the committed cursor and bypasses the disk cache for feeds and job hydration', async () => {
+    const seen: string[] = [];
+    const api = apiWith((url) => {
+      if (url.pathname === '/v1/changes') { seen.push(url.searchParams.get('cursor')!); return seen.length === 1 ? { ...page('opened'), nextCursor: 'middle' } : { items: [], pageSize: 100, nextCursor: null, syncCursor: 'end' }; }
+      return job();
+    });
+    expect(await sweepChanges(sql, api)).toEqual({ pages: 2, events: 1 });
+    await sweepChanges(sql, api);
+    expect(seen).toEqual(['start', 'middle', 'end']);
+  });
+});

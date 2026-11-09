@@ -1,5 +1,5 @@
 {
-  "name": "@cm/builder",
+  "name": "@cm/worker",
   "private": true,
   "type": "module",
   "scripts": {

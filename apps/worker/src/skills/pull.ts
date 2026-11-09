@@ -1,3 +1,4 @@
+import { concurrentMap } from '../concurrent.ts';
 import { isTileSkill } from '@cm/core/codes';
 import { addDays, type IsoDay } from '@cm/core/dates';
 import type { Sql } from '@cm/core/db';
@@ -102,12 +103,12 @@ export async function pullSkillPages(
   };
   log.info({ skills: tracked.length }, 'pulling skill pages');
 
-  for (const skill of tracked) {
+  await concurrentMap(tracked, async (skill) => {
     const now = await krill.facets({ skills: skill.id });
     if (!now) {
       log.warn({ skill: skill.id }, 'krill facets failed for skill; its page keeps the numbers of its last good day');
       out.failed.push(skill.id);
-      continue;
+      return;
     }
     out.tracked.push({ ...skill, total: now.total, families: now.facets.family.map((f) => ({ family: f.value, count: f.count })) });
     out.companies.set(
@@ -132,7 +133,7 @@ export async function pullSkillPages(
     }
 
     out.latest.set(skill.id, dedupeRoles(await krill.latestRoles(skill.id, LATEST_FETCH)).slice(0, LATEST_ROLES));
-  }
+  });
 
   // Company names and websites, once per company (a lookup is a krill call).
   const wanted = new Set<string>();
@@ -145,11 +146,11 @@ export async function pullSkillPages(
         where fetched_on > ${addDays(T, -COMPANY_REF_DAYS)} and company_id in ${sql([...wanted, ''])}`
     ).map((r) => r.company_id),
   );
-  for (const id of wanted) {
-    if (known.has(id)) continue;
+  await concurrentMap([...wanted], async (id) => {
+    if (known.has(id)) return;
     const company = await krill.company(id);
     if (company) out.companyRefs.push({ id: company.id, name: company.name, domain: company.domain ?? null });
-  }
+  });
 
   // One priced-role sample per profession that is some skill's main profession.
   const mainFamilies = new Set(out.tracked.map((s) => s.families[0]?.family).filter((f): f is string => !!f));

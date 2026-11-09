@@ -9,9 +9,9 @@
   "scripts": {
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "migrate": "pnpm --filter @cm/builder run migrate",
-    "builder": "pnpm --filter @cm/builder run build-once",
-    "builder:watch": "pnpm --filter @cm/builder run watch",
+    "migrate": "pnpm --filter @cm/worker run migrate",
+    "builder": "pnpm --filter @cm/worker run build-once",
+    "builder:watch": "pnpm --filter @cm/worker run watch",
     "api": "pnpm --filter @cm/api run start",
     "web:dev": "pnpm --filter @cm/web run dev",
     "web:build": "pnpm --filter @cm/web run build",
@@ -22,7 +22,10 @@
     "web-next:start": "pnpm --filter @cm/web-next run start",
     "typecheck": "pnpm -r run typecheck",
     "test": "vitest run",
-    "lint": "pnpm -r run lint"
+    "lint": "pnpm -r run lint",
+    "worker": "pnpm --filter @cm/worker run build-once",
+    "worker:watch": "pnpm --filter @cm/worker run watch",
+    "worker:sweep": "pnpm --filter @cm/worker run sweep"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",

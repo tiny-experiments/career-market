@@ -1,4 +1,4 @@
-# VPS side of Career Market: the read-only API and the nightly builder.
+# VPS side of Career Market: the read-only API and the worker.
 # Both join the shared external 'infra' network, where the shared Postgres
 # (DATABASE_URL) and the reverse proxy live. No port is published: the
 # reverse proxy routes https://api.careers.market to read-api:4100.
@@ -31,11 +31,11 @@ services:
       timeout: 5s
       retries: 3
 
-  builder:
+  worker:
     <<: *server
     # Applies migrations, then polls krill /v1/meta every BUILDER_POLL_MINUTES and
     # builds each new snapshot day.
-    working_dir: /app/apps/builder
+    working_dir: /app/apps/worker
     command: ["node", "--import", "tsx", "src/cli.ts", "watch"]
     volumes:
       - krill-cache:/var/cache/krill

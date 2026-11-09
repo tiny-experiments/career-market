@@ -1,3 +1,4 @@
+import { concurrentMap } from './concurrent.ts';
 import { addDays, dayRange, FIRST_OBSERVED_DAY, isBootstrapDay, type IsoDay } from '@cm/core/dates';
 import type { Logger } from '@cm/core/logger';
 import type { KrillApi } from './krill/api.ts';
@@ -44,7 +45,7 @@ export interface PullPlan {
 
 const POSTED_EVER = '1970-01-01';
 
-export async function pull(api: KrillApi, meta: Pulled['meta'], plan: PullPlan, log: Logger): Promise<Pulled> {
+export async function pull(api: KrillApi, meta: Pulled['meta'], plan: PullPlan, log: Logger, snapshotApi?: Promise<KrillApi>): Promise<Pulled> {
   const T = meta.lastSnapshotDate;
   const taxonomy = await api.taxonomy();
   const families = taxonomy.families.map((f) => f.id);
@@ -54,15 +55,16 @@ export async function pull(api: KrillApi, meta: Pulled['meta'], plan: PullPlan, 
   const panel = await api.panelDaily(addDays(FIRST_OBSERVED_DAY, -1), T);
 
   const grouped = new Map<IsoDay, KrillDailyItem[]>();
-  for (const day of plan.groupedDays) {
+  await concurrentMap(plan.groupedDays, async (day) => {
     log.info({ day }, 'pulling grouped daily stats');
     grouped.set(day, await api.dailyStats(day, day, ['family', 'specialty', 'level', 'country']));
-  }
+  });
 
+  if (snapshotApi) api = await snapshotApi;
   log.info({ families: families.length }, 'pulling facets per family');
   const familySkills: Pulled['familySkills'] = new Map();
   const failedFamilies: string[] = [];
-  for (const family of families) {
+  await concurrentMap(families, async (family) => {
     try {
       const f = await api.facets({ family, limit: plan.skillsPerFamily });
       familySkills.set(family, { total: f.total, skills: f.facets.skill });
@@ -71,7 +73,7 @@ export async function pull(api: KrillApi, meta: Pulled['meta'], plan: PullPlan, 
       log.warn({ family }, 'krill facets failed for family; skills for it are skipped today');
       failedFamilies.push(family);
     }
-  }
+  });
 
   const companies = (await api.companies({ sort: 'openJobs', pageSize: plan.topCompanies })).items;
 
