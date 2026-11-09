@@ -12,12 +12,12 @@ export interface MetricHint {
   readonly text: string;
 }
 
-/** The approved line for the headline figure; the footer's cousin. */
-const OPEN_ROLES_TEXT = "Open tech roles across 48,000+ company career pages.";
-
 export const METRICS = {
   // Headline and counts
-  openRoles: { title: "Open roles", text: OPEN_ROLES_TEXT },
+  openRoles: {
+    title: "Open roles",
+    text: "Tech roles that are open right now.",
+  },
   openRolesProfession: {
     title: "Open roles",
     text: "Roles in this profession that are open right now.",

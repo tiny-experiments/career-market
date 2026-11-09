@@ -34,7 +34,7 @@ export interface PageCopy {
   readonly meta: string;
 }
 
-/** The list pages and the About page. Detail pages are built with the helpers below. */
+/** Every routed page's title and descriptions; routes.ts reads them from here. Named detail pages are built with the helpers below. */
 export const PAGES = {
   market: {
     title: "Market",
@@ -71,10 +71,32 @@ export const PAGES = {
     description: "What Career Market is and who it is for.",
     meta: "What Career Market is: open tech roles, pay and demand, charted like a market.",
   },
-  notFound: {
-    title: "Page not found",
-    description: "The link may be old, or the page may have moved.",
-    meta: "This page could not be found. The link may be old, or the page may have moved.",
+  profession: {
+    title: "Profession",
+    description: "Open roles, pay range and demand for one profession.",
+    meta: "A tech profession: open roles, pay range, hiring companies and how demand is moving.",
+  },
+  company: {
+    title: "Company",
+    description: "Open tech roles at one company, by team, level and place.",
+    meta: "A company's open tech roles, hiring signal, teams and locations.",
+  },
+  skill: {
+    title: "Skill",
+    description:
+      "Open roles that ask for one skill, who is hiring and what they pay.",
+    meta: "A tech skill: open roles, pay, the professions that ask for it and the skills it pairs with.",
+  },
+  job: {
+    title: "Job",
+    description: "An open role, its pay against the market and similar roles.",
+    meta: "An open tech role: the posting, its pay against the market, and similar open roles.",
+  },
+  search: {
+    title: "Search",
+    description:
+      "Professions, companies, skills and roles matching your search.",
+    meta: "Search open tech roles, professions, companies and skills.",
   },
 } as const satisfies Record<string, PageCopy>;
 

@@ -74,13 +74,10 @@ describe("content vocabulary", () => {
     expect(text.replace(/48,000\+/g, "")).not.toMatch(TOTAL);
   });
 
-  it("names the source only in the footer line and the headline hint", () => {
+  it("names the source only in the footer line", () => {
     const aboutPages = strings(content).filter((text) =>
       /career pages/i.test(text),
     );
-    expect(aboutPages).toEqual([
-      content.METRICS.openRoles.text,
-      content.FOOTER_LINE,
-    ]);
+    expect(aboutPages).toEqual([content.FOOTER_LINE]);
   });
 });

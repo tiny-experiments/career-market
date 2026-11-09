@@ -21,6 +21,8 @@ export interface RouteHandle {
   readonly subBar?: readonly SubBarTab[];
   /** The document title's first part; the site name follows it. */
   readonly title?: string;
+  /** The page's `<meta name="description">`. */
+  readonly meta?: string;
 }
 
 export const SECTIONS: readonly NavItem[] = [
