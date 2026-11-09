@@ -104,7 +104,7 @@ export function ProfessionsPage() {
               />
             </div>
             <ProfessionsTable
-              key={view}
+              key={`${view}:${region ?? ""}`}
               rows={rows}
               view={view}
               regional={region !== undefined}

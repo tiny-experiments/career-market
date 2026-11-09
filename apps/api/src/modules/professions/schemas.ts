@@ -1,7 +1,16 @@
+import {
+  PROFESSION_REGIONS,
+  type ProfessionRegionId,
+} from '@cm/core/professions';
 import { z } from 'zod';
 export const indexQuerySchema = z.strictObject({
   region: z
-    .enum(['north-america', 'europe', 'apac', 'latam', 'mena'])
+    .enum(
+      PROFESSION_REGIONS.map((region) => region.id) as [
+        ProfessionRegionId,
+        ...ProfessionRegionId[],
+      ],
+    )
     .optional(),
 });
 export const detailParamsSchema = z.strictObject({

@@ -22,6 +22,12 @@ export interface ProfessionsTableProps {
   readonly regional?: boolean;
 }
 
+const REGIONAL_HIDDEN_SORTS: ReadonlySet<ProfessionSortKey> = new Set([
+  "change1m",
+  "companies",
+  "remote",
+]);
+
 const dash = <span className="text-subtle">{NO_FIGURE}</span>;
 
 /**
@@ -33,7 +39,11 @@ export function ProfessionsTable({
   view,
   regional = false,
 }: ProfessionsTableProps) {
-  const [sort, setSort] = useState(VIEW_SORT[view]);
+  const [sort, setSort] = useState(() =>
+    regional && REGIONAL_HIDDEN_SORTS.has(VIEW_SORT[view].key)
+      ? { key: "open" as const, direction: "desc" as const }
+      : VIEW_SORT[view],
+  );
 
   const rankOf = useMemo(() => {
     const ranks = new Map<string, number>();
