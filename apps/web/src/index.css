@@ -1,0 +1,287 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Career Market tokens (docs/UI-RULEBOOK.md). Two themes from one sheet: dark
+  is its own near-black scale, not an inversion. Only the surfaces, lines and
+  greys change between them; the one blue and the up/down colours stay put.
+
+  shadcn reads the standard names (--background, --card, --primary, --muted…);
+  the market semantics (--up, --down, --flat, --warn, --tile, --subtle) are ours.
+*/
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-subtle: var(--subtle);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* The flat tinted tile inside a card: the second of the two surface levels. */
+  --color-tile: var(--tile);
+
+  /* Direction and signal. Soft is the chip ground; the plain colour is text and strokes. */
+  --color-up: var(--up);
+  --color-up-soft: var(--up-soft);
+  --color-down: var(--down);
+  --color-down-soft: var(--down-soft);
+  --color-flat: var(--flat);
+  --color-flat-soft: var(--flat-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  /* Series colours for stacked bars and legends, strongest first. */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Elevation: light lifts with a soft shadow, dark separates with a hairline. */
+  --shadow-card: var(--elevation-card);
+  --shadow-float: var(--elevation-float);
+
+  /* Radius: controls and tiles 8, cards and hover cards 12, chips and avatars round. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
+}
+
+/*
+  The type scale (UI-RULEBOOK.md §2): each step carries its size, line-height
+  and tracking so `text-h1` is one class. Weight is set beside it.
+*/
+@theme {
+  --text-display: 2.375rem;
+  --text-display--line-height: 2.625rem;
+  --text-display--letter-spacing: -0.03em;
+  --text-h1: 1.625rem;
+  --text-h1--line-height: 2rem;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h2: 1.125rem;
+  --text-h2--line-height: 1.5rem;
+  --text-h2--letter-spacing: -0.01em;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.125rem;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1rem;
+  --text-eyebrow--letter-spacing: 0.04em;
+
+  /* Layout steps (UI-RULEBOOK.md §4): fluid to 1920, 24 px gutters, fixed chrome heights. */
+  --container-page: 120rem;
+  --spacing-gutter: 1.5rem;
+  --spacing-nav: 3.5rem;
+  --spacing-subbar: 2.875rem;
+  --spacing-row: 3.25rem;
+  --spacing-row-compact: 2.5rem;
+  --spacing-control: 2rem;
+  --spacing-rail: 20rem;
+  --spacing-spark: 7.5rem;
+  --spacing-spark-h: 2.125rem;
+}
+
+:root,
+.light {
+  color-scheme: light;
+
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --subtle: #3f4a5c;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f6f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f4f6f9;
+  --muted-foreground: #6b7686;
+  --accent: #f4f6f9;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
+  --border: #e6eaf0;
+  --input: #dde2ea;
+  --ring: #2563eb;
+  --radius: 0.5rem;
+
+  --tile: #f4f6f9;
+
+  --up: #16a34a;
+  --down: #dc2626;
+  --flat: #6b7686;
+  --warn: #d97706;
+  --up-soft: color-mix(in oklab, var(--up) 12%, var(--card));
+  --down-soft: color-mix(in oklab, var(--down) 12%, var(--card));
+  --flat-soft: color-mix(in oklab, var(--flat) 12%, var(--card));
+  --warn-soft: color-mix(in oklab, var(--warn) 14%, var(--card));
+
+  --chart-1: #2563eb;
+  --chart-2: #3b82f6;
+  --chart-3: #60a5fa;
+  --chart-4: #7c3aed;
+  --chart-5: #cbd5e1;
+
+  --elevation-card:
+    0 1px 2px rgb(15 23 42 / 0.06), 0 4px 16px rgb(15 23 42 / 0.06);
+  --elevation-float:
+    0 1px 2px rgb(15 23 42 / 0.08), 0 8px 32px rgb(15 23 42 / 0.16);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #0b0e13;
+  --foreground: #eef2f7;
+  --subtle: #aab4c3;
+  --card: #11161d;
+  --card-foreground: #eef2f7;
+  --popover: #171d26;
+  --popover-foreground: #eef2f7;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #171d26;
+  --secondary-foreground: #eef2f7;
+  --muted: #171d26;
+  --muted-foreground: #74808f;
+  --accent: #171d26;
+  --accent-foreground: #eef2f7;
+  --destructive: #ef4444;
+  --border: #232b37;
+  --input: #2b3442;
+  --ring: #3b82f6;
+
+  --tile: #171d26;
+
+  --up: #22c55e;
+  --down: #ef4444;
+  --flat: #74808f;
+  --warn: #f59e0b;
+  --up-soft: color-mix(in oklab, var(--up) 16%, var(--card));
+  --down-soft: color-mix(in oklab, var(--down) 16%, var(--card));
+  --flat-soft: color-mix(in oklab, var(--flat) 16%, var(--card));
+  --warn-soft: color-mix(in oklab, var(--warn) 18%, var(--card));
+
+  --chart-1: #3b82f6;
+  --chart-2: #60a5fa;
+  --chart-3: #93c5fd;
+  --chart-4: #a78bfa;
+  --chart-5: #2b3442;
+
+  --elevation-card: 0 0 0 1px var(--border);
+  --elevation-float: 0 0 0 1px var(--border), 0 8px 32px rgb(0 0 0 / 0.55);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Every figure lines up: counts, changes and pay never jitter between rows. */
+    font-variant-numeric: tabular-nums;
+  }
+  button,
+  a {
+    color: inherit;
+  }
+  /*
+   * Tailwind 4's reset dropped the hand on buttons, so every control gets it
+   * here by its role. A label takes it when it wraps a toggle or points at a
+   * control with `for`. Text fields keep the text cursor, disabled controls the arrow.
+   */
+  :is(
+    button,
+    select,
+    input:is([type="checkbox"], [type="radio"], [type="range"], [type="file"])
+  ):not(:disabled),
+  :is(
+    [role="button"],
+    [role="tab"],
+    [role="link"],
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"],
+    [role="option"],
+    [role="checkbox"],
+    [role="radio"],
+    [role="switch"]
+  ):not(
+    :disabled,
+    [aria-disabled="true"],
+    [data-disabled=""],
+    [data-disabled="true"]
+  ),
+  summary,
+  a[href],
+  label:has(
+    :is(
+      [role="checkbox"],
+      [role="radio"],
+      [role="switch"],
+      input[type="checkbox"],
+      input[type="radio"]
+    ):not(:disabled)
+  ),
+  label[for] {
+    cursor: pointer;
+  }
+}
+
+/*
+ * The ticker strip (components/layout/TickerStrip.tsx): one long row that
+ * slides left and pauses under the pointer. Reduced motion shows it still.
+ */
+@layer components {
+  .ticker-track {
+    animation: ticker-slide var(--ticker-duration, 60s) linear infinite;
+  }
+  .ticker-strip:hover .ticker-track,
+  .ticker-strip:focus-within .ticker-track {
+    animation-play-state: paused;
+  }
+  @keyframes ticker-slide {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+    }
+  }
+}

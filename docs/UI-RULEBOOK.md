@@ -1,0 +1,196 @@
+# UI rule book — `apps/web`
+
+How we build the Career Market front end. A living document: add a rule when a decision repeats, instead of restating it in review.
+
+**Read first, every time:**
+
+1. `apps/web/src/index.css` — the tokens as they are. The file is the source of truth; this document explains it.
+2. `/design` in the running app — every token and component with realistic content, in both themes.
+3. `apps/web/scripts/check-ui.mjs` — the rules a script can hold you to. `pnpm --filter @cm/web run check:ui` runs in CI.
+
+The bar is CoinMarketCap, TradingView, Apple: full width, breathing room, bold where it matters, every figure explained on hover. Nothing here applies to `apps/web-next`, which is being replaced.
+
+---
+
+## 1. Non-negotiables
+
+1. **No raw colour.** No hex, no `rgb()`, no Tailwind palette names (`bg-slate-800`, `text-red-500`) in app code. Only tokens: `bg-card`, `text-up`, `text-muted-foreground`.
+2. **No magic numbers.** Spacing, radius and type come from the scales below. `p-[13px]` is a bug; name a token instead.
+3. **One blue, one meaning.** `primary` is the single call to action on a page, the active underline and links. Up is green, down is red, warn is amber. Nothing else is coloured.
+4. **shadcn first.** If shadcn/ui has it, we use it (vendored in `components/ui`). We change it through tokens and variants, never by hand-rolling a copy.
+5. **Both themes, always.** Dark is the default; every surface is checked in light before it is done.
+6. **Never name the source.** No provider name, no table name, no pipeline word anywhere a visitor can read. The footer's line is the only sentence about where roles come from.
+7. **Twice is a component.** The second time you write the same markup, extract it.
+8. **Tokens > variants > className.** Change the token first, add a `cva` variant second, reach for a one-off `className` last.
+
+---
+
+## 2. Typography
+
+Inter (variable, self-hosted) for everything; Geist Mono for codes (`SWE`, `AIML`) and formulas. Tabular figures are on for the whole body, so columns never jitter.
+
+| Role        | Size / line | Weight | Tailwind                                             | Where                                  |
+| ----------- | ----------- | ------ | ---------------------------------------------------- | -------------------------------------- |
+| Display     | 38 / 42     | 800    | `text-display font-extrabold`                        | the headline figure on a detail page   |
+| H1          | 26 / 32     | 800    | `text-h1 font-extrabold`                             | page and section titles                |
+| H2          | 18 / 24     | 700    | `text-h2 font-bold`                                  | card and panel titles                  |
+| Body        | 15 / 22     | 400    | `text-body`                                          | prose, descriptions                    |
+| Table       | 14 / 20     | 500    | `text-sm font-medium`                                | table cells, list rows                 |
+| Name        | 14 / 20     | 700    | `text-sm font-bold`                                  | the name in a row                      |
+| Small       | 13 / 18     | 400    | `text-small`                                         | secondary lines, footer                |
+| Label       | 12 / 16     | 600    | `text-eyebrow font-semibold text-muted-foreground`   | tile labels, table headers             |
+| Code / mono | 12 / 16     | 600    | `font-mono text-eyebrow font-semibold`               | ticker codes, formulas                 |
+
+Rules:
+
+- Headings are bold. The feedback was "scared to be bold": names are 700, titles 700–800, and size carries hierarchy.
+- Each step carries its own line-height and tracking; `text-h1` is one class. New steps are tokens in `index.css`, registered in `lib/utils.ts` so `cn` can merge them.
+- Prose caps at `max-w-2xl`. Tables and charts never do.
+- Numbers always right-aligned; labels always left-aligned.
+
+## 3. Spacing — 4 px base
+
+`4 · 8 · 12 · 16 · 20 · 24 · 32 · 48 · 64` (Tailwind `1 2 3 4 5 6 8 12 16`).
+
+- **Inside a tile:** 12–16. **Between tiles:** 8–12. **Between cards:** 16. **Between page sections:** 32–48 (`PageContainer` sets `gap-8 lg:gap-12`).
+- Lay out with flex/grid and `gap`. Never margin-stack siblings.
+- Breathing room is part of a component (`PageHeader`, `Panel`, `MarketCard` carry their own padding), so pages never fight over it.
+
+## 4. Layout
+
+| Token             | Value   | Class                 | Use                                            |
+| ----------------- | ------- | --------------------- | ---------------------------------------------- |
+| `--container-page`| 1920 px | `max-w-page`          | the fluid page column                          |
+| `--spacing-gutter`| 24 px   | `px-gutter`           | page gutters at every width                    |
+| `--spacing-nav`   | 56 px   | `h-nav`               | the top bar                                    |
+| `--spacing-subbar`| 46 px   | `h-subbar`            | the section's view tabs under the top bar      |
+| `--spacing-row`   | 52 px   | `h-row`               | a table row                                    |
+| `--spacing-row-compact` | 40 px | `h-row-compact`     | a list row inside a card                       |
+| `--spacing-control` | 32 px | `h-control`           | every toolbar control (buttons, selects, chips) |
+| `--spacing-rail`  | 320 px  | `w-rail`              | a detail page's sticky side rail               |
+| `--spacing-spark` | 120 × 34| `w-spark h-spark-h`   | a sparkline                                    |
+
+- **Fluid to 1920 px.** No 1600 px cap, no centred narrow column. Tables run edge to edge of the column (`-mx-gutter` when inside a padded container).
+- **Nav and sub-bar are one sticky unit** (`SiteHeader`). The sub-bar comes from the route's `handle.subBar`; a page never draws its own.
+- **Active navigation is ink plus a 2 px underline that slides** (`UnderlineIndicator`). No filled pills anywhere in navigation.
+- **Two surface levels, never three.** A card on the page; flat tinted tiles inside the card. Never a card inside a card inside a card.
+- Detail pages: header with the facts rail, a full-width chart panel, then three panels on one row, then full-width tables.
+- Works at 400 px and at 1920 px. Columns that do not fit hide below a breakpoint (`Column.from`); the body never scrolls sideways.
+
+## 5. Shape and elevation
+
+| Class          | Size  | Use                                     |
+| -------------- | ----- | --------------------------------------- |
+| `rounded-sm`   | 4 px  | checkboxes, kbd, focus rings            |
+| `rounded-md`   | 6 px  | small controls                          |
+| `rounded-lg`   | 8 px  | controls, tiles, inputs                 |
+| `rounded-xl`   | 12 px | cards, hover cards, dialogs             |
+| `rounded-full` |       | pills, logos, dots                      |
+
+Elevation is one token, two themes:
+
+- `shadow-card` — a card on the page. Light: a soft double shadow and no border. Dark: a 1 px hairline (`--border`) and no shadow.
+- `shadow-float` — hover cards, popovers, menus. Light: a deeper shadow. Dark: hairline plus shadow.
+- Tiles inside a card are flat `bg-tile` with no border and no shadow.
+- Never a border and a heavy shadow on the same element.
+
+## 6. File structure
+
+```
+apps/web/src/
+  components/
+    ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
+    layout/    SiteHeader, TopNav, SubBar, SearchBox, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
+    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, RangeTabs
+    common/    EmptyState, ErrorState, MetricHoverCard, Chip
+    jobs/      VerdictCard (and the job page's parts to come)
+  hooks/       useSlidingIndicator, useElementWidth
+  lib/         utils (cn), format, nav, logo, paging, charts
+  layouts/     RootLayout
+  pages/       route components: assembly only. pages/design holds the /design chapters.
+  index.css    the tokens
+  router.tsx   the page map, with each section's sub-bar in its handle
+```
+
+- One component per file, PascalCase, named after the component. Barrel `index.ts` per folder.
+- Pages assemble; they do not style. Layout Tailwind beyond a little belongs in a component.
+- Formatters live in `lib/format.ts`. Never format a number inline.
+- Tests live in `apps/web/test`, mirroring `src`; `test/support/renderWithRouter.tsx` gives a component the router and providers the shell gives it.
+
+## 7. Component rules
+
+- **Props speak the domain.** `<SignalBadge signal="ramping" />`, not `<Badge variant="up">Ramping</Badge>` in a page.
+- **Never wrap a primitive just to set defaults.** No `PrimaryButton`. Add a variant to `buttonVariants`.
+- **Variants use `cva`**, typed with `VariantProps`. Colour decisions live in the variant map.
+- **Presentational by default.** Components take data and callbacks; fetching lives in hooks and pages.
+- **`asChild`** for composition (`<Button asChild><Link/></Button>`).
+- Every reusable component accepts `className` and merges it with `cn()`.
+- Interactive elements have a visible focus ring (the primary ring) and an accessible name.
+- **Never write `cursor-pointer` by hand.** The base rule in `index.css` gives the hand to every enabled control by role.
+
+### When to use which
+
+| Need                                           | Use                                                        |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| Move between the five sections                 | `TopNav` (from `SECTIONS`); never add a sixth              |
+| Switch a section's view (Gaining, Remote…)     | the route's `handle.subBar` → `SubBar`; the view is a query parameter |
+| Tabs inside a page (Chart · Companies · Skills)| `Tabs` with `TabsList variant="underline"`                 |
+| A chart's range (1W 1M 3M 1Y All)              | `RangeTabs` (segmented)                                    |
+| Filter a table above it                        | `Chip` row; the chosen chip is the one blue tint           |
+| A filter rail's controls                       | `Input`, `Select`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Switch` |
+| A ranked list of things with their change      | `DataTable` (full width, 52 px rows) or `RankedList` inside a card |
+| Many pages of rows                             | `Pager`, 50 a page, every control a link                   |
+| A home-page door into a section                | `MarketCard` (header is the link, optional pager)          |
+| A section of a detail page                     | `Panel`                                                    |
+| A fact on a detail page's rail                 | `StatCard`                                                 |
+| A small fact inside a market card              | `KpiTile`                                                  |
+| A change                                       | `Delta` (text in a cell, pill beside a headline)           |
+| A company's hiring signal                      | `SignalBadge`                                              |
+| A share of a whole                             | `ShareBar` under the percentage; `SegmentBar` for parts    |
+| Explain what a figure means                    | `MetricHoverCard` (the only explanation surface)           |
+| Name an icon                                   | `Tooltip`                                                  |
+| A company, skill or profession mark            | `Logo` (round for companies, square for the rest)          |
+| Nothing to show / something broke / loading    | `EmptyState` / `ErrorState` / `Skeleton` rows              |
+| A job's read                                   | `VerdictCard` first, one `Button size="lg"` to apply       |
+
+## 8. Using shadcn
+
+shadcn owns **behaviour**: overlays, focus, keyboard, portals, form controls. We own the market pieces that are plain markup and SVG: tables' row links, sparklines, charts, gauges, the ticker.
+
+- Vendored files import `cn` from `@/lib/utils`, never from the `cn` package directly: only ours knows the type and layout tokens.
+- `shadcn add --overwrite` clobbers local edits. Patched for this repo: `card.tsx` (`shadow-card`, bold `CardTitle`), `hover-card.tsx` (320 wide, 14 px padding, arrow, instant), `tabs.tsx` (`underline` list variant), `badge.tsx` (`up` `down` `flat` `warn` `code` variants and a `md` size), `button.tsx` (`chip` variant), `progress.tsx` (`indicatorClassName`), `sonner.tsx` (strict TS). Re-add any of them and re-apply.
+- Arbitrary values inside `components/ui` are shadcn's own and are allow-listed in `scripts/check-ui.allowlist.json`; ours are not.
+- shadcn Charts (Recharts) are not used: sparklines, area and segment charts are hand-drawn SVG (`lib/charts.ts`), smaller and under our control.
+
+## 9. Data display and copy
+
+The feedback that shaped these rules: "1.3% since November 3" sounds machine-written, footnotes and method text clutter the page, and a visitor should hover to learn how a number is made.
+
+- **A change is a caret, a number and the comparison in words**: `▲ 1.3% this week`. Never a date as a qualifier ("since 3 Nov"), never an asterisk, never a footnote.
+- **The method lives in the hover card, in one sentence, about what the number is**: "Change in open roles compared with a week ago." A formula only when it is the reader's own arithmetic. Never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
+- **No timestamps in the chrome.** No "Updated 06:14 UTC", no "as of", no refresh rhythm. The footer's line is the only sentence about freshness.
+- **Never state the total number of companies.** Per-profession and per-signal counts are fine; a grand total is not.
+- **Estimated history is a dashed line with a legend entry**, not a sentence under the chart.
+- **Pay is a range**, `$144K–$157K`, and its method ("the middle half of listed pay for senior roles in the United States") is a hover card. No "estimated base pay" labels.
+- **Whole figures with separators** (`99,923`), **percentages with one decimal** for changes and none for shares, **units after numbers** (`38 days`).
+- **The row is the link.** A name in a table is bold text inside the row link, never a bare blue link. A job row opens our job page; the only outbound link on the site is the apply button.
+- **Links say where they go in words**: "See all 1,240 jobs", not "See all rows in screener".
+- **Empty states say what to do**: "No jobs match these filters. Try widening the region." **Error states say what broke and offer a retry**: "Companies could not be loaded." Never an API code.
+- **Every status carries a word**, never a bare coloured dot.
+
+## 10. Definition of done
+
+- [ ] Dark and light both checked, on `/design` if a component is new
+- [ ] No hex, no palette names, no arbitrary values, no provider names (`check:ui` clean)
+- [ ] Works at 400 px and at 1920 px; no sideways scroll
+- [ ] Keyboard reachable, focus visible, every control named
+- [ ] Loading, empty and error states exist
+- [ ] Figures through `lib/format.ts`; changes through `Delta`; explanations through `MetricHoverCard`
+- [ ] Nothing duplicated that should be a component; nothing hand-rolled that shadcn provides
+- [ ] `pnpm --filter @cm/web run typecheck && pnpm --filter @cm/web run lint && pnpm --filter @cm/web run test && pnpm --filter @cm/web run check:ui` clean
+
+---
+
+## Changelog
+
+- **2026-11-09** — First version, with the design system: tokens in `index.css` (dark default, light), shadcn/ui vendored and customised through variants, the shell (`SiteHeader` with sliding underline, `SubBar` from route handles, `SearchBox`, `Footer`, `TickerStrip`), the market components (`DataTable`, `MarketCard`, `KpiTile`, `Gauge`, `RankedList`, `Sparkline`, `AreaChart`, `Delta`, `SignalBadge`, `MetricHoverCard`, `Logo`, `Pager`, `StatCard`, `Panel`), `/design`, and `check:ui`.

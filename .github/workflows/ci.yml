@@ -60,5 +60,13 @@ jobs:
       - name: Verify API database types
         run: pnpm --filter @cm/api db:types:check --url "$TEST_DATABASE_URL"
 
+      # The Vite app's own rules: tokens only, no raw colours or magic numbers (docs/UI-RULEBOOK.md).
+      - name: UI rules (web)
+        run: pnpm --filter @cm/web run check:ui
+
       - name: Build web app
         run: pnpm web:build
+
+      # The previous Next.js app stays runnable until the new pages replace it.
+      - name: Build previous web app (web-next)
+        run: pnpm web-next:build

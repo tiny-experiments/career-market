@@ -1,0 +1,212 @@
+[
+  {
+    "path": "src/components/common/MetricHoverCard.tsx",
+    "rule": "raw-element",
+    "value": "<button>",
+    "reason": "The (i) trigger is a bare icon inside a label; a Button would add its own height and padding and push the label apart."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "grid-cols-[auto_1fr]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "ring-[3px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[min(var(--radius-md),10px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[min(var(--radius-md),12px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "text-[0.8rem]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "grid-cols-[1fr_auto]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "grid-rows-[auto_auto]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[4px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "palette-colour",
+    "value": "bg-black",
+    "reason": "shadcn's dialog and sheet scrim (bg-black/10), the same in both themes; vendored (UI-RULEBOOK.md section 8)."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "max-w-[calc(100%-2rem)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "min-w-[96px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[calc(var(--radius)-5px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "ml-[-0.3rem]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "ml-[-0.15rem]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "mr-[-0.3rem]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "mr-[-0.15rem]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[calc(var(--radius)-3px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[inherit]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "transition-[color,box-shadow]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "h-[18.4px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "w-[32px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "h-[14px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "w-[24px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "translate-x-[calc(100%-2px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "p-[3px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "h-[calc(100%-1px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "bottom-[-5px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "bottom-[-1px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "gap-[--spacing(var(--gap))]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "translate-y-[calc(-50%_-_2px)]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/components/ui/",
+    "rule": "arbitrary-value",
+    "value": "rounded-[2px]",
+    "reason": "Vendored shadcn primitive; UI-RULEBOOK.md section 8 changes ui/ through tokens and variants, not its internals."
+  },
+  {
+    "path": "src/main.tsx",
+    "rule": "file-name",
+    "value": "main.tsx",
+    "reason": "Vite's entry file, not a component."
+  },
+  {
+    "path": "src/router.tsx",
+    "rule": "file-name",
+    "value": "router.tsx",
+    "reason": "The route table, not a component."
+  }
+]
