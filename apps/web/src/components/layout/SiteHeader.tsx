@@ -2,9 +2,8 @@ import { useEffect } from "react";
 import { useMatches } from "react-router";
 import { TopNav } from "@/components/layout/TopNav";
 import { SubBar } from "@/components/layout/SubBar";
+import { documentTitle } from "@/content";
 import type { RouteHandle } from "@/lib/nav";
-
-const SITE = "Career Market";
 
 /**
  * Nav and sub-bar as one sticky unit. The deepest matched route decides the
@@ -19,7 +18,7 @@ export function SiteHeader() {
   const title = [...handles].reverse().find((handle) => handle.title)?.title;
 
   useEffect(() => {
-    document.title = title ? `${title} · ${SITE}` : SITE;
+    document.title = documentTitle(title);
   }, [title]);
 
   return (

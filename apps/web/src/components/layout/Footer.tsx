@@ -1,10 +1,7 @@
 import { Link } from "react-router";
 import { BrandLockup } from "@/components/layout/BrandMark";
+import { FOOTER_LINE, SITE_NAME } from "@/content";
 import { SECTIONS } from "@/lib/nav";
-
-/** The approved line and the sections; nothing about where the data comes from. */
-export const FOOTER_LINE =
-  "Open roles from 48,000+ company career pages, updated through the day.";
 
 const YEAR = new Date().getFullYear();
 
@@ -35,7 +32,9 @@ export function Footer() {
         </nav>
       </div>
       <div className="mx-auto w-full max-w-page px-gutter pb-8">
-        <p className="text-xs text-muted-foreground">© {YEAR} Career Market</p>
+        <p className="text-xs text-muted-foreground">
+          © {YEAR} {SITE_NAME}
+        </p>
       </div>
     </footer>
   );

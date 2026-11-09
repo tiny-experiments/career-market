@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { FOOTER_LINE, Footer } from "@/components/layout";
+import { Footer } from "@/components/layout";
+import { FOOTER_LINE } from "@/content";
 import { renderWithRouter } from "../support/renderWithRouter";
 
 describe("Footer", () => {
