@@ -25,17 +25,17 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   paired skills, salary effect and latest roles. Every krill response is parsed with zod. Every table can
   be rebuilt from krill, except the day-by-day skill counts: krill serves no skill history, so those rows
   accumulate from the first build onward and earlier days are estimated by the back-cast.
-- **read API** (`apps/api`) is a small read-only HTTP service over the read model. Every `/v1` route
-  needs `Authorization: Bearer $READ_API_TOKEN`. `GET /v1/jobs/{krill id}` (the Job page) is the one route
-  that also reads krill live: the posting, the employer's company history and similar roles, cached for 1 hour
+- **read API** (`apps/api`) is a small public, read-only Express service over the read model: JSON under
+  `/api/*` (see `apps/api/README.md`), no token. It runs behind a single reverse proxy and sets
+  `API_TRUST_PROXY=1` so the per-IP rate limit sees each client. Job lists and `GET /api/jobs/{krill id}`
+  (the Job page) are the routes that also read krill live, with list depth capped (page 20, first 1000 roles) to
+  protect krill's rate limit: the posting, the employer's company history and similar roles, cached for 1 hour
   and paced under krill's rate limit, joined with the read model's profession trend, pay band and typical
   posting window. A panel krill could not answer shows as unavailable and marks the payload `degraded`;
   the web app then caches that page for 60 seconds instead of an hour. A closed role answers 410 with its
   tombstone.
-- **web app** (`apps/web`, Next.js App Router) renders pages on the server from the read API only. It
-  never connects to Postgres, and the token never reaches the browser. Pages render per request; the read
-  API responses they use are cached for 1 hour, and the builder expires that cache right after a build
-  through `POST /api/revalidate`.
+- **web app** (`apps/web`, Next.js App Router) is being replaced by a new SPA that reads the public API
+  from the browser. It never connects to Postgres.
 - **packages/core**: the one config module that reads the environment, logging (pino), the Postgres
   client (postgres.js), migrations, display codes and the shared payload types.
 
@@ -75,8 +75,7 @@ PORT=3000 pnpm web:dev        # web app in development
 pnpm web:build && PORT=3000 pnpm web:start
 ```
 
-The web app needs only `READ_API_URL` and `READ_API_TOKEN` (and `REVALIDATE_TOKEN` to accept the
-builder's refresh call). `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
+The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
 
 ### Screener and search
 
@@ -128,14 +127,12 @@ The skill-fallback test needs a scratch Postgres that may be wiped: set `TEST_DA
 `Dockerfile` builds one server image for the read API and the builder.
 `deploy/docker-compose.yml` runs both on the external `infra` network next to the shared Postgres; it
 publishes no ports, and the reverse proxy routes `https://api.careers.market` to `read-api:4100`.
+The proxy is the sole ingress, so the compose file sets `API_TRUST_PROXY=1` (override it in `deploy/.env`).
 
 ```sh
 cp deploy/.env.example deploy/.env
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
-
-On Vercel, set the project root to `apps/web` and set `READ_API_URL=https://api.careers.market`,
-`READ_API_TOKEN` and `REVALIDATE_TOKEN`.
 
 ## Data
 

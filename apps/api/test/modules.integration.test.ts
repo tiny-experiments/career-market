@@ -199,6 +199,16 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         'Beta',
         'Small',
       ]);
+      const byName = await request(app)
+        .get('/api/companies?sort=name')
+        .expect(200);
+      expect(byName.body.items).toEqual(sorted.body.items);
+      const byNameDesc = await request(app)
+        .get('/api/companies?sort=name&dir=desc')
+        .expect(200);
+      expect(byNameDesc.body.items.map((c: { name: string }) => c.name)).toEqual(
+        ['Small', 'Beta', 'Acme', '100%_literal'],
+      );
     });
     it('preserves detail and serves company roles through the job repository', async () => {
       const res = await request(app).get('/api/companies/acme').expect(200);

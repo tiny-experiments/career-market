@@ -1,5 +1,5 @@
 import type { Queries } from '../../../database/client.ts';
-import { notFound, sourceUnavailable } from '../../../http/errors.ts';
+import { AppError, notFound, sourceUnavailable } from '../../../http/errors.ts';
 import {
   jobPage,
   companyDomains,
@@ -25,8 +25,8 @@ export function createJobsServices(deps: {
             total: 0,
           };
       }
-      const page = await deps.jobs.list({ ...query, company }).catch(() => {
-        throw sourceUnavailable();
+      const page = await deps.jobs.list({ ...query, company }).catch((err) => {
+        throw err instanceof AppError ? err : sourceUnavailable();
       });
       const domains = await companyDomains(
         deps.queries,

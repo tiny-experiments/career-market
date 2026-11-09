@@ -3,8 +3,12 @@ import { addDays, type IsoDay } from '@cm/core/dates';
 import { LEVEL_GROUPS } from '@cm/core/screener';
 import { krillJobPageSchema } from '@cm/core/krillJob';
 import type { JobsRepository, JobsQuery } from '../modules/jobs/domain.ts';
-import { sourceUnavailable } from '../http/errors.ts';
+import { sourceUnavailable, validationFailed } from '../http/errors.ts';
 import type { KrillLive } from './krillLive.ts';
+
+/** Rows reachable through numbered pages, and the most cursor pages walked for one request. */
+export const MAX_UPSTREAM_DEPTH = 1000;
+export const MAX_UPSTREAM_PAGE = 20;
 
 export function createUpstreamJobs(
   live: KrillLive,
@@ -22,6 +26,13 @@ export function createUpstreamJobs(
       }),
     similar: (params) => live.jobs(params),
     async list(query: JobsQuery) {
+      if (
+        query.page > MAX_UPSTREAM_PAGE ||
+        query.page * query.pageSize > MAX_UPSTREAM_DEPTH
+      )
+        throw validationFailed({
+          page: `Pages beyond page ${MAX_UPSTREAM_PAGE} or the first ${MAX_UPSTREAM_DEPTH} roles are not available. Narrow the filters instead.`,
+        });
       const params: Record<string, string | number | undefined> = {
         q: query.q,
         company: query.company,

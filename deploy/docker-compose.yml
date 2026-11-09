@@ -3,7 +3,7 @@
 # (DATABASE_URL) and the reverse proxy live. No port is published: the
 # reverse proxy routes https://api.careers.market to read-api:4100.
 #
-#   cp deploy/.env.example deploy/.env   # fill in DATABASE_URL, READ_API_TOKEN, ...
+#   cp deploy/.env.example deploy/.env   # fill in DATABASE_URL, ...
 #   docker compose -f deploy/docker-compose.yml up -d --build
 name: career-market
 
@@ -22,6 +22,8 @@ services:
     environment:
       READ_API_HOST: 0.0.0.0
       READ_API_PORT: "4100"
+      # The reverse proxy is the sole ingress; trust its one hop so rate limits are per client.
+      API_TRUST_PROXY: "${API_TRUST_PROXY:-1}"
     expose: ["4100"]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]

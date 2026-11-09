@@ -34,7 +34,8 @@ success envelope. The old `/v1` API and `/api/revalidate` are removed.
 
 Companies accept `q` (literal case-insensitive name substring), `signal`
 (`ramping`, `steady`, `cooling`, `freezing`), `sort` (`open`, `name`, `change1w`,
-`rank`) and `dir` (`asc`, `desc`). Default ordering is open roles descending,
+`rank`) and `dir` (`asc`, `desc`). `dir` defaults to `asc` for `name` and `rank`
+and `desc` for `open` and `change1w`; the default ordering is open roles descending,
 with a stable company-id tie-break. Missing changes sort last.
 
 Jobs and company roles accept `q`, `company` (id, slug or exact name), `family`,
@@ -42,7 +43,11 @@ Jobs and company roles accept `q`, `company` (id, slug or exact name), `family`,
 (days, 1–365), `salaryMin`, `hasPay=true`, `currency` (default USD) and `sort`
 (`newest`, `opened`, `salary`). A company route always scopes to its company.
 Seniority accepts the entry/mid/senior/staff/management groups and individual
-levels. List items expose an internal `href` instead of an employer link; Apply
+levels. Until the job mirror replaces the upstream adapter, job lists reach at most
+page 20 and the first 1000 roles (`page * pageSize`); beyond that they return 400
+`VALIDATION_FAILED` on `page`. Search roles cost two upstream calls per request. The
+upstream client uses `KRILL_API_KEY` (and its higher pace limit) when set, and remembers
+failures briefly. List items expose an internal `href` instead of an employer link; Apply
 lives on the job detail page. Company names can be selected with the search
 endpoint and passed as their ids.
 
@@ -86,8 +91,8 @@ ports. Credentials are not enabled. `createApp` also accepts a
 requests per IP per minute, with standard rate-limit and Retry-After headers.
 The limiter is process-local, appropriate to the single VPS API process.
 
-Forwarded headers are untrusted by default. Behind the VPS reverse proxy set
-`API_TRUST_PROXY=1` only when one trusted proxy is the sole ingress. Higher hop
+Forwarded headers are untrusted by default. The VPS compose file sets
+`API_TRUST_PROXY=1`, because the Caddy reverse proxy is the sole ingress. Higher hop
 counts (up to 5) require the matching controlled ingress topology. Successful
 reads cache for 60 seconds in browsers and 300 seconds in shared caches, with a
 60-second stale revalidation window. Errors and health checks use `no-store`.

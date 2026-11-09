@@ -92,8 +92,21 @@ describe('temporary job repository adapter', () => {
     expect(jobs[1]!.searchParams.get('cursor')).toBe('bbbbbbbb');
     const terminal = await source.list({ ...query, page: 3 });
     expect(terminal).toMatchObject({ items: [], page: 3, total: 3 });
-    const beyond = await source.list({ ...query, page: 99 });
-    expect(beyond).toMatchObject({ items: [], page: 99, total: 3 });
+    const beyond = await source.list({ ...query, page: 20 });
+    expect(beyond).toMatchObject({ items: [], page: 20, total: 3 });
+  });
+  it('refuses deep pages before any upstream call', async () => {
+    const { source, fetchImpl } = setup();
+    await expect(
+      source.list(jobsQuerySchema.parse({ page: 21, pageSize: 1 })),
+    ).rejects.toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
+    await expect(
+      source.list(jobsQuerySchema.parse({ page: 11, pageSize: 100 })),
+    ).rejects.toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    await expect(
+      source.list(jobsQuerySchema.parse({ page: 10, pageSize: 100 })),
+    ).resolves.toMatchObject({ items: [] });
   });
   it('maps missing detail and refuses malformed source data', async () => {
     const { source } = setup();
