@@ -7,12 +7,13 @@ A [Tiny Experiments](https://github.com/tiny-experiments) project.
 ## How it fits together
 
 ```
-krill API (/v1)  ──nightly──▶  builder  ──▶  Postgres read model  ──▶  read API  ──▶  web app
-krill.kurso.sh                 apps/worker   (plain SQL migrations)    apps/api       apps/web
+krill API (/v1)  ──daily + 15 min──▶  worker  ──▶  Postgres read model  ──▶  read API  ──▶  web app
+krill.kurso.sh                       apps/worker   (plain SQL migrations)    apps/api       apps/web
 ```
 
 - **krill** collects every board each day and captures the facts that exist only on their day.
-- **builder** (`apps/worker`) polls krill `/v1/meta`; on a new snapshot day it pulls
+- **worker** (`apps/worker`) polls krill `/v1/meta`; on a completed new snapshot day it mirrors every open job
+  (served from Postgres once the API reads the mirror) and pulls
   `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies`, a sample of the
   day's closings and, per profession, the newest open US roles that list pay (the Job page's pay bands),
   then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
@@ -24,7 +25,9 @@ krill.kurso.sh                 apps/worker   (plain SQL migrations)    apps/api 
   `BUILDER_SKILL_PAGES` largest skills (default 60) and writes each skill's demand series, companies,
   paired skills, salary effect and latest roles. Every krill response is parsed with zod. Every table can
   be rebuilt from krill, except the day-by-day skill counts: krill serves no skill history, so those rows
-  accumulate from the first build onward and earlier days are estimated by the back-cast.
+  accumulate from the first build onward and earlier days are estimated by the back-cast. Between builds a
+  15-minute sweep of krill's change feed keeps the job mirror current; see
+  [worker read model](docs/worker-read-model.md).
 - **read API** (`apps/api`) is a small public, read-only Express service over the read model: JSON under
   `/api/*` (see `apps/api/README.md`), no token. It runs behind a single reverse proxy and sets
   `API_TRUST_PROXY=1` so the per-IP rate limit sees each client. Job lists and `GET /api/jobs/{krill id}`
@@ -42,7 +45,7 @@ krill.kurso.sh                 apps/worker   (plain SQL migrations)    apps/api 
 - **packages/core**: the one config module that reads the environment, logging (pino), the Postgres
   client (postgres.js), migrations, display codes and the shared payload types.
 
-Hosting: the web app deploys to Vercel; the read API, builder and Postgres run on the VPS behind
+Hosting: the web app deploys to Vercel; the read API, worker and Postgres run on the VPS behind
 `https://api.careers.market`. Nothing in this repository deploys anything.
 
 ## Run it locally
@@ -56,19 +59,24 @@ pnpm db:up                    # Postgres 16 on 127.0.0.1:55432 (CM_PG_PORT to ch
 pnpm migrate                  # apply packages/core/migrations/*.sql
 ```
 
-### Builder
+### Worker
 
 ```sh
-pnpm builder                  # build krill's latest snapshot day once (skips a day already built)
-pnpm builder -- --force       # rebuild the latest day
-pnpm builder -- --full        # refetch every grouped day since 2026-11-02, then rebuild
-pnpm builder:watch            # poll krill every BUILDER_POLL_MINUTES (default 5) and build completed new days; sweep changes every 15 minutes
+pnpm worker                   # build krill's latest snapshot day once (skips a day already built)
+pnpm worker -- --force        # rebuild the latest day
+pnpm worker -- --full         # refetch every grouped day since 2026-11-02, then rebuild
+pnpm worker:sweep             # apply krill's change feed once, from the stored cursor
+pnpm worker:watch             # poll krill every BUILDER_POLL_MINUTES (default 5) and build completed new days;
+                              # sweep changes every WORKER_SWEEP_MINUTES (default 15); backfill job descriptions when idle
 ```
 
-Without `KRILL_API_KEY` krill allows 60 calls a minute per address; the builder paces itself under that
+The `pnpm builder` and `pnpm builder:watch` scripts remain aliases.
+
+Without `KRILL_API_KEY` krill allows 60 calls a minute per address; the worker paces itself under that
 (`KRILL_RATE_PER_MIN`), follows `RateLimit-*` and `Retry-After`, and caches responses on disk per
-snapshot day (`KRILL_CACHE_DIR`), so a rerun of the same day costs no krill calls. A first build makes a
-few hundred calls (about 10 minutes unkeyed); later builds fetch only the recent days.
+snapshot day (`KRILL_CACHE_DIR`), so a rerun of the same day costs no krill calls. Every build fetches the
+full open-job listing fresh, so build with a `KRILL_API_KEY` (a keyed full build takes about 10 minutes);
+timings and rate limits are in the [worker read model](docs/worker-read-model.md).
 
 ### Read API and web app
 
@@ -84,7 +92,7 @@ The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company
 
 ### Jobs and search
 
-- The builder also reads the 150 largest companies (`/v1/companies`, with domain), their daily statistics
+- The worker also reads the 150 largest companies (`/v1/companies`, with domain), their daily statistics
   (`/v1/stats/companies/daily`), and krill facets per company, profession and skill. It writes
   `screener_company`, `screener_company_day`, `screener_subject`, `screener_facet` and `search_entry`.
 - The read API serves `/api/jobs` (replacing the Screener) and `/api/search`; see `apps/api/README.md`.
@@ -95,8 +103,8 @@ The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company
 
 ### Company page
 
-`/companies/<slug>` shows one company. The builder keeps a `company` directory (every company with at
-least one open tech roles), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
+`/companies/<slug>` shows one company. The worker keeps a `company` directory (every company with at
+least one open tech role), krill's daily company statistics (`/v1/stats/companies/daily`) for all of them,
 and a full profile for the largest `BUILDER_COMPANY_PROFILES` (default 100): facets for skills, countries,
 levels and work modes, the careers-site url, a median age from six facet cuts and family-by-level history.
 Peers are not in v1 and show a coming-soon state.
@@ -128,7 +136,7 @@ The API integration tests need a scratch Postgres that may be wiped: set `TEST_D
 
 ## Deploy shape (VPS)
 
-`Dockerfile` builds one server image for the read API and the builder.
+`Dockerfile` builds one server image for the read API and the worker.
 `deploy/docker-compose.yml` runs both on the external `infra` network next to the shared Postgres; it
 publishes no ports, and the reverse proxy routes `https://api.careers.market` to `read-api:4100`.
 The proxy is the sole ingress, so the compose file sets `API_TRUST_PROXY=1` (override it in `deploy/.env`).

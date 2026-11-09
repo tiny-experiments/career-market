@@ -23,6 +23,9 @@ the SPA or the public read API.
 - `job_counter_daily`: `date`, `new_today` (opened + reopened), `closed_today`.
 - `company_open_count`: exact current mirror counts by `company_id`, including
   employers with one role. `company.open` is refreshed with these counts.
+  A sweep that meets an employer missing from `company` inserts it with the
+  placeholder slug `company-<company_id>` (`placeholderSlug`); the next build
+  replaces exactly that slug with the normal name-derived one.
 
 Jobs filters use B-tree indexes for profession, employer, seniority, work mode,
 posting/opening date and pay; GIN indexes cover country arrays, full-text search

@@ -33,8 +33,8 @@ services:
 
   worker:
     <<: *server
-    # Applies migrations, then polls krill /v1/meta every BUILDER_POLL_MINUTES and
-    # builds each new snapshot day.
+    # Applies migrations, then polls krill /v1/meta every BUILDER_POLL_MINUTES, builds
+    # each completed snapshot day and sweeps the change feed every WORKER_SWEEP_MINUTES.
     working_dir: /app/apps/worker
     command: ["node", "--import", "tsx", "src/cli.ts", "watch"]
     volumes:
