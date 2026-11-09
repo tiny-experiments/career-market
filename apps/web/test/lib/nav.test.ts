@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isTabActive,
-  MARKET_TABS,
-  PROFESSIONS_TABS,
-} from "@/lib/nav";
+import { isTabActive, MARKET_TABS, PROFESSIONS_TABS } from "@/lib/nav";
 
 const at = (pathname: string, search = "") => ({ pathname, search });
 

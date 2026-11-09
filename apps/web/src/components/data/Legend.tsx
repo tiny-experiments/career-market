@@ -25,10 +25,7 @@ export function Legend({
         <li key={item.label} className="inline-flex items-center gap-1.5">
           <span
             aria-hidden
-            className={cn(
-              "inline-block h-2.5 w-2.5 rounded-sm",
-              item.swatch,
-            )}
+            className={cn("inline-block h-2.5 w-2.5 rounded-sm", item.swatch)}
           />
           {item.label}
         </li>

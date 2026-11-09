@@ -253,10 +253,7 @@ export function TablesSection() {
       title="The market table"
       description="Full width, the row is the link, numbers right-aligned in tabular figures, a sparkline per row coloured by direction and a share bar under a percentage. Hints sit behind the (i) in the header. No column is a bare link."
     >
-      <Example
-        title="Professions"
-        note="Chips filter, headers sort."
-      >
+      <Example title="Professions" note="Chips filter, headers sort.">
         <div className="-mx-gutter flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2 px-gutter">
             {VIEWS.map((label) => (

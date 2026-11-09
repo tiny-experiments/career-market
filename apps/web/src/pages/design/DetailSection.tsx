@@ -117,9 +117,7 @@ export function DetailSection() {
               series={SWE_SERIES}
               label="Open Software roles over the last 90 days"
             />
-            <Legend
-              items={[{ label: "Open roles", swatch: "bg-primary" }]}
-            />
+            <Legend items={[{ label: "Open roles", swatch: "bg-primary" }]} />
           </Panel>
           <div className="grid gap-4 lg:grid-cols-3">
             <Panel title="Specialties">
