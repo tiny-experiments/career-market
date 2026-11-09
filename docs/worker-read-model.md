@@ -123,5 +123,6 @@ roles and search stay local.
 
 `0012_description_backfill.sql` adds both queue indexes and the persisted retry
 table to the same ordered migration set. `0015_job_mirror_skills_index.sql` adds
-the skill and pay-ranking indexes to both mirror tables. Neither mirror may have incoming
+the skill and pay-ranking indexes to both mirror tables, and `0017_worker_change_job_index.sql`
+indexes `worker_change` by `(job_id, kind, date desc)` for the closed-role lookup. Neither mirror may have incoming
 foreign keys because publication rotates its physical table identity.

@@ -27,7 +27,10 @@ describe("JobsPulseStrip", () => {
 
   it("leaves no strip behind when the read fails", async () => {
     stubFetch({
-      "/api/jobs/pulse": { status: 500, body: { message: "down", code: "INTERNAL" } },
+      "/api/jobs/pulse": {
+        status: 500,
+        body: { message: "down", code: "INTERNAL" },
+      },
     });
     const { container } = renderWithRouter(<JobsPulseStrip />);
     await waitFor(() =>

@@ -13,7 +13,7 @@ krill.kurso.sh                       apps/worker   (plain SQL migrations)    app
 
 - **krill** collects every board each day and captures the facts that exist only on their day.
 - **worker** (`apps/worker`) polls krill `/v1/meta`; on a completed new snapshot day it mirrors every open job
-  (served from Postgres once the API reads the mirror) and pulls
+  (the read API serves jobs from this mirror) and pulls
   `/v1/stats/daily`, `/v1/stats/panel/daily`, `/v1/facets`, `/v1/companies`, a sample of the
   day's closings and, per profession, the newest open US roles that list pay (the Job page's pay bands),
   then rebuilds every derived number: the chain-linked Tech Hiring Index, 1W/1M/3M/1Y/ALL
@@ -30,12 +30,12 @@ krill.kurso.sh                       apps/worker   (plain SQL migrations)    app
   [worker read model](docs/worker-read-model.md).
 - **read API** (`apps/api`) is a small public, read-only Express service over the read model: JSON under
   `/api/*` (see `apps/api/README.md`), no token. It runs behind a single reverse proxy and sets
-  `API_TRUST_PROXY=1` so the per-IP rate limit sees each client. Job lists and `GET /api/jobs/{krill id}`
-  (the Job page) also read krill live, cached for 1 hour and paced under krill's rate limit; job lists are
-  depth-capped and limited in flight for the same reason (see `apps/api/README.md`). The Job page joins the
-  posting, the employer's company history and similar roles with the read model's profession trend, pay
-  band and typical posting window. A panel krill could not answer shows as unavailable and marks the
-  payload `degraded`. A closed role answers 410 with its tombstone.
+  `API_TRUST_PROXY=1` so the per-IP rate limit sees each client. Job lists, the Job page
+  (`GET /api/jobs/{krill id}`), company roles and search read the worker's job mirror in Postgres; only the
+  first visit to a role whose text is not stored yet fetches it once from krill (see `apps/api/README.md`).
+  The Job page joins the posting, the employer's company history and similar roles with the read model's
+  profession trend, pay band and typical posting window. A panel that could not be answered shows as
+  unavailable and marks the payload `degraded`. A closed role answers 410 with its tombstone.
 - **web app** (`apps/web`, Vite + React 19 + react-router 7 + Tailwind 4 + shadcn/ui) is the single-page
   app being built page by page on the design system in `apps/web/src/components` (see
   `docs/UI-RULEBOOK.md`; `/design`, in development builds only, shows every token and component in both themes). It reads the public
@@ -96,9 +96,8 @@ The read API needs no token. Logos are optional: see Company logos below.
   (`/v1/stats/companies/daily`), and krill facets per company, profession and skill. It writes
   `screener_company`, `screener_company_day`, `screener_subject`, `screener_facet` and `search_entry`.
 - The read API serves `/api/jobs` (replacing the Screener) and `/api/search`; see `apps/api/README.md`.
-  Job lists ask krill for the counts and the matching roles, cache each answer in memory for an hour and
-  share requests in flight. They need `KRILL_API_KEY` for a comfortable rate (600 calls a minute; 60
-  without a key).
+  Job lists, counts, filters and search run over the job mirror in Postgres. `KRILL_API_KEY` only raises the
+  pace limit of the one-off text fetch for a role whose description is not stored yet.
 
 ### Company page
 
@@ -118,8 +117,8 @@ Peers are not in v1 and show a coming-soon state.
   is short, and the page says so): RAMPING needs open roles up 5% with openings at least 1.5x closings;
   COOLING needs down 3% with closings at least 1.5x openings; FREEZING needs down 10% with closings at least
   2.5x openings.
-- Current roles are read live from krill by the read API (`/api/companies/:slug/jobs`) through the shared live
-  krill client, so it shares its pacing and hour cache with job lists and the Job page.
+- Current roles are read from the job mirror by the read API (`/api/companies/:slug/jobs`), the same
+  source as job lists and the Job page.
 
 ### Company logos
 
