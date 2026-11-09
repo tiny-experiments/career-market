@@ -1,29 +1,45 @@
-import { serve } from '@hono/node-server';
-import { loadConfig, requireReadApiToken } from '@cm/core/config';
-import { createSql } from '@cm/core/db';
-import { createLogger } from '@cm/core/logger';
+import { pino } from 'pino';
+import { loadConfig } from '@cm/core/config';
+import { createDatabase } from './database/client.ts';
 import { createApp } from './app.ts';
-import { KrillLive } from './krillLive.ts';
+import { apiConfig } from './config/config.ts';
+import { KrillLive } from './integrations/krillLive.ts';
+import { createUpstreamJobs } from './integrations/upstreamJobs.ts';
 
 const config = loadConfig();
-const log = createLogger('read-api');
-const sql = createSql(config.databaseUrl, { max: 10 });
-const live = new KrillLive({
-  baseUrl: config.krill.baseUrl,
-  apiKey: config.krill.apiKey,
-  ratePerMinute: config.krill.ratePerMinute,
-  timeoutMs: config.krill.timeoutMs,
+const log = pino({ name: 'career-market-api', level: config.logLevel });
+const db = createDatabase(config.databaseUrl);
+const live = new KrillLive({ ...config.krill, log, ttlMs: 300_000 });
+const app = createApp({
+  db,
   log,
+  jobs: createUpstreamJobs(live),
+  trustProxy: apiConfig.trustProxy,
 });
-const app = createApp({ sql, token: requireReadApiToken(config), log, live, withLogos: Boolean(config.web.contextDevClientId) });
-
-const server = serve({ fetch: app.fetch, hostname: config.readApi.host, port: config.readApi.port }, (info) => {
-  log.info({ host: info.address, port: info.port }, 'read api listening');
+const server = app.listen(config.readApi.port, config.readApi.host, () => {
+  log.info(
+    {
+      event: 'api.listening',
+      host: config.readApi.host,
+      port: config.readApi.port,
+    },
+    'API listening',
+  );
 });
-
-const shutdown = () => {
-  server.close();
-  void sql.end({ timeout: 5 }).then(() => process.exit(0));
-};
+let stopping = false;
+function shutdown() {
+  if (stopping) return;
+  stopping = true;
+  const deadline = setTimeout(() => {
+    log.error({ event: 'api.shutdown.timeout' }, 'Shutdown timed out');
+    process.exit(1);
+  }, 10_000).unref();
+  server.close(() => {
+    void db.destroy().then(() => {
+      clearTimeout(deadline);
+      process.exit(0);
+    });
+  });
+}
 process.once('SIGINT', shutdown);
 process.once('SIGTERM', shutdown);

@@ -53,9 +53,12 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      # Krill is faked. The skill fallback test runs against the Postgres service.
+      # Job source is faked; API integration tests use the isolated Postgres service.
       - name: Test
         run: pnpm test
+
+      - name: Verify API database types
+        run: pnpm --filter @cm/api db:types:check --url "$TEST_DATABASE_URL"
 
       - name: Build web app
         run: pnpm web:build
