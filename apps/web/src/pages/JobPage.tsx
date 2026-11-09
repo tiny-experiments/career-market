@@ -1,11 +1,10 @@
 import { useParams } from "react-router";
 import { NotFoundState, PageSkeleton, ResourceView } from "@/components/common";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { ClosedJob, JobView } from "@/components/jobs";
+import { PageContainer } from "@/components/layout";
+import { ERROR } from "@/content";
 import { useResource } from "@/hooks";
 import { jobDetail } from "@/lib/api";
-import { PageBodyPlaceholder } from "./PageBodyPlaceholder";
-
-const CRUMBS = [{ label: "Jobs", to: "/jobs" }];
 
 export function JobPage() {
   const { id = "" } = useParams();
@@ -16,23 +15,16 @@ export function JobPage() {
       <ResourceView
         state={job}
         skeleton={<PageSkeleton variant="detail" />}
-        errorTitle="This job could not be loaded"
+        errorTitle={ERROR.job.title}
         notFound={<NotFoundState />}
       >
-        {(page) => (
-          <>
-            <PageHeader
-              crumbs={CRUMBS}
-              title={
-                page.status === "open" ? page.job.title : "This role has closed"
-              }
-              {...(page.status === "open"
-                ? { description: page.job.company.name }
-                : {})}
-            />
-            <PageBodyPlaceholder />
-          </>
-        )}
+        {(page) =>
+          page.status === "open" ? (
+            <JobView page={page} />
+          ) : (
+            <ClosedJob job={page} />
+          )
+        }
       </ResourceView>
     </PageContainer>
   );

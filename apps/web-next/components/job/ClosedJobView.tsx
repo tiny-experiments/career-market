@@ -11,8 +11,13 @@ export function ClosedJobView({ job }: { job: ClosedJobPayload }) {
         This role closed on <time dateTime={job.closedAt}>{formatDayLong(job.closedAt)}</time>
       </h1>
       <p>
-        It was {job.openedSource === 'posted' ? 'posted' : 'first seen'} on <time dateTime={job.openedAt}>{formatDayLong(job.openedAt)}</time>
-        {job.familyName ? ` in ${job.familyName}` : ''}. Career Market keeps no text of closed roles.
+        {job.openedAt ? (
+          <>
+            It was {job.openedSource === 'posted' ? 'posted' : 'first seen'} on <time dateTime={job.openedAt}>{formatDayLong(job.openedAt)}</time>
+            {job.familyName ? ` in ${job.familyName}` : ''}.{' '}
+          </>
+        ) : null}
+        Career Market keeps no text of closed roles.
       </p>
       <p>
         <Link href="/screener" className="link">

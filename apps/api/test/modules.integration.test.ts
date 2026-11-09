@@ -61,7 +61,12 @@ const lookup = vi.fn<JobsRepository['lookup']>(async (id) =>
       : { kind: 'missing' },
 );
 const similar = vi.fn(async () => []);
-const source: JobsRepository = { list, lookup, similar };
+const pulseCounts = vi.fn(async () => ({
+  open: 100,
+  newToday: 3,
+  withPay: 40,
+}));
+const source: JobsRepository = { list, lookup, similar, pulseCounts };
 const log = pino({ level: 'silent' });
 
 describe.skipIf(!url)('public module integration (real Postgres)', () => {
@@ -281,7 +286,7 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         .expect(200);
       expect(jobs.body.items[0].href).toBe('/jobs/kr_aaaaaaaaaaaaaaaa');
       expect(list).toHaveBeenLastCalledWith(
-        expect.objectContaining({ company: 'acme', workMode: 'remote' }),
+        expect.objectContaining({ company: 'acme', workMode: ['remote'] }),
       );
       await request(app).get('/api/companies/unknown').expect(404);
     });
@@ -455,15 +460,30 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       expect(list).toHaveBeenLastCalledWith(
         expect.objectContaining({
           company: 'acme',
-          workMode: 'remote',
+          workMode: ['remote'],
           postedWithin: 7,
           hasPay: 'true',
         }),
       );
-      const noMatch = await request(app)
-        .get('/api/jobs?company=Not-a-company')
-        .expect(200);
-      expect(noMatch.body).toMatchObject({ items: [], total: 0 });
+      await request(app).get('/api/jobs?company=Not-a-company').expect(200);
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          company: undefined,
+          companyContains: 'Not-a-company',
+        }),
+      );
+    });
+    it('serves the Jobs strip from the read model and live counts', async () => {
+      const res = await request(app).get('/api/jobs/pulse').expect(200);
+      expect(res.body).toMatchObject({
+        open: 100,
+        newToday: 3,
+        withPay: 40,
+        change1w: 0.1,
+        openSpark: [100],
+        professions: [{ family: 'software', code: 'SWE', change1w: 0.1 }],
+      });
+      expect(JSON.stringify(res.body)).not.toMatch(/krill/i);
     });
     it('preserves job verdict/context, closed and missing responses', async () => {
       const res = await request(app).get(`/api/jobs/${job.id}`).expect(200);
@@ -476,6 +496,11 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         },
       });
       expect(res.body.context.health).toBeDefined();
+      expect(res.body.context.verdict).toMatchObject({
+        kind: 'evergreen',
+        repostCount: 2,
+      });
+      expect(res.body.job.company.slug).toBe('acme');
       expect(res.body.context.companyTrend).toMatchObject({
         available: true,
         open: 100,

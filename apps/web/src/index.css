@@ -104,6 +104,8 @@
   --spacing-row-compact: 2.5rem;
   --spacing-control: 2rem;
   --spacing-rail: 20rem;
+  --spacing-chrome: 7.25rem;
+  --spacing-rail-h: calc(100vh - 8.25rem);
   --spacing-spark: 7.5rem;
   --spacing-spark-h: 2.125rem;
 }

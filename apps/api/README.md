@@ -22,6 +22,7 @@ continues to own migrations; this app never migrates on startup.
 | `GET /api/skills/:slug`         | Skill detail                                               |
 | `GET /api/jobs`                 | Paginated jobs (replaces Screener)                         |
 | `GET /api/jobs/facets`          | Unfiltered counts and available filter values              |
+| `GET /api/jobs/pulse`           | Open, new and remote roles and the busiest professions     |
 | `GET /api/jobs/:id`             | Posting, verdict and market context; 410 for a closed role |
 | `GET /api/search`               | Grouped profession, company and skill hits; optional roles |
 
@@ -45,20 +46,17 @@ and `rank` and `desc` for the rest; the default ordering is open roles descendin
 with a stable company-id tie-break. Missing changes, and changes whose window is
 too short to show (`fullWindow` in `@cm/core/changes`), sort last.
 
-Jobs and company roles accept `q`, `company` (id, slug or exact name), `family`,
-`specialty`, `skill`, `region`, `country`, `workMode`, `level`, `postedWithin`
-(days, 1–365), `salaryMin`, `hasPay=true`, `currency` (default USD) and `sort`
-(`newest`, `opened`, `salary`). A company route always scopes to its company.
-Seniority accepts the entry/mid/senior/staff/management groups and individual
-levels. Until the job mirror replaces the upstream adapter, job lists reach at most
-page 4; deeper pages return 400 `VALIDATION_FAILED` on `page` asking the client to
-narrow the filters. A list costs at most one count call and four job-page calls, and at
-most two list requests that need upstream run at once per process; a third gets 503
-`SOURCE_UNAVAILABLE` immediately. Fully cached lists are unaffected. Search roles cost two upstream calls per request. The
-upstream client uses `KRILL_API_KEY` (and its higher pace limit) when set, and remembers
-failures briefly. List items expose an internal `href` instead of an employer link; Apply
-lives on the job detail page. Company names can be selected with the search
-endpoint and passed as their ids.
+Jobs and company roles accept `q`, `company` (id, slug or exact name; other text
+matches inside employer names), `family`, `specialty`, `skill`, `region`, `country`,
+`workMode`, `level`, `postedWithin` (calendar days, 1–365, counting today), `salaryMin`, `hasPay=true`,
+`currency` and `sort` (`newest`, `opened`, `oldest`, `salary`). `family`, `workMode`
+and `level` take comma-separated values. A company route always scopes to its
+company. Seniority accepts the entry/mid/senior/staff/management groups and
+individual levels. Ranking by pay and `salaryMin` compare within one currency,
+USD unless `currency` says otherwise. An exact `total` gets a 150 ms budget; past
+it the response carries the planner's figure and `totalIsEstimate: true`, and the
+exact count is cached for the next page. List items expose an internal `href`
+instead of an employer link; Apply lives on the job detail page.
 
 Search accepts `q` (max 80 characters), `limit` (per group, 1–10, default 5),
 and `roles=1` to include up to eight matching roles. Company search uses the
@@ -83,13 +81,13 @@ pnpm --filter @cm/api db:types:check --url "$DATABASE_URL"
 ```
 
 Jobs, posting detail, company roles, similar roles and role search share the
-`JobsRepository` interface in `src/modules/jobs/domain.ts`. The temporary
-`integrations/upstreamJobs.ts` adapter retains today's job source and translates
-its cursor pages to numbered pages. Its transport has bounded caching and shares
-in-flight requests. Company identities, logos, hiring history, market context,
-pay bands and global company search already read Postgres. The worker's job
-mirror can replace the adapter in `server.ts`, without changing modules or HTTP
-contracts. This API creates no mirror table or migrations.
+`JobsRepository` interface in `src/modules/jobs/domain.ts`, implemented over the
+worker's `job_mirror` table by `integrations/mirrorJobs.ts`. No request reaches the
+upstream service, with one exception: the first visit to a role whose text is not
+stored yet fetches it once through the worker's description hydrator (at most five
+seconds; past that the page renders without the text). `KRILL_API_KEY` raises that
+fetch's pace limit when set. Closed roles are answered from the closing record the
+worker keeps.
 
 ## HTTP deployment
 

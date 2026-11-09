@@ -30,7 +30,7 @@ export interface Column<Row> {
   };
   readonly sortable?: boolean;
   /** Hide the column below this breakpoint. */
-  readonly from?: "sm" | "md" | "lg" | "xl";
+  readonly from?: "sm" | "md" | "lg" | "xl" | "2xl";
   readonly className?: string;
 }
 
@@ -69,6 +69,7 @@ const FROM = {
   md: "hidden md:table-cell",
   lg: "hidden lg:table-cell",
   xl: "hidden xl:table-cell",
+  "2xl": "hidden 2xl:table-cell",
 } as const;
 
 /**

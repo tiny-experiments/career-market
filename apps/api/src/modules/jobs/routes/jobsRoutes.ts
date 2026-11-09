@@ -6,6 +6,7 @@ export function jobsRoutes(services: JobsServices) {
   const controller = createJobsController(services);
   router.get('/', controller.list);
   router.get('/facets', controller.facets);
+  router.get('/pulse', controller.pulse);
   router.get('/:id', controller.detail);
   return router;
 }

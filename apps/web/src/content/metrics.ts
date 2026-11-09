@@ -31,6 +31,11 @@ export const METRICS = {
     text: "Open roles that name this skill.",
   },
   newToday: { title: "New today", text: "Roles first posted today." },
+  newLastDay: { title: "New today", text: "Roles posted in the last day." },
+  remoteRoles: {
+    title: "Remote roles",
+    text: "Open roles that can be done from anywhere the employer hires.",
+  },
   closedToday: { title: "Closed today", text: "Roles that closed today." },
   companiesHiring: {
     title: "Companies hiring",

@@ -40,6 +40,30 @@ describe("companiesFiltersFrom", () => {
 });
 
 describe("jobsFiltersFrom", () => {
+  it("reads several values and keeps only the known ones", () => {
+    expect(
+      defined(
+        jobsFiltersFrom(
+          params(
+            "mode=remote,hybrid,moon&level=senior,staff,nope&family=software,ai-ml",
+          ),
+        ),
+      ),
+    ).toEqual({
+      workMode: "remote,hybrid",
+      level: "senior,staff",
+      family: "software,ai-ml",
+    });
+    expect(defined(jobsFiltersFrom(params("mode=moon")))).toEqual({});
+    expect(defined(jobsFiltersFrom(params("family=Bad,Value")))).toEqual({});
+  });
+
+  it("knows the longest-open sort", () => {
+    expect(defined(jobsFiltersFrom(params("sort=oldest")))).toEqual({
+      sort: "oldest",
+    });
+  });
+
   it("reads the sub-bar's links", () => {
     expect(defined(jobsFiltersFrom(params("posted=1d")))).toEqual({
       postedWithin: 1,
@@ -68,8 +92,15 @@ describe("jobsFiltersFrom", () => {
 describe("screenerRedirect", () => {
   it("sends the bare Screener to Jobs", () => {
     expect(screenerRedirect(params(""))).toBe("/jobs");
+  });
+
+  it("sends the old views to their own sections", () => {
     expect(screenerRedirect(params("mode=companies&growth=ramping"))).toBe(
-      "/jobs",
+      "/companies?signal=ramping",
+    );
+    expect(screenerRedirect(params("mode=professions"))).toBe("/professions");
+    expect(screenerRedirect(params("mode=skills&growth=ramping"))).toBe(
+      "/skills",
     );
   });
 

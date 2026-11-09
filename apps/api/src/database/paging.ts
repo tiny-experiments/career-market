@@ -10,4 +10,6 @@ export interface PageRequest {
 export interface Page<T> extends PageRequest {
   items: T[];
   total: number;
+  /** Set when `total` is a quick estimate: said "about" to the reader. */
+  totalIsEstimate?: true;
 }

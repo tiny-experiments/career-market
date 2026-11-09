@@ -12,6 +12,10 @@ export function createJobsController(services: JobsServices) {
       parse(z.strictObject({}), req.query);
       res.json(await services.facets());
     },
+    pulse: async (req: Request, res: Response) => {
+      parse(z.strictObject({}), req.query);
+      res.json(await services.pulse());
+    },
     detail: async (req: Request, res: Response) => {
       const { id } = parse(jobParamsSchema, req.params);
       const result = await services.detail(id);

@@ -8,6 +8,7 @@ import {
   jobSlug,
   payMidpoint,
   percentile,
+  jobVerdict,
   postingHealth,
   salaryLabel,
   salaryPosition,
@@ -150,5 +151,28 @@ describe('splitLocations', () => {
     ]);
     expect(splitLocations([])).toEqual([]);
     expect(shortLocation('Seattle, Washington, United States of America')).toBe('Seattle, Washington, US');
+  });
+});
+
+describe('jobVerdict', () => {
+  const typical = { scope: 'Software', n: 90, medianDays: 30, p25Days: 12, p75Days: 45 };
+  const base = { ageDays: 5, repostCount: 0, staleScore: 0.1, openedSource: 'posted' as const };
+
+  it('calls a new, unreposted role first-time', () => {
+    expect(jobVerdict(base, typical)).toMatchObject({ kind: 'first-time', ageDays: 5, typical: { medianDays: 30 } });
+    expect(jobVerdict(base, null)).toMatchObject({ kind: 'first-time', typical: null });
+  });
+  it('calls one repost reposted, ahead of the window', () => {
+    expect(jobVerdict({ ...base, ageDays: 50, repostCount: 1 }, typical).kind).toBe('reposted');
+  });
+  it('calls a role past the 75th percentile closing soon, and only past it', () => {
+    expect(jobVerdict({ ...base, ageDays: 45 }, typical).kind).toBe('first-time');
+    expect(jobVerdict({ ...base, ageDays: 46 }, typical).kind).toBe('closing-soon');
+    expect(jobVerdict({ ...base, ageDays: 46 }, null).kind).toBe('first-time');
+  });
+  it('calls repeat reposts, very old roles and high stale scores evergreen', () => {
+    expect(jobVerdict({ ...base, repostCount: 2 }, typical).kind).toBe('evergreen');
+    expect(jobVerdict({ ...base, ageDays: 120 }, null).kind).toBe('evergreen');
+    expect(jobVerdict({ ...base, staleScore: 0.8 }, null).kind).toBe('evergreen');
   });
 });

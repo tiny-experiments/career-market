@@ -9,6 +9,8 @@ import type { Change, Unavailable } from './types.ts';
 export interface JobCompany {
   id: string;
   name: string;
+  /** Our company page's address; null when the employer has none yet. */
+  slug: string | null;
   /** Registrable domain krill holds for the company (feeds the logo service); null when unknown. */
   domain: string | null;
 }
@@ -25,6 +27,8 @@ export interface JobSalary {
 export interface JobSkill {
   id: string;
   label: string;
+  /** Our skill page's address; null for skills too small to have one. */
+  slug: string | null;
 }
 
 export interface JobPosting {
@@ -123,7 +127,20 @@ export interface SimilarRole {
   salaryLabel: string | null;
 }
 
+/** What kind of posting this is, in one word the job page can lead with. */
+export type JobVerdictKind = 'first-time' | 'reposted' | 'evergreen' | 'closing-soon';
+
+export interface JobVerdict {
+  kind: JobVerdictKind;
+  repostCount: number;
+  ageDays: number | null;
+  openedSource: 'posted' | 'first_seen';
+  /** How long roles like this usually stay open; null until enough have closed. */
+  typical: Pick<TypicalWindow, 'scope' | 'medianDays' | 'p25Days' | 'p75Days'> | null;
+}
+
 export interface JobContext {
+  verdict: JobVerdict;
   health: PostingHealth;
   salaryBand: SalaryBand | Unavailable;
   companyTrend: CompanyTrend | Unavailable;
@@ -144,8 +161,9 @@ export interface ClosedJobPayload {
   status: 'closed';
   id: string;
   closedAt: IsoDay;
-  openedAt: IsoDay;
-  openedSource: 'posted' | 'first_seen';
+  /** Unknown for roles only the closing record remembers. */
+  openedAt: IsoDay | null;
+  openedSource: 'posted' | 'first_seen' | null;
   family: string | null;
   familyName: string | null;
 }
@@ -160,6 +178,53 @@ export const MIN_BAND_N = 30;
 export const MIN_WINDOW_N = 30;
 /** Company signals need this many days of company history. */
 export const SIGNAL_HISTORY_DAYS = 30;
+
+/** Reposts that make a posting likely evergreen. */
+export const EVERGREEN_REPOSTS = 2;
+/** A stale score this high means open two months or more and reposted at least once. */
+export const EVERGREEN_STALE_SCORE = 0.8;
+
+/**
+ * The job page's first word on a posting. Evergreen wins (reposted twice, open
+ * 120 days or more, or a high stale score), then a single repost, then a role
+ * past the 75th percentile of its typical window. Anything else is new.
+ */
+export function jobVerdict(
+  input: {
+    ageDays: number | null;
+    repostCount: number;
+    staleScore: number | null;
+    openedSource: 'posted' | 'first_seen';
+  },
+  typical: TypicalWindow | null,
+): JobVerdict {
+  const { ageDays, repostCount, staleScore, openedSource } = input;
+  const evergreen =
+    repostCount >= EVERGREEN_REPOSTS ||
+    (ageDays !== null && ageDays >= GHOST_AGE_DAYS) ||
+    (staleScore !== null && staleScore >= EVERGREEN_STALE_SCORE);
+  const kind: JobVerdictKind = evergreen
+    ? 'evergreen'
+    : repostCount === 1
+      ? 'reposted'
+      : typical !== null && ageDays !== null && ageDays > typical.p75Days
+        ? 'closing-soon'
+        : 'first-time';
+  return {
+    kind,
+    repostCount,
+    ageDays,
+    openedSource,
+    typical: typical
+      ? {
+          scope: typical.scope,
+          medianDays: typical.medianDays,
+          p25Days: typical.p25Days,
+          p75Days: typical.p75Days,
+        }
+      : null,
+  };
+}
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 

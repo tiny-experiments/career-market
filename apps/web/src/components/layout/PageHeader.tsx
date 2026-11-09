@@ -18,6 +18,8 @@ export interface Crumb {
 
 export interface PageHeaderProps {
   readonly crumbs?: readonly Crumb[];
+  /** A line above the name: the employer a job belongs to. */
+  readonly eyebrow?: ReactNode;
   readonly logo?: ReactNode;
   readonly title: string;
   /** The ticker-style code after the name: SWE, AIML. */
@@ -43,6 +45,7 @@ export interface PageHeaderProps {
  */
 export function PageHeader({
   crumbs,
+  eyebrow,
   logo,
   title,
   code,
@@ -79,6 +82,7 @@ export function PageHeader({
             </BreadcrumbList>
           </Breadcrumb>
         ) : null}
+        {eyebrow}
         <div className="flex items-center gap-3">
           {logo}
           <h1 className="text-h1 font-extrabold">{title}</h1>

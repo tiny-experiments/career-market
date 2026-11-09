@@ -112,18 +112,17 @@ through three paths:
   flag is its durable resume cursor. Failed or closed lookups receive a persisted
   one-hour deferral in `job_description_retry`, so they cannot pin the queue.
 
-### API integration seam (P5c)
+### API integration
 
-Add `@cm/worker` as a workspace dependency and construct one singleton
-`createDescriptionHydrator({sql, api})` from `@cm/worker/descriptions` at server
-composition. `sql` is a core postgres.js pool; `api` is the keyed worker
-`KrillApi`/`KrillClient` (`@cm/worker/krill` and `@cm/worker/client`). The
-hydrator's `lookup(id)` returns `{kind:'open',job}`, `{kind:'closed',tombstone}`
-or `{kind:'missing'}`, matching the API job repository's lookup result. Open
-results are parsed `KrillJobDetail` records. It updates only text/coverage, so an
-on-demand response cannot overwrite newer sweep metadata. Route wiring stays
-with P5c. Lists, filters, company roles, similar roles and search remain local.
+`apps/api/src/server.ts` builds one `createDescriptionHydrator({sql, api})` from
+`@cm/worker/descriptions`, with a core postgres.js pool and a keyed `KrillApi`.
+Its `lookup(id)` returns `{kind:'open',job}`, `{kind:'closed',tombstone}` or
+`{kind:'missing'}`. It updates only text and coverage, so an on-demand response
+cannot overwrite newer sweep metadata. Lists, filters, company roles, similar
+roles and search stay local.
 
 `0012_description_backfill.sql` adds both queue indexes and the persisted retry
-table to the same ordered migration set. Neither mirror may have incoming
+table to the same ordered migration set. `0017_job_mirror_skills_index.sql` adds
+the skill and pay-ranking indexes to both mirror tables, and `0018_worker_change_job_index.sql`
+indexes `worker_change` by `(job_id, kind, date desc)` for the closed-role lookup. Neither mirror may have incoming
 foreign keys because publication rotates its physical table identity.
