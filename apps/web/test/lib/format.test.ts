@@ -33,6 +33,8 @@ describe("format", () => {
     expect(formatPay(144_000)).toBe("$144K");
     expect(formatPay(1_250_000)).toBe("$1.25M");
     expect(formatPay(12_000_000)).toBe("$12M");
+    expect(formatPay(999_400)).toBe("$999K");
+    expect(formatPay(999_600)).toBe("$1M");
     expect(formatPayRange(144_000, 157_000)).toBe("$144K–$157K");
     expect(formatPayRange(150_000, 150_400)).toBe("$150K");
   });

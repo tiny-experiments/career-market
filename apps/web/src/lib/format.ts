@@ -27,7 +27,7 @@ export function formatShare(ratio: number): string {
 
 /** 144000 → "$144K"; 1250000 → "$1.25M". Pay is always USD here. */
 export function formatPay(amount: number): string {
-  if (amount >= 1_000_000) {
+  if (Math.round(amount / 1000) >= 1000) {
     const millions = amount / 1_000_000;
     return `$${millions.toFixed(millions >= 10 ? 1 : 2).replace(/\.?0+$/, "")}M`;
   }

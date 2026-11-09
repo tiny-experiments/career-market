@@ -5,7 +5,7 @@ How we build the Career Market front end. A living document: add a rule when a d
 **Read first, every time:**
 
 1. `apps/web/src/index.css` — the tokens as they are. The file is the source of truth; this document explains it.
-2. `/design` in the running app — every token and component with realistic content, in both themes.
+2. `/design` in the running app (development builds only: `pnpm web:dev`) — every token and component with realistic content, in both themes.
 3. `apps/web/scripts/check-ui.mjs` — the rules a script can hold you to. `pnpm --filter @cm/web run check:ui` runs in CI.
 
 The bar is CoinMarketCap, TradingView, Apple: full width, breathing room, bold where it matters, every figure explained on hover. Nothing here applies to `apps/web-next`, which is being replaced.
@@ -170,7 +170,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **The method lives in the hover card, in one sentence, about what the number is**: "Change in open roles compared with a week ago." A formula only when it is the reader's own arithmetic. Never how the data is gathered, never where it comes from, never how often it refreshes, never how long we have had it.
 - **No timestamps in the chrome.** No "Updated 06:14 UTC", no "as of", no refresh rhythm. The footer's line is the only sentence about freshness.
 - **Never state the total number of companies.** Per-profession and per-signal counts are fine; a grand total is not.
-- **Estimated history is a dashed line with a legend entry**, not a sentence under the chart.
+- **A series is one solid line.** No estimated-history styling and no caveat sentence under the chart.
 - **Pay is a range**, `$144K–$157K`, and its method ("the middle half of listed pay for senior roles in the United States") is a hover card. No "estimated base pay" labels.
 - **Whole figures with separators** (`99,923`), **percentages with one decimal** for changes and none for shares, **units after numbers** (`38 days`).
 - **The row is the link.** A name in a table is bold text inside the row link, never a bare blue link. A job row opens our job page; the only outbound link on the site is the apply button.
@@ -180,7 +180,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 
 ## 10. Definition of done
 
-- [ ] Dark and light both checked, on `/design` if a component is new
+- [ ] Dark and light both checked, on `/design` (`pnpm web:dev`) if a component is new
 - [ ] No hex, no palette names, no arbitrary values, no provider names (`check:ui` clean)
 - [ ] Works at 400 px and at 1920 px; no sideways scroll
 - [ ] Keyboard reachable, focus visible, every control named
@@ -194,3 +194,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 ## Changelog
 
 - **2026-11-09** — First version, with the design system: tokens in `index.css` (dark default, light), shadcn/ui vendored and customised through variants, the shell (`SiteHeader` with sliding underline, `SubBar` from route handles, `SearchBox`, `Footer`, `TickerStrip`), the market components (`DataTable`, `MarketCard`, `KpiTile`, `Gauge`, `RankedList`, `Sparkline`, `AreaChart`, `Delta`, `SignalBadge`, `MetricHoverCard`, `Logo`, `Pager`, `StatCard`, `Panel`), `/design`, and `check:ui`.
+- **2026-11-09** — `/design` is development builds only; a series is one solid line (estimated-history styling removed).

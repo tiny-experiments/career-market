@@ -16,7 +16,10 @@ export interface AreaChartProps {
   readonly className?: string;
 }
 
-const MONTH = new Intl.DateTimeFormat("en-US", { month: "short" });
+const MONTH = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  timeZone: "UTC",
+});
 
 /**
  * One series over time, filling the width it is given: three faint grid
