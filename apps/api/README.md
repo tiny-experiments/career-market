@@ -12,7 +12,7 @@ continues to own migrations; this app never migrates on startup.
 | `GET /health`                   | Database readiness, `{ok}`                                 |
 | `GET /api/meta`                 | Ticker and chrome (formerly `/v1/chrome`)                  |
 | `GET /api/market`               | Headline, time series and market panels                    |
-| `GET /api/professions`          | Profession index                                           |
+| `GET /api/professions`          | Profession index; optional `region` scopes it to a region  |
 | `GET /api/professions/:code`    | Profession detail                                          |
 | `GET /api/companies`            | Paginated directory over every current company             |
 | `GET /api/companies/:slug`      | Company detail (also accepts company id)                   |
@@ -31,6 +31,11 @@ company roles return `{items,page,pageSize,total}`. `page` starts at 1;
 query keys, repeated parameters and invalid filter values return 400 with
 `{message,code,fields}`. Other errors return `{message,code}`. There is no
 success envelope. The old `/v1` API and `/api/revalidate` are removed.
+
+`GET /api/professions` accepts one optional `region` (an id from `PROFESSION_REGIONS` in
+`@cm/core`: `north-america`, `europe`, `apac`, `latam`, `mena`). Under a region, open
+roles, new roles and the 1-day and 1-week changes are that region's; remote share,
+companies and the 1-month change come back `null`.
 
 Companies accept `q` (literal case-insensitive name substring), `signal`
 (`ramping`, `steady`, `cooling`, `freezing`), `sort` (`open`, `name`, `change1w`,
