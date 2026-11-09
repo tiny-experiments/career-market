@@ -139,8 +139,11 @@ export const jobItem: JobListItem = {
   title: "Staff Engineer",
   company: { id: "co_stripe", name: "Stripe", domain: "stripe.com" },
   location: "London",
+  moreLocations: 0,
   workMode: "remote",
   level: "staff",
+  family: "swe",
+  familyName: "Software Engineering",
   salary: {
     min: 100000,
     max: 120000,
@@ -151,6 +154,7 @@ export const jobItem: JobListItem = {
   },
   openedAt: "2026-11-08",
   ageDays: 1,
+  repostCount: 0,
   href: "/jobs/kr_open12",
 };
 
