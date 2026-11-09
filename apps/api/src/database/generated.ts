@@ -49,6 +49,7 @@ export interface Company {
   ats: Generated<string[]>;
   careers_url: string | null;
   company_id: string;
+  directory_domain: string | null;
   domain: string | null;
   name: string;
   open: number;
@@ -66,6 +67,24 @@ export interface CompanyDaily {
   name: string | null;
   new: number | null;
   open: number;
+}
+
+export interface CompanyDomain {
+  brand_checked_at: Timestamp | null;
+  checked_at: Generated<Timestamp>;
+  company_id: string;
+  domain: string | null;
+  logo: string | null;
+  logo_checked_at: Timestamp | null;
+  name_checked: string | null;
+  source: string;
+}
+
+export interface CompanyDomainOverride {
+  company_id: string;
+  domain: string | null;
+  note: Generated<string>;
+  updated_at: Generated<Timestamp>;
 }
 
 export interface CompanyOpenCount {
@@ -502,6 +521,8 @@ export interface DB {
   closing_sample: ClosingSample;
   company: Company;
   company_daily: CompanyDaily;
+  company_domain: CompanyDomain;
+  company_domain_override: CompanyDomainOverride;
   company_open_count: CompanyOpenCount;
   company_profile: CompanyProfile;
   company_ref: CompanyRef;

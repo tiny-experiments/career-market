@@ -43,6 +43,16 @@ const schema = z.object({
   WEB_REVALIDATE_URL: optionalString,
 
   CONTEXT_DEV_PUBLIC_CLIENT_ID: optionalString,
+  CONTEXT_DEV_API_KEY: optionalString,
+  LOGO_DAILY_CREDITS: z.coerce.number().int().min(0).default(1000),
+  LOGO_DAILY_CHECKS: z.coerce.number().int().min(0).default(3000),
+  LOGO_LOOKUPS_PER_RUN: z.coerce.number().int().min(0).default(100),
+  LOGO_CHECKS_PER_RUN: z.coerce.number().int().min(0).default(300),
+  LOGO_RECHECK_DAYS: z.coerce.number().int().positive().default(90),
+  LOGO_MONOGRAM_RECHECK_DAYS: z.coerce.number().int().positive().default(7),
+  LOGO_RUN_MINUTES: z.coerce.number().int().positive().default(30),
+  LOGO_LOOKUP_INTERVAL_MS: z.coerce.number().int().min(0).default(500),
+  LOGO_CHECK_REFERER: z.string().url().default('https://careermarket.app/'),
 });
 
 export type RawConfig = z.infer<typeof schema>;
@@ -68,6 +78,22 @@ export interface Config {
     skillPages: number;
     /** Companies (largest by open roles) that get a full profile: facets, board url and median age. */
     companyProfiles: number;
+  };
+  logos: {
+    /** Server-side key for paid brand lookups; without it only the free sources run. */
+    apiKey: string | undefined;
+    /** Public id of the logo service; without it domains stay unverified. */
+    publicClientId: string | undefined;
+    dailyCredits: number;
+    dailyChecks: number;
+    lookupsPerRun: number;
+    checksPerRun: number;
+    recheckDays: number;
+    monogramRecheckDays: number;
+    runMinutes: number;
+    lookupIntervalMs: number;
+    /** The site the logo service expects checks to come from once domain restrictions are on. */
+    checkReferer: string;
   };
   readApi: {
     host: string;
@@ -106,6 +132,19 @@ export function parseConfig(env: Record<string, string | undefined>, cwd = proce
       groupedRefreshDays: raw.BUILDER_GROUPED_REFRESH_DAYS,
       skillPages: raw.BUILDER_SKILL_PAGES,
       companyProfiles: raw.BUILDER_COMPANY_PROFILES,
+    },
+    logos: {
+      apiKey: raw.CONTEXT_DEV_API_KEY,
+      publicClientId: raw.CONTEXT_DEV_PUBLIC_CLIENT_ID,
+      dailyCredits: raw.LOGO_DAILY_CREDITS,
+      dailyChecks: raw.LOGO_DAILY_CHECKS,
+      lookupsPerRun: raw.LOGO_LOOKUPS_PER_RUN,
+      checksPerRun: raw.LOGO_CHECKS_PER_RUN,
+      recheckDays: raw.LOGO_RECHECK_DAYS,
+      monogramRecheckDays: raw.LOGO_MONOGRAM_RECHECK_DAYS,
+      runMinutes: raw.LOGO_RUN_MINUTES,
+      lookupIntervalMs: raw.LOGO_LOOKUP_INTERVAL_MS,
+      checkReferer: raw.LOGO_CHECK_REFERER,
     },
     readApi: {
       host: raw.READ_API_HOST,

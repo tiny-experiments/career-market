@@ -8,10 +8,12 @@
     "watch": "node --env-file-if-exists=../../.env --import tsx src/cli.ts watch",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "tsc -p tsconfig.json",
-    "sweep": "node --env-file-if-exists=../../.env --import tsx src/cli.ts sweep"
+    "sweep": "node --env-file-if-exists=../../.env --import tsx src/cli.ts sweep",
+    "logos": "node --env-file-if-exists=../../.env --import tsx src/cli.ts logos"
   },
   "dependencies": {
     "@cm/core": "workspace:*",
+    "tldts": "^7.4.19",
     "tsx": "^4.23.15",
     "zod": "^4.1.12"
   },

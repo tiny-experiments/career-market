@@ -88,7 +88,7 @@ PORT=3001 pnpm web-next:dev   # previous Next.js app in development
 pnpm web-next:build && PORT=3001 pnpm web-next:start
 ```
 
-The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
+The read API needs no token. Logos are optional: see Company logos below.
 
 ### Jobs and search
 
@@ -99,7 +99,6 @@ The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company
   Job lists ask krill for the counts and the matching roles, cache each answer in memory for an hour and
   share requests in flight. They need `KRILL_API_KEY` for a comfortable rate (600 calls a minute; 60
   without a key).
-- Company logos use `CONTEXT_DEV_PUBLIC_CLIENT_ID`; without it each company shows its initial.
 
 ### Company page
 
@@ -121,8 +120,16 @@ Peers are not in v1 and show a coming-soon state.
   2.5x openings.
 - Current roles are read live from krill by the read API (`/api/companies/:slug/jobs`) through the shared live
   krill client, so it shares its pacing and hour cache with job lists and the Job page.
-- Logos come from Context.dev Logo Link when `CONTEXT_DEV_PUBLIC_CLIENT_ID` is set and krill knows the
-  company's domain; otherwise the page draws a monogram tile.
+
+### Company logos
+
+`pnpm --filter @cm/worker logos [--limit N]` (also part of `worker:watch`) keeps `company.domain` current.
+For each company it takes the first of: a row in `company_domain_override` (a null domain there is a
+deliberate monogram), the directory's domain, the first-party careers site or job links (hiring platforms
+do not count), then a paid Context.dev brand search by name with a strict match. Biggest employers go
+first, within `LOGO_DAILY_CREDITS` and `LOGO_DAILY_CHECKS`. A domain with no real mark at the logo service
+is withheld, so the page draws our monogram tile. The browser needs `VITE_CONTEXT_DEV_PUBLIC_CLIENT_ID`;
+the worker needs `CONTEXT_DEV_PUBLIC_CLIENT_ID` and, for paid lookups, `CONTEXT_DEV_API_KEY`.
 
 ### Checks
 

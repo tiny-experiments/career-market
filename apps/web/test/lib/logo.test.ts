@@ -11,7 +11,7 @@ describe("logoUrl", () => {
   });
 
   it("makes no request without a client id or a domain", () => {
-    vi.stubEnv("VITE_LOGO_LINK_ID", "");
+    vi.stubEnv("VITE_CONTEXT_DEV_PUBLIC_CLIENT_ID", "");
     expect(logoUrl("stripe.com", "dark")).toBeNull();
     expect(logoUrl("stripe.com", "dark", "")).toBeNull();
     expect(logoUrl(null, "light", "brandLL_test")).toBeNull();

@@ -8,6 +8,8 @@ import { migrate } from '@cm/core/migrate';
 import { runBuild } from './build.ts';
 import { KrillApi } from './krill/api.ts';
 import { KrillClient } from './krill/client.ts';
+import { createBrandSearch, createLogoProbe } from './logos/contextDev.ts';
+import { resolveCompanyDomains, type LogoDeps } from './logos/resolve.ts';
 
 const USAGE = `career-market worker
 
@@ -17,6 +19,8 @@ const USAGE = `career-market worker
                        --force  rebuild a day that was already built
                        --full   refetch every grouped day since 2026-11-02
   sweep                apply the persisted change feed cursor
+  logos [--limit N]    resolve company website domains for logos; N caps paid
+                       lookups in this run (the daily budget still applies)
   watch                poll krill /v1/meta every BUILDER_POLL_MINUTES and
                        build each new snapshot day`;
 
@@ -47,6 +51,22 @@ async function main(argv: string[]): Promise<number> {
       }),
     );
 
+    const logoDeps = (lookupsPerRun = config.logos.lookupsPerRun): LogoDeps => ({
+      sql,
+      log,
+      settings: { ...config.logos, lookupsPerRun, checksPerRun: Math.max(config.logos.checksPerRun, lookupsPerRun) },
+      brandSearch: config.logos.apiKey ? createBrandSearch(config.logos.apiKey) : undefined,
+      logoProbe: config.logos.publicClientId ? createLogoProbe(config.logos.publicClientId, config.logos.checkReferer) : undefined,
+    });
+
+    if (command === 'logos') {
+      const at = flags.indexOf('--limit');
+      const limit = at >= 0 ? Number(flags[at + 1]) : undefined;
+      if (limit !== undefined && (!Number.isInteger(limit) || limit < 0)) throw new Error('--limit needs a whole number');
+      await resolveCompanyDomains(logoDeps(limit));
+      return 0;
+    }
+
     if (command === 'build') {
       const result = await runBuild({ sql, api, config, log }, { force: flags.includes('--force'), full: flags.includes('--full') });
       log.info(result.status === 'skipped' ? result : { status: result.status, snapshotDate: result.snapshotDate }, 'done');
@@ -76,6 +96,8 @@ async function main(argv: string[]): Promise<number> {
         pollMs: intervalMs, sweepMs: config.worker.sweepMinutes * 60_000,
         build: () => runBuild({ sql, api, config, log }),
         sweep: () => sweepChanges(sql, api),
+        logos: () => resolveCompanyDomains(logoDeps()),
+        logosMs: config.logos.runMinutes * 60_000,
         onError: (err) => log.error({ err: String(err) }, 'worker tick failed; retrying at next interval'),
       });
       while (!stopping) {
