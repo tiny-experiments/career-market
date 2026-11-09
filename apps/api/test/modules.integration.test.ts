@@ -341,6 +341,21 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         .expect(200);
       expect(res.body.items[0].slug).toBe('beta');
     });
+    it('sorts a window too short to show as no value, in either direction', async () => {
+      const week = await request(app)
+        .get('/api/companies?sort=change1w&dir=desc')
+        .expect(200);
+      const weekSlugs = week.body.items.map((i: { slug: string }) => i.slug);
+      expect(weekSlugs.slice(0, 3)).toEqual(['code', 'careers-at-named', 'acme']);
+      const weekAsc = await request(app)
+        .get('/api/companies?sort=change1w&dir=asc')
+        .expect(200);
+      expect(weekAsc.body.items[0].slug).toBe('acme');
+      const month = await request(app)
+        .get('/api/companies?sort=change30d&dir=desc')
+        .expect(200);
+      expect(month.body.items[0].slug).toBe('beta');
+    });
     it('counts signals and lists the week\'s movers', async () => {
       const res = await request(app).get('/api/company-signals').expect(200);
       expect(res.body.counts).toEqual({

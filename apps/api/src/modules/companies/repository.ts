@@ -24,7 +24,7 @@ import {
   type IsoDay,
   type Range,
 } from '@cm/core/dates';
-import { fullWindow, MIN_FULL_WEEK_DAYS } from '@cm/core/changes';
+import { fullWindow, MIN_FULL_DAYS } from '@cm/core/changes';
 import { skillDomain } from '@cm/core/skills';
 import type { Queries as Sql } from '../../database/client.ts';
 import type { Change, Unavailable } from '@cm/core/types';
@@ -196,7 +196,7 @@ async function movers(
     from company c join market_change m on m.subject = 'cpage:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
     where c.updated_on = ${asOf} and c.open >= ${MIN_MOVER_OPEN} and c.domain is not null
       and coalesce(c.named, true)
-      and m.change * ${sign}::int > 0 and m.base_date <= ${addDays(asOf, -MIN_FULL_WEEK_DAYS)}
+      and m.change * ${sign}::int > 0 and m.base_date <= ${addDays(asOf, -MIN_FULL_DAYS['1W'])}
       and abs(c.open - c.open / (1 + m.change)) >= ${MIN_RAMPING_DELTA}
     order by m.change * ${sign}::int desc, c.company_id
     limit ${MOVERS_PER_CARD}`;
@@ -295,13 +295,15 @@ export async function companyDirectory(
       join
         .on('m.subject', '=', ksql<string>`'cpage:' || c.company_id`)
         .on('m.as_of', '=', build.asOf)
-        .on('m.range', '=', '1W'),
+        .on('m.range', '=', '1W')
+        .on('m.base_date', '<=', addDays(build.asOf, -MIN_FULL_DAYS['1W'])),
     )
     .leftJoin('market_change as month', (join) =>
       join
         .on('month.subject', '=', ksql<string>`'cpage:' || c.company_id`)
         .on('month.as_of', '=', build.asOf)
-        .on('month.range', '=', '1M'),
+        .on('month.range', '=', '1M')
+        .on('month.base_date', '<=', addDays(build.asOf, -MIN_FULL_DAYS['1M'])),
     )
     .where('c.updated_on', '=', build.asOf)
     .where('c.open', '>', 0);
