@@ -1,13 +1,19 @@
 import { z } from 'zod';
 import { pagingShape } from '../../database/paging.ts';
+
+/** `a,b,c`: any of these. One value is a list of one. */
+function anyOf<T extends z.ZodType<string, string>>(item: T) {
+  return z
+    .string()
+    .transform((value) => value.split(',').filter(Boolean))
+    .pipe(z.array(item).min(1).max(20));
+}
+
 export const jobsQuerySchema = z.strictObject({
   ...pagingShape,
   q: z.string().trim().max(80).optional(),
   company: z.string().trim().min(1).max(160).optional(),
-  family: z
-    .string()
-    .regex(/^[a-z0-9-]{1,40}$/)
-    .optional(),
+  family: anyOf(z.string().regex(/^[a-z0-9-]{1,40}$/)).optional(),
   specialty: z
     .string()
     .regex(/^[a-z0-9-]{1,60}$/)
@@ -33,9 +39,9 @@ export const jobsQuerySchema = z.strictObject({
     .string()
     .regex(/^[A-Z]{2}$/)
     .optional(),
-  workMode: z.enum(['remote', 'hybrid', 'onsite']).optional(),
-  level: z
-    .enum([
+  workMode: anyOf(z.enum(['remote', 'hybrid', 'onsite'])).optional(),
+  level: anyOf(
+    z.enum([
       'entry',
       'mid',
       'senior',
@@ -47,15 +53,15 @@ export const jobsQuerySchema = z.strictObject({
       'manager',
       'director',
       'executive',
-    ])
-    .optional(),
+    ]),
+  ).optional(),
   postedWithin: z.coerce.number().int().min(1).max(365).optional(),
   salaryMin: z.coerce.number().int().min(0).max(10000000).optional(),
   hasPay: z.literal('true').optional(),
   currency: z
     .enum(['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY', 'CHF'])
-    .default('USD'),
-  sort: z.enum(['newest', 'opened', 'salary']).default('newest'),
+    .optional(),
+  sort: z.enum(['newest', 'opened', 'oldest', 'salary']).default('newest'),
 });
 export const jobParamsSchema = z.strictObject({
   id: z.string().regex(/^kr_[a-z0-9]{6,40}$/),

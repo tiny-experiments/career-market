@@ -14,7 +14,7 @@ export type ScreenerMode = (typeof SCREENER_MODES)[number];
 export const SORT_KEYS = ['open', 'name', 'change1w', 'change1m', 'remote'] as const;
 export type SortKey = (typeof SORT_KEYS)[number];
 
-export const JOB_SORTS = ['newest', 'opened', 'salary'] as const;
+export const JOB_SORTS = ['newest', 'opened', 'oldest', 'salary'] as const;
 export type JobSort = (typeof JOB_SORTS)[number];
 
 /** Seniority groups of the summary strip and the filter, each a set of krill levels. */
@@ -43,6 +43,36 @@ export const REGIONS = [
   { id: 'latam', label: 'Latin America' },
   { id: 'mena', label: 'Middle East & North Africa' },
 ] as const;
+
+const EU_COUNTRIES = [
+  'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU',
+  'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK',
+];
+
+/** Which countries a region covers: a job counts when it is placed in any of them. */
+export const REGION_COUNTRIES: Record<(typeof REGIONS)[number]['id'], readonly string[]> = {
+  'north-america': ['US', 'CA', 'MX'],
+  europe: [
+    ...EU_COUNTRIES,
+    'GB', 'CH', 'NO', 'IS', 'LI', 'UA', 'RS', 'BA', 'ME', 'MK', 'AL', 'MD', 'XK', 'BY',
+  ],
+  eu: EU_COUNTRIES,
+  dach: ['DE', 'AT', 'CH'],
+  nordics: ['SE', 'NO', 'DK', 'FI', 'IS'],
+  benelux: ['BE', 'NL', 'LU'],
+  apac: [
+    'AU', 'NZ', 'JP', 'KR', 'CN', 'HK', 'TW', 'SG', 'MY', 'TH', 'VN', 'PH', 'ID', 'IN',
+    'PK', 'BD', 'LK', 'NP', 'KH', 'MM', 'BN', 'MN', 'LA', 'MO',
+  ],
+  latam: [
+    'MX', 'BR', 'AR', 'CL', 'CO', 'PE', 'UY', 'PY', 'BO', 'EC', 'VE', 'CR', 'PA', 'GT',
+    'HN', 'SV', 'NI', 'DO', 'CU', 'PR', 'JM', 'TT', 'BS', 'BB', 'GY', 'SR', 'BZ',
+  ],
+  mena: [
+    'AE', 'SA', 'IL', 'EG', 'QA', 'KW', 'BH', 'OM', 'JO', 'LB', 'MA', 'TN', 'DZ', 'IQ',
+    'IR', 'YE', 'LY', 'PS', 'SY', 'TR',
+  ],
+};
 
 export const GROWTH_STATES = ['ramping', 'steady', 'cooling', 'freezing'] as const;
 export type GrowthState = (typeof GROWTH_STATES)[number];
@@ -350,6 +380,12 @@ export interface RoleHit {
   id: string;
   title: string;
   company: string;
+  /** The employer's domain, for its logo; null when unknown. */
+  domain: string | null;
   location: string | null;
   url: string;
+  level: string | null;
+  workMode: string | null;
+  salary: { currency: string | null; annualMin: number | null; annualMax: number | null } | null;
+  ageDays: number | null;
 }

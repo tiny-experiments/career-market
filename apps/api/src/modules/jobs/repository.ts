@@ -9,6 +9,7 @@ import type { Queries as Sql } from '../../database/client.ts';
 import {
   companySignal,
   employmentLabel,
+  jobVerdict,
   MIN_WINDOW_N,
   payMidpoint,
   postingHealth,
@@ -32,21 +33,21 @@ import {
 } from '@cm/core/job';
 import type { KrillJob, KrillJobDetail } from '@cm/core/krillJob';
 import type { Change, Unavailable } from '@cm/core/types';
-import type { JobsRepository } from './domain.ts';
+import type { JobsPulseCounts, JobsRepository } from './domain.ts';
 import { latestBuild } from '../../database/readModel.ts';
 
 /**
- * The Job page: one posting from krill (live, cached an hour) joined with the
- * read model (profession trend, pay band, typical posting window). The page
- * never fails as a whole because a side panel could not be filled: each panel
- * carries its own honest "unavailable" state.
+ * The Job page: one posting from the job mirror joined with the read model
+ * (profession trend, pay band, typical posting window). The page never fails
+ * as a whole because a side panel could not be filled: each panel carries its
+ * own honest "unavailable" state.
  */
 
 const SPARK_DAYS = 30;
 const SIMILAR_COUNT = 4;
 const TYPICAL_WINDOW_DAYS = 28;
 
-/** Collects whether any side panel fell back because a krill call failed or was refused. */
+/** Collects whether any side panel fell back because its read failed. */
 interface Fallbacks {
   degraded: boolean;
 }
@@ -86,16 +87,27 @@ export async function jobPage(deps: JobDeps, id: string): Promise<JobResult> {
   const build = await latestBuild(deps.sql);
   const asOf = build?.asOf ?? null;
   const fallbacks: Fallbacks = { degraded: false };
-  const [company, band, window, profession, similar] = await Promise.all([
-    companyFor(deps, job, asOf),
-    salaryBandFor(deps.sql, job),
-    typicalWindow(deps.sql, job.family, asOf),
-    professionTrendFor(deps.sql, job.family, asOf),
-    similarRoles(deps, fallbacks, job),
-  ]);
+  const [company, band, window, profession, similar, skillSlugs] =
+    await Promise.all([
+      companyFor(deps, job, asOf),
+      salaryBandFor(deps.sql, job),
+      typicalWindow(deps.sql, job.family, asOf),
+      professionTrendFor(deps.sql, job.family, asOf),
+      similarRoles(deps, fallbacks, job),
+      skillPages(deps.sql, job.skills),
+    ]);
 
-  const posting = toPosting(job, company.domain, company.name);
+  const posting = toPosting(job, company, skillSlugs);
   const context: JobContext = {
+    verdict: jobVerdict(
+      {
+        ageDays: job.ageDays,
+        repostCount: job.repostCount,
+        staleScore: job.staleScore,
+        openedSource: job.openedSource,
+      },
+      window,
+    ),
     health: postingHealth(
       {
         ageDays: job.ageDays,
@@ -146,8 +158,12 @@ export function toSalary(job: Pick<KrillJob, 'salary'>): JobSalary | null {
 
 function toPosting(
   job: KrillJobDetail,
-  domain: string | null,
-  displayName: string | null,
+  company: {
+    domain: string | null;
+    slug: string | null;
+    name: string | null;
+  },
+  skillSlugs: ReadonlyMap<string, string>,
 ): JobPosting {
   const evidence = new Map(
     (job.skillEvidence ?? []).map((e) => [e.id, e.count]),
@@ -155,7 +171,11 @@ function toPosting(
   const skills = [...job.skills]
     .map((id) => ({ id, label: skillLabel(id), count: evidence.get(id) ?? 0 }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-    .map(({ id, label }) => ({ id, label }));
+    .map(({ id, label }) => ({
+      id,
+      label,
+      slug: skillSlugs.get(id) ?? null,
+    }));
   const places = splitLocations(
     job.locations.length > 0 ? job.locations : job.places.map((p) => p.label),
   );
@@ -165,8 +185,9 @@ function toPosting(
     title: job.title,
     company: {
       id: job.company.id,
-      name: displayName ?? job.company.name,
-      domain,
+      name: company.name ?? job.company.name,
+      domain: company.domain,
+      slug: company.slug,
     },
     applyUrl: httpUrl(job.applyUrl) ?? httpUrl(job.url),
     postingUrl: httpUrl(job.url),
@@ -188,6 +209,18 @@ function toPosting(
     description: job.description?.trim() ? job.description : null,
     skills,
   };
+}
+
+/** Which of these skills have a page of their own. */
+async function skillPages(
+  sql: Sql,
+  ids: readonly string[],
+): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const rows = await sql<{ skill: string; slug: string }[]>`
+    select skill, slug from skill_summary
+    where date = (select max(date) from skill_summary) and skill in ${sql(ids)}`;
+  return new Map(rows.map((row) => [row.skill, row.slug]));
 }
 
 // ---------- Salary vs. band ----------
@@ -371,7 +404,7 @@ async function professionTrendFor(
 
 // ---------- Company trend ----------
 
-/** The employer's domain (for the logo) and its trend: today's count from /v1/companies, history from krill K2. */
+/** The employer's domain (for the logo), its page and its trend. */
 async function companyFor(
   deps: JobDeps,
   job: KrillJobDetail,
@@ -379,13 +412,19 @@ async function companyFor(
 ): Promise<{
   domain: string | null;
   name: string | null;
+  slug: string | null;
   trend: CompanyTrend | Unavailable;
 }> {
   const to = asOf ?? job.lastSeenAt;
   const [company] = await deps.sql<
-    { domain: string | null; name: string | null; openJobs: number }[]
+    {
+      domain: string | null;
+      name: string | null;
+      slug: string;
+      openJobs: number;
+    }[]
   >`
-    select domain, display_name as name, open as "openJobs" from company where company_id = ${job.company.id}`;
+    select domain, display_name as name, slug, open as "openJobs" from company where company_id = ${job.company.id}`;
   const items = await deps.sql<
     { date: IsoDay; open: number; new: number; closed: number }[]
   >`
@@ -393,6 +432,7 @@ async function companyFor(
       and family = '*' and new is not null and date >= ${addDays(to, -(SPARK_DAYS + 5))} and date <= ${to} order by date`;
   const domain = company?.domain ?? null;
   const name = company?.name ?? null;
+  const slug = company?.slug ?? null;
   const usable = items.filter((i) => i.date > FIRST_COMPARABLE_BASE);
   const open =
     company?.openJobs ?? usable.at(-1)?.open ?? items.at(-1)?.open ?? null;
@@ -400,6 +440,7 @@ async function companyFor(
     return {
       domain,
       name,
+      slug,
       trend: {
         available: false,
         reason: 'Company hiring history is not available yet.',
@@ -408,7 +449,8 @@ async function companyFor(
   const signal = companySignal(usable);
   return {
     domain,
-    name,
+      name,
+      slug,
     trend: {
       available: true,
       open,
@@ -444,17 +486,17 @@ async function similarRoles(
         ? job.languages
         : job.skills
   ).slice(0, 3);
-  const base: Record<string, string | number | undefined> = {
-    ...(job.specialty ? { specialty: job.specialty } : { family: job.family }),
+  const base = {
+    family: job.family,
+    specialty: job.specialty ?? undefined,
     level: job.level ?? undefined,
     country,
-    sort: 'newest',
-    pageSize: 12,
+    limit: 12,
   };
   try {
     let items = await deps.jobs.similar({
       ...base,
-      skillsAny: topSkills.length ? topSkills.join(',') : undefined,
+      skillsAny: topSkills.length ? topSkills : undefined,
     });
     if (items.length < SIMILAR_COUNT + 1 && topSkills.length > 0)
       items = await deps.jobs.similar(base);
@@ -463,13 +505,13 @@ async function similarRoles(
     await Promise.all(
       picked.map(async (j) => {
         const [row] = await deps.sql<
-          { domain: string | null; name: string | null }[]
-        >`select domain, display_name as name from company where company_id = ${j.company.id}`;
-        const domain = row?.domain ?? null;
+          { domain: string | null; name: string | null; slug: string }[]
+        >`select domain, display_name as name, slug from company where company_id = ${j.company.id}`;
         companies.set(j.company.id, {
           id: j.company.id,
           name: row?.name ?? j.company.name,
-          domain,
+          domain: row?.domain ?? null,
+          slug: row?.slug ?? null,
         });
       }),
     );
@@ -543,5 +585,83 @@ export async function jobFacets(sql: Sql) {
   const facets = await sql<
     { kind: string; value: string; count: number }[]
   >`select kind, value, count from screener_facet where as_of = ${build.asOf} order by kind, count desc`;
-  return { facets };
+  return {
+    facets: facets.map((facet) =>
+      facet.kind === 'family'
+        ? { ...facet, label: familyInfo(facet.value).name }
+        : facet,
+    ),
+  };
+}
+
+const PULSE_DAYS = 30;
+const PULSE_PROFESSIONS = 5;
+
+export interface JobsPulse extends JobsPulseCounts {
+  /** Change in open roles against a week ago; null until there is a week to compare. */
+  change1w: number | null;
+  /** Daily open roles and new roles, oldest first. */
+  openSpark: number[];
+  newSpark: number[];
+  workModes: { remote: number; hybrid: number; onsite: number };
+  professions: {
+    family: string;
+    code: string;
+    name: string;
+    open: number;
+    change1w: number | null;
+  }[];
+}
+
+/** The strip above the Jobs table. Read-model figures plus the mirror's live counts. */
+export async function jobsPulse(
+  sql: Sql,
+  jobs: Pick<JobsRepository, 'pulseCounts'>,
+): Promise<JobsPulse> {
+  const build = await latestBuild(sql);
+  const counts = await jobs.pulseCounts();
+  if (!build)
+    return {
+      ...counts,
+      change1w: null,
+      openSpark: [],
+      newSpark: [],
+      workModes: { remote: 0, hybrid: 0, onsite: 0 },
+      professions: [],
+    };
+  const [days, changes, modes, professions] = await Promise.all([
+    sql<{ open: number; opened: number }[]>`
+      select open, opened from market_daily
+      where date > ${addDays(build.asOf, -PULSE_DAYS)} and date <= ${build.asOf} and not estimated
+      order by date`,
+    sql<{ subject: string; change: number }[]>`
+      select subject, change from market_change
+      where as_of = ${build.asOf} and range = '1W' and (subject = 'market' or subject like 'family:%')`,
+    sql<{ value: string; count: number }[]>`
+      select value, count from screener_facet where as_of = ${build.asOf} and kind = 'workMode'`,
+    sql<{ family: string; code: string; open: number }[]>`
+      select family, code, open from family_daily
+      where date = ${build.asOf} order by open desc limit ${PULSE_PROFESSIONS}`,
+  ]);
+  const changeOf = new Map(changes.map((row) => [row.subject, row.change]));
+  const mode = (value: string) =>
+    modes.find((row) => row.value === value)?.count ?? 0;
+  return {
+    ...counts,
+    change1w: changeOf.get('market') ?? null,
+    openSpark: days.map((day) => day.open),
+    newSpark: days.map((day) => day.opened),
+    workModes: {
+      remote: mode('remote'),
+      hybrid: mode('hybrid'),
+      onsite: mode('onsite'),
+    },
+    professions: professions.map((row) => ({
+      family: row.family,
+      code: row.code,
+      name: familyInfo(row.family).name,
+      open: row.open,
+      change1w: changeOf.get(`family:${row.family}`) ?? null,
+    })),
+  };
 }
