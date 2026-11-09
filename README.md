@@ -28,7 +28,7 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
 - **read API** (`apps/api`) is a small public, read-only Express service over the read model: JSON under
   `/api/*` (see `apps/api/README.md`), no token. It runs behind a single reverse proxy and sets
   `API_TRUST_PROXY=1` so the per-IP rate limit sees each client. Job lists and `GET /api/jobs/{krill id}`
-  (the Job page) are the routes that also read krill live, with list depth capped (page 20, first 1000 roles) to
+  (the Job page) are the routes that also read krill live, with list depth capped (page 5, two in flight) to
   protect krill's rate limit: the posting, the employer's company history and similar roles, cached for 1 hour
   and paced under krill's rate limit, joined with the read model's profession trend, pay band and typical
   posting window. A panel krill could not answer shows as unavailable and marks the payload `degraded`;

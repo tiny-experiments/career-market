@@ -44,8 +44,10 @@ Jobs and company roles accept `q`, `company` (id, slug or exact name), `family`,
 (`newest`, `opened`, `salary`). A company route always scopes to its company.
 Seniority accepts the entry/mid/senior/staff/management groups and individual
 levels. Until the job mirror replaces the upstream adapter, job lists reach at most
-page 20 and the first 1000 roles (`page * pageSize`); beyond that they return 400
-`VALIDATION_FAILED` on `page`. Search roles cost two upstream calls per request. The
+page 5; deeper pages return 400 `VALIDATION_FAILED` on `page` asking the client to
+narrow the filters. A list costs at most one count call and five job-page calls, and at
+most two list requests call upstream at once per process; a third gets 503
+`SOURCE_UNAVAILABLE` immediately. Search roles cost two upstream calls per request. The
 upstream client uses `KRILL_API_KEY` (and its higher pace limit) when set, and remembers
 failures briefly. List items expose an internal `href` instead of an employer link; Apply
 lives on the job detail page. Company names can be selected with the search

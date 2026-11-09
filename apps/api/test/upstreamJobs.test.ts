@@ -92,21 +92,45 @@ describe('temporary job repository adapter', () => {
     expect(jobs[1]!.searchParams.get('cursor')).toBe('bbbbbbbb');
     const terminal = await source.list({ ...query, page: 3 });
     expect(terminal).toMatchObject({ items: [], page: 3, total: 3 });
-    const beyond = await source.list({ ...query, page: 20 });
-    expect(beyond).toMatchObject({ items: [], page: 20, total: 3 });
+    const beyond = await source.list({ ...query, page: 5 });
+    expect(beyond).toMatchObject({ items: [], page: 5, total: 3 });
   });
-  it('refuses deep pages before any upstream call', async () => {
+  it('refuses pages beyond the fifth before any upstream call', async () => {
     const { source, fetchImpl } = setup();
     await expect(
-      source.list(jobsQuerySchema.parse({ page: 21, pageSize: 1 })),
-    ).rejects.toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
-    await expect(
-      source.list(jobsQuerySchema.parse({ page: 11, pageSize: 100 })),
+      source.list(jobsQuerySchema.parse({ page: 6, pageSize: 100 })),
     ).rejects.toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
     expect(fetchImpl).not.toHaveBeenCalled();
     await expect(
-      source.list(jobsQuerySchema.parse({ page: 10, pageSize: 100 })),
+      source.list(jobsQuerySchema.parse({ page: 5, pageSize: 100 })),
     ).resolves.toMatchObject({ items: [] });
+  });
+  it('fails a third concurrent list fast without calling upstream', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const fetchImpl = vi.fn(async () => {
+      await gate;
+      return Response.json({ total: 0 });
+    });
+    const source = createUpstreamJobs(
+      new KrillLive({
+        baseUrl: 'https://internal.example',
+        log: pino({ level: 'silent' }),
+        fetchImpl,
+      }),
+      () => '2026-11-09' as IsoDay,
+    );
+    const first = source.list(jobsQuerySchema.parse({ q: 'one' }));
+    const second = source.list(jobsQuerySchema.parse({ q: 'two' }));
+    await expect(
+      source.list(jobsQuerySchema.parse({ q: 'three' })),
+    ).rejects.toMatchObject({ status: 503, code: 'SOURCE_UNAVAILABLE' });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    release();
+    await Promise.all([first, second]);
+    await expect(
+      source.list(jobsQuerySchema.parse({ q: 'three' })),
+    ).resolves.toMatchObject({ total: 0 });
   });
   it('maps missing detail and refuses malformed source data', async () => {
     const { source } = setup();
