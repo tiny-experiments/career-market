@@ -237,6 +237,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('resolveCompanyDomains (dedicate
     });
     const stats = await resolveCompanyDomains(deps({ logoProbe }));
     expect(stats).toMatchObject({ skipped: 1, logoChecks: 1, stoppedEarly: false });
+    expect(logoProbe.mock.calls.filter((c) => c[0] === 'odd.com')).toHaveLength(1);
     expect((await row('b')).logo).toBe('real');
     expect((await row('a')).logo).toBeNull();
 
@@ -245,6 +246,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('resolveCompanyDomains (dedicate
     const refused = await resolveCompanyDomains(deps({ logoProbe: refusing }));
     expect(refused.stoppedEarly).toBe(true);
     expect(refused.logoChecks).toBe(0);
+    expect(refusing.mock.calls.length).toBeLessThanOrEqual(2);
   });
 
   it('skips a company that times out and carries on with the next', async () => {
