@@ -6,9 +6,9 @@ import type { JobsRepository, JobsQuery } from '../modules/jobs/domain.ts';
 import { sourceUnavailable, validationFailed } from '../http/errors.ts';
 import type { KrillLive } from './krillLive.ts';
 
-/** Most cursor pages one request may walk upstream; deeper pages must narrow the filters instead. */
-export const MAX_UPSTREAM_PAGE = 5;
-/** Most list requests allowed to call upstream at the same time in this process. */
+/** Most cursor pages one request may walk upstream, so the count call plus pages is at most five; deeper pages must narrow the filters instead. */
+export const MAX_UPSTREAM_PAGE = 4;
+/** Most list requests allowed to be calling upstream at the same time in this process. */
 export const MAX_CONCURRENT_WALKS = 2;
 
 export function createUpstreamJobs(
@@ -21,7 +21,7 @@ export function createUpstreamJobs(
     { at: number; pages: Map<number, string | null> }
   >();
   let walks = 0;
-  async function load(query: JobsQuery) {
+  async function load(query: JobsQuery, get: KrillLive['get']) {
     const params: Record<string, string | number | undefined> = {
       q: query.q,
       company: query.company,
@@ -57,7 +57,7 @@ export function createUpstreamJobs(
     }
     const checkpoints = checkpoint.pages;
     if (cursors.size > 200) cursors.delete(cursors.keys().next().value!);
-    const total = await live.get(
+    const total = await get(
       '/v1/facets',
       { ...params, limit: 1 },
       z.object({ total: z.number().int().nonnegative() }),
@@ -82,7 +82,7 @@ export function createUpstreamJobs(
       };
     }
     while (true) {
-      const result = await live.get(
+      const result = await get(
         '/v1/jobs',
         {
           ...params,
@@ -122,12 +122,19 @@ export function createUpstreamJobs(
         throw validationFailed({
           page: `Only the first ${MAX_UPSTREAM_PAGE} pages are available. Narrow the filters instead.`,
         });
-      if (walks >= MAX_CONCURRENT_WALKS) throw sourceUnavailable();
-      walks++;
+      let walking = false;
+      const get: KrillLive['get'] = async (pathname, params, schema) => {
+        if (!walking && !live.has(pathname, params)) {
+          if (walks >= MAX_CONCURRENT_WALKS) throw sourceUnavailable();
+          walks++;
+          walking = true;
+        }
+        return live.get(pathname, params, schema);
+      };
       try {
-        return await load(query);
+        return await load(query, get);
       } finally {
-        walks--;
+        if (walking) walks--;
       }
     },
   };

@@ -105,6 +105,19 @@ export class KrillLive {
     );
   }
 
+  /** Whether this call would be answered without reaching krill: a fresh cached answer or one already in flight. */
+  has(
+    pathname: string,
+    params: Record<string, string | number | undefined>,
+  ): boolean {
+    const url = this.url(pathname, params);
+    const hit = this.cache.get(url);
+    return (
+      (hit !== undefined && this.now() - hit.at < hit.ttl) ||
+      this.inflight.has(url)
+    );
+  }
+
   /** An open job with its text, a closed job's tombstone, or neither. */
   async job(id: string): Promise<JobLookup> {
     const url = this.url(`/v1/jobs/${encodeURIComponent(id)}`, {});

@@ -92,24 +92,24 @@ describe('temporary job repository adapter', () => {
     expect(jobs[1]!.searchParams.get('cursor')).toBe('bbbbbbbb');
     const terminal = await source.list({ ...query, page: 3 });
     expect(terminal).toMatchObject({ items: [], page: 3, total: 3 });
-    const beyond = await source.list({ ...query, page: 5 });
-    expect(beyond).toMatchObject({ items: [], page: 5, total: 3 });
+    const beyond = await source.list({ ...query, page: 4 });
+    expect(beyond).toMatchObject({ items: [], page: 4, total: 3 });
   });
-  it('refuses pages beyond the fifth before any upstream call', async () => {
+  it('refuses pages beyond the fourth before any upstream call', async () => {
     const { source, fetchImpl } = setup();
     await expect(
-      source.list(jobsQuerySchema.parse({ page: 6, pageSize: 100 })),
+      source.list(jobsQuerySchema.parse({ page: 5, pageSize: 100 })),
     ).rejects.toMatchObject({ status: 400, code: 'VALIDATION_FAILED' });
     expect(fetchImpl).not.toHaveBeenCalled();
     await expect(
-      source.list(jobsQuerySchema.parse({ page: 5, pageSize: 100 })),
+      source.list(jobsQuerySchema.parse({ page: 4, pageSize: 100 })),
     ).resolves.toMatchObject({ items: [] });
   });
-  it('fails a third concurrent list fast without calling upstream', async () => {
+  it('fails a third uncached concurrent list fast but still serves cached ones', async () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
-    const fetchImpl = vi.fn(async () => {
-      await gate;
+    const fetchImpl = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      if (new URL(String(input)).searchParams.get('q') !== 'warm') await gate;
       return Response.json({ total: 0 });
     });
     const source = createUpstreamJobs(
@@ -120,12 +120,17 @@ describe('temporary job repository adapter', () => {
       }),
       () => '2026-11-09' as IsoDay,
     );
+    const warm = jobsQuerySchema.parse({ q: 'warm' });
+    await source.list(warm);
     const first = source.list(jobsQuerySchema.parse({ q: 'one' }));
     const second = source.list(jobsQuerySchema.parse({ q: 'two' }));
+    await new Promise((r) => setTimeout(r, 0));
+    const calls = fetchImpl.mock.calls.length;
     await expect(
       source.list(jobsQuerySchema.parse({ q: 'three' })),
     ).rejects.toMatchObject({ status: 503, code: 'SOURCE_UNAVAILABLE' });
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    await expect(source.list(warm)).resolves.toMatchObject({ total: 0 });
+    expect(fetchImpl).toHaveBeenCalledTimes(calls);
     release();
     await Promise.all([first, second]);
     await expect(
