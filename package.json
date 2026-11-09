@@ -15,13 +15,18 @@
     "api": "pnpm --filter @cm/api run start",
     "web:dev": "pnpm --filter @cm/web run dev",
     "web:build": "pnpm --filter @cm/web run build",
-    "web:start": "pnpm --filter @cm/web run start",
+    "web:preview": "pnpm --filter @cm/web run preview",
+    "web:check-ui": "pnpm --filter @cm/web run check:ui",
+    "web-next:dev": "pnpm --filter @cm/web-next run dev",
+    "web-next:build": "pnpm --filter @cm/web-next run build",
+    "web-next:start": "pnpm --filter @cm/web-next run start",
     "typecheck": "pnpm -r run typecheck",
     "test": "vitest run",
     "lint": "pnpm -r run lint"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
+    "jsdom": "^29.1.1",
     "tsx": "^4.23.15",
     "typescript": "5.9.3",
     "vitest": "^5.1.0"

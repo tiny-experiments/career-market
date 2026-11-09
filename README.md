@@ -33,8 +33,12 @@ krill.kurso.sh                 apps/builder   (plain SQL migrations)    apps/api
   posting, the employer's company history and similar roles with the read model's profession trend, pay
   band and typical posting window. A panel krill could not answer shows as unavailable and marks the
   payload `degraded`. A closed role answers 410 with its tombstone.
-- **web app** (`apps/web`, Next.js App Router) is being replaced by a new SPA that reads the public API
-  from the browser. It never connects to Postgres.
+- **web app** (`apps/web`, Vite + React 19 + react-router 7 + Tailwind 4 + shadcn/ui) is the single-page
+  app being built page by page on the design system in `apps/web/src/components` (see
+  `docs/UI-RULEBOOK.md`; `/design`, in development builds only, shows every token and component in both themes). It reads the public
+  API from the browser and never connects to Postgres.
+- **previous web app** (`apps/web-next`, Next.js App Router) stays runnable until the new pages replace
+  it. It renders pages on the server from the read API only and never connects to Postgres.
 - **packages/core**: the one config module that reads the environment, logging (pino), the Postgres
   client (postgres.js), migrations, display codes and the shared payload types.
 
@@ -70,8 +74,10 @@ few hundred calls (about 10 minutes unkeyed); later builds fetch only the recent
 
 ```sh
 pnpm api                      # read API on READ_API_HOST:READ_API_PORT (default 127.0.0.1:4100)
-PORT=3000 pnpm web:dev        # web app in development
-pnpm web:build && PORT=3000 pnpm web:start
+pnpm web:dev                  # web app (Vite) on http://localhost:3000; /design shows the design system (dev only)
+pnpm web:build                # production build to apps/web/dist
+PORT=3001 pnpm web-next:dev   # previous Next.js app in development
+pnpm web-next:build && PORT=3001 pnpm web-next:start
 ```
 
 The read API needs no token. `CONTEXT_DEV_PUBLIC_CLIENT_ID` is optional (company logos).
@@ -131,6 +137,10 @@ The proxy is the sole ingress, so the compose file sets `API_TRUST_PROXY=1` (ove
 cp deploy/.env.example deploy/.env
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
+
+On Vercel the project root `apps/web` now holds the Vite app (`apps/web/vercel.json` rewrites every path to
+`index.html`). Until the new pages replace it, the Next.js app at `apps/web-next` can be deployed instead; it
+needs `READ_API_URL` pointing at the API.
 
 ## Data
 
