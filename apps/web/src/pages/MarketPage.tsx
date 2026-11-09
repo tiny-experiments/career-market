@@ -8,6 +8,7 @@ import {
   ProfessionsTable,
   WhereJobsPanel,
 } from "@/components/market";
+import { ERROR, MARKET_COPY, PAGES } from "@/content";
 import { useResource } from "@/hooks";
 import { marketOverview, professionsIndex } from "@/lib/api";
 import { formatCount } from "@/lib/format";
@@ -23,35 +24,37 @@ export function MarketPage() {
 
   return (
     <PageContainer>
-      <h1 className="sr-only">Market</h1>
+      <h1 className="sr-only">{PAGES.market.title}</h1>
       <ResourceView
         state={market}
         skeleton={skeleton}
-        errorTitle="The market could not be loaded"
+        errorTitle={ERROR.market.title}
       >
         {(overview) => (
           <ResourceView
             state={professions}
             skeleton={skeleton}
-            errorTitle="The market could not be loaded"
+            errorTitle={ERROR.market.title}
           >
             {({ rows }) => (
               <>
                 <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                   <MarketStatusCard market={overview} professions={rows} />
                   <ProfessionListCard
-                    title="Professions gaining"
+                    title={MARKET_COPY.professionsGaining}
                     to="/professions?view=gaining"
                     rows={gainingProfessions(rows)}
                     value={(row) => formatCount(row.open)}
                     change={(row) => row.change?.value}
-                    empty="No profession grew this week."
+                    empty={MARKET_COPY.noneGaining}
                     comfortable
                   />
                   <CompaniesRampingCard market={overview} />
                 </div>
                 <section className="flex flex-col gap-4">
-                  <h2 className="text-h2 font-bold">Professions</h2>
+                  <h2 className="text-h2 font-bold">
+                    {MARKET_COPY.professions}
+                  </h2>
                   <ProfessionsTable key={view} rows={rows} view={view} />
                 </section>
                 <WhereJobsPanel countries={overview.countries} />

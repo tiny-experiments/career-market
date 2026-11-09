@@ -8,7 +8,7 @@ import type { Signal } from "@/components/data/SignalBadge";
 import { Sparkline } from "@/components/data/Sparkline";
 import type { MarketOverview } from "@/lib/api";
 import { formatCount } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import { MARKET_COPY, METRICS, SIGNALS as SIGNAL_COPY } from "@/content";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 5;
@@ -18,10 +18,14 @@ const SIGNALS: readonly {
   readonly label: string;
   readonly tone: string;
 }[] = [
-  { signal: "ramping", label: "Ramping", tone: "text-up" },
-  { signal: "steady", label: "Steady", tone: "text-foreground" },
-  { signal: "cooling", label: "Cooling", tone: "text-warn" },
-  { signal: "freezing", label: "Freezing", tone: "text-down" },
+  { signal: "ramping", label: SIGNAL_COPY.RAMPING.label, tone: "text-up" },
+  {
+    signal: "steady",
+    label: SIGNAL_COPY.STEADY.label,
+    tone: "text-foreground",
+  },
+  { signal: "cooling", label: SIGNAL_COPY.COOLING.label, tone: "text-warn" },
+  { signal: "freezing", label: SIGNAL_COPY.FREEZING.label, tone: "text-down" },
 ];
 
 /** Hiring signal counts over the companies moving most, each signal a door. */
@@ -39,7 +43,7 @@ export function CompaniesRampingCard({
 
   return (
     <MarketCard
-      title="Companies ramping"
+      title={MARKET_COPY.companiesRamping}
       to="/companies?signal=ramping"
       pager={{
         page,
@@ -58,8 +62,8 @@ export function CompaniesRampingCard({
             <span className="inline-flex items-center gap-1 truncate text-eyebrow font-semibold text-muted-foreground">
               {label}
               {signal === "ramping" ? (
-                <MetricHoverCard title={HINTS.signal.title}>
-                  {HINTS.signal.text}
+                <MetricHoverCard title={METRICS.signal.title}>
+                  {METRICS.signal.text}
                 </MetricHoverCard>
               ) : null}
             </span>
@@ -71,7 +75,7 @@ export function CompaniesRampingCard({
       </div>
       {rows.length === 0 ? (
         <p className="py-6 text-center text-small text-muted-foreground">
-          No companies are ramping quickly right now.
+          {MARKET_COPY.noneRamping}
         </p>
       ) : (
         <RankedList

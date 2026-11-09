@@ -10,10 +10,14 @@ import {
   formatPayRange,
   formatShare,
 } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import {
+  changeSuffix,
+  MARKET_COPY,
+  METRICS,
+  NO_FIGURE,
+  WINDOW_HEADER,
+} from "@/content";
 import { ChangePill } from "./ChangePill";
-
-const NO_FIGURE = "—";
 
 /** The name, the number, how it moved, and the four facts that matter about it. */
 export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
@@ -34,11 +38,15 @@ export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
       code={page.code}
       headline={{
         value: formatCount(page.open),
-        label: "open roles",
+        label: MARKET_COPY.openRolesUnit,
         ...(week
           ? {
               change: (
-                <Delta value={week.value} suffix="this week" variant="pill" />
+                <Delta
+                  value={week.value}
+                  suffix={changeSuffix("week")}
+                  variant="pill"
+                />
               ),
             }
           : {}),
@@ -47,23 +55,23 @@ export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
         <>
           {page.change1d === null ? null : (
             <ChangePill
-              label="1D"
+              label={WINDOW_HEADER.day}
               value={page.change1d}
-              hint={HINTS.changeDay}
+              hint={METRICS.changeDay}
             />
           )}
           {month ? (
             <ChangePill
-              label="30D"
+              label={WINDOW_HEADER.month}
               value={month.value}
-              hint={HINTS.changeMonth}
+              hint={METRICS.changeMonth}
             />
           ) : null}
           {quarter ? (
             <ChangePill
-              label="3M"
+              label={WINDOW_HEADER.quarter}
               value={quarter.value}
-              hint={HINTS.changeQuarter}
+              hint={METRICS.changeQuarter}
             />
           ) : null}
         </>
@@ -71,42 +79,42 @@ export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
       aside={
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
           <StatCard
-            label={HINTS.payRange.title}
+            label={METRICS.payRange.title}
             value={
               salary.available
                 ? formatPayRange(salary.p25, salary.p75)
                 : NO_FIGURE
             }
-            detail={salary.available ? "Senior roles, US" : undefined}
-            hint={HINTS.payRange}
+            detail={salary.available ? MARKET_COPY.seniorRolesUs : undefined}
+            hint={METRICS.payRange}
           />
           <StatCard
-            label="Remote"
+            label={MARKET_COPY.remote}
             value={remote === null ? NO_FIGURE : formatShare(remote)}
             detail={
               remote === null ? undefined : (
                 <ShareBar value={remote} className="mt-1.5" />
               )
             }
-            hint={HINTS.remoteShare}
+            hint={METRICS.remoteShare}
           />
           <StatCard
-            label={HINTS.typicalTimeOpen.title}
+            label={METRICS.typicalTimeOpen.title}
             value={
               page.medianDaysOpen === null
                 ? NO_FIGURE
                 : formatDays(page.medianDaysOpen)
             }
-            hint={HINTS.typicalTimeOpen}
+            hint={METRICS.typicalTimeOpen}
           />
           <StatCard
-            label={HINTS.companiesHiring.title}
+            label={METRICS.companiesHiring.title}
             value={
               page.companiesHiring === null
                 ? NO_FIGURE
                 : formatCount(page.companiesHiring)
             }
-            hint={HINTS.companiesHiring}
+            hint={METRICS.companiesHiring}
           />
         </div>
       }

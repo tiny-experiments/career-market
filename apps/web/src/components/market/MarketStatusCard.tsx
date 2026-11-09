@@ -5,12 +5,17 @@ import { KpiTile } from "@/components/data/KpiTile";
 import { MarketCard } from "@/components/data/MarketCard";
 import type { MarketOverview } from "@/lib/api";
 import { direction, formatCount, formatDays, formatShare } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import {
+  changeSuffix,
+  MARKET_COPY,
+  METRICS,
+  NO_FIGURE,
+  professionsGrowing,
+} from "@/content";
 import { marketBreadth, type ProfessionRow } from "@/lib/professions";
 import { FlowBars } from "./FlowBars";
 
 const FLOW_DAYS = 7;
-const NO_FIGURE = "—";
 
 /** The market at a glance: the headline, the breadth behind it and the day's flow. */
 export function MarketStatusCard({
@@ -33,13 +38,13 @@ export function MarketStatusCard({
     }));
 
   return (
-    <MarketCard title="Market status" to="/jobs">
+    <MarketCard title={MARKET_COPY.status} to="/jobs">
       <div className="grid grid-cols-6 gap-2">
         <div className="col-span-6 row-span-2 flex flex-col items-center justify-center gap-1 rounded-lg bg-tile px-2 py-3 text-center sm:col-span-2">
           <span className="inline-flex items-center gap-1.5 text-eyebrow font-semibold text-muted-foreground">
-            Tech Hiring Index
-            <MetricHoverCard title="Tech Hiring Index">
-              {HINTS.openRoles.text}
+            {MARKET_COPY.hiringIndex}
+            <MetricHoverCard title={MARKET_COPY.hiringIndex}>
+              {METRICS.openRoles.text}
             </MetricHoverCard>
           </span>
           <Gauge
@@ -53,48 +58,48 @@ export function MarketStatusCard({
           {market.headline.change ? (
             <Delta
               value={market.headline.change.value}
-              suffix="this week"
+              suffix={changeSuffix("week")}
               variant="pill"
             />
           ) : null}
           <span className="mt-1 inline-flex items-center gap-1 text-eyebrow text-muted-foreground">
-            {breadth.up} of {breadth.total} growing
-            <MetricHoverCard title={HINTS.breadth.title}>
-              {HINTS.breadth.text}
+            {professionsGrowing(breadth.up, breadth.total)}
+            <MetricHoverCard title={METRICS.professionsGrowing.title}>
+              {METRICS.professionsGrowing.text}
             </MetricHoverCard>
           </span>
         </div>
         <KpiTile
           className="col-span-3 sm:col-span-2"
-          label={HINTS.newToday.title}
+          label={METRICS.newToday.title}
           value={formatCount(market.stats.newToday)}
-          hint={HINTS.newToday}
+          hint={METRICS.newToday}
         />
         <KpiTile
           className="col-span-3 sm:col-span-2"
-          label={HINTS.closedToday.title}
+          label={METRICS.closedToday.title}
           value={formatCount(market.stats.closedToday)}
-          hint={HINTS.closedToday}
+          hint={METRICS.closedToday}
         />
         <KpiTile
           className="col-span-3 sm:col-span-2"
-          label={HINTS.typicalTimeOpen.title}
+          label={METRICS.typicalTimeOpen.title}
           value={
             market.stats.medianDaysOpen === null
               ? NO_FIGURE
               : formatDays(market.stats.medianDaysOpen)
           }
-          hint={HINTS.typicalTimeOpen}
+          hint={METRICS.typicalTimeOpen}
         />
         <KpiTile
           className="col-span-3 sm:col-span-2"
-          label={HINTS.remoteShare.title}
+          label={METRICS.remoteShare.title}
           value={
             market.stats.remoteShare === null
               ? NO_FIGURE
               : formatShare(market.stats.remoteShare)
           }
-          hint={HINTS.remoteShare}
+          hint={METRICS.remoteShare}
         />
       </div>
       {flow.length > 1 ? <FlowBars days={flow} /> : null}

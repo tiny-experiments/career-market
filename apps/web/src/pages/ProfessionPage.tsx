@@ -7,6 +7,7 @@ import {
   ProfessionPanels,
   ProfessionTables,
 } from "@/components/professions";
+import { ERROR } from "@/content";
 import { useResource } from "@/hooks";
 import { professionDetail } from "@/lib/api";
 
@@ -19,7 +20,7 @@ export function ProfessionPage() {
       <ResourceView
         state={profession}
         skeleton={<PageSkeleton variant="detail" />}
-        errorTitle="This profession could not be loaded"
+        errorTitle={ERROR.profession.title}
         notFound={<NotFoundState />}
       >
         {(page) => (

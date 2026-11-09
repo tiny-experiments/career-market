@@ -4,7 +4,7 @@ import { Panel } from "@/components/data/Panel";
 import { SegmentBar } from "@/components/data/SegmentBar";
 import type { ProfessionPage } from "@/lib/api";
 import { formatCount, formatShare } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import { METRICS } from "@/content";
 
 const LIST_ROWS = 6;
 const SERIES = [
@@ -36,7 +36,7 @@ export function ProfessionPanels({ page }: { readonly page: ProfessionPage }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <Panel title={<Title hint={HINTS.specialties} />}>
+      <Panel title={<Title hint={METRICS.specialties} />}>
         <BreakdownList
           items={page.specialties.slice(0, LIST_ROWS).map((specialty) => ({
             key: specialty.id,
@@ -48,7 +48,7 @@ export function ProfessionPanels({ page }: { readonly page: ProfessionPage }) {
         />
       </Panel>
       <Panel
-        title={<Title hint={HINTS.seniority} />}
+        title={<Title hint={METRICS.seniority} />}
         contentClassName="flex flex-col gap-4"
       >
         <SegmentBar
@@ -69,7 +69,7 @@ export function ProfessionPanels({ page }: { readonly page: ProfessionPage }) {
           }))}
         />
       </Panel>
-      <Panel title={<Title hint={HINTS.countries} />}>
+      <Panel title={<Title hint={METRICS.countries} />}>
         <BreakdownList
           items={page.countries.slice(0, LIST_ROWS).map((country) => ({
             key: country.code,

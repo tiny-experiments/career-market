@@ -8,8 +8,8 @@ import { TablePanel } from "@/components/data/TablePanel";
 import { ChangeCell } from "@/components/market/ChangeCell";
 import { Button } from "@/components/ui/button";
 import type { ProfessionPage } from "@/lib/api";
-import { formatCount, formatShare } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import { formatCount, formatRelativeDays, formatShare } from "@/lib/format";
+import { METRICS, NO_FIGURE, seeAll, sentence, WINDOW_HEADER } from "@/content";
 
 type CompanyRow = Extract<
   ProfessionPage["topCompanies"],
@@ -18,7 +18,7 @@ type CompanyRow = Extract<
 type SkillRow = ProfessionPage["skills"][number];
 type JobRow = ProfessionPage["latestRoles"][number];
 
-const dash = <span className="text-subtle">—</span>;
+const dash = <span className="text-subtle">{NO_FIGURE}</span>;
 
 const COMPANY_COLUMNS: Column<CompanyRow>[] = [
   {
@@ -45,9 +45,9 @@ const COMPANY_COLUMNS: Column<CompanyRow>[] = [
   },
   {
     key: "change",
-    header: "7D",
+    header: WINDOW_HEADER.week,
     align: "right",
-    hint: HINTS.changeWeek,
+    hint: METRICS.changeWeek,
     cell: (row) => (
       <ChangeCell
         value={row.coverageJump ? null : (row.change?.value ?? null)}
@@ -59,7 +59,7 @@ const COMPANY_COLUMNS: Column<CompanyRow>[] = [
     header: "Signal",
     align: "right",
     from: "sm",
-    hint: HINTS.signal,
+    hint: METRICS.signal,
     cell: (row) =>
       row.state ? (
         <SignalBadge signal={row.state.toLowerCase() as Signal} />
@@ -97,7 +97,7 @@ const skillColumns = (withChange: boolean): Column<SkillRow>[] => [
     header: "Share of roles",
     align: "right",
     from: "sm",
-    hint: HINTS.skillShare,
+    hint: METRICS.skillShare,
     cell: (row) => (
       <span className="ml-auto flex w-16 flex-col items-end gap-1">
         {formatShare(row.share)}
@@ -109,20 +109,14 @@ const skillColumns = (withChange: boolean): Column<SkillRow>[] => [
     ? [
         {
           key: "change",
-          header: "7D",
+          header: WINDOW_HEADER.week,
           align: "right",
-          hint: HINTS.skillChange,
+          hint: METRICS.skillChange,
           cell: (row) => <ChangeCell value={row.change} />,
         } satisfies Column<SkillRow>,
       ]
     : []),
 ];
-
-function posted(ageDays: number): string {
-  if (ageDays === 0) return "Today";
-  if (ageDays === 1) return "Yesterday";
-  return `${ageDays} days ago`;
-}
 
 const JOB_COLUMNS: Column<JobRow>[] = [
   {
@@ -164,7 +158,7 @@ const JOB_COLUMNS: Column<JobRow>[] = [
     key: "posted",
     header: "Posted",
     align: "right",
-    cell: (row) => posted(row.ageDays),
+    cell: (row) => sentence(formatRelativeDays(row.ageDays)),
   },
 ];
 
@@ -209,7 +203,7 @@ export function ProfessionTables({ page }: { readonly page: ProfessionPage }) {
           action={
             <Button asChild variant="ghost" size="sm">
               <Link to={`/jobs?family=${page.family}`}>
-                See all {formatCount(page.open)} jobs
+                {seeAll(page.open)}
                 <ArrowRight data-icon="inline-end" />
               </Link>
             </Button>

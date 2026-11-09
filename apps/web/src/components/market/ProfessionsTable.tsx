@@ -4,7 +4,7 @@ import { Logo } from "@/components/data/Logo";
 import { ShareBar } from "@/components/data/ShareBar";
 import { Sparkline } from "@/components/data/Sparkline";
 import { formatCount, formatPayRange, formatShare } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import { METRICS, NO_FIGURE, WINDOW_HEADER } from "@/content";
 import {
   professionHref,
   sortProfessions,
@@ -22,7 +22,7 @@ export interface ProfessionsTableProps {
   readonly regional?: boolean;
 }
 
-const dash = <span className="text-subtle">—</span>;
+const dash = <span className="text-subtle">{NO_FIGURE}</span>;
 
 /**
  * The market's main table: every profession, full width, the whole row a link.
@@ -74,24 +74,24 @@ export function ProfessionsTable({
       header: "Open roles",
       align: "right",
       sortable: true,
-      hint: HINTS.openRolesProfession,
+      hint: METRICS.openRolesProfession,
       cell: (row) => formatCount(row.open),
     },
     {
       key: "change1d",
-      header: "1D",
+      header: WINDOW_HEADER.day,
       align: "right",
       sortable: true,
       from: "lg",
-      hint: HINTS.changeDay,
+      hint: METRICS.changeDay,
       cell: (row) => <ChangeCell value={row.change1d} />,
     },
     {
       key: "change7d",
-      header: "7D",
+      header: WINDOW_HEADER.week,
       align: "right",
       sortable: true,
-      hint: HINTS.changeWeek,
+      hint: METRICS.changeWeek,
       cell: (row) => <ChangeCell value={row.change?.value ?? null} />,
     },
     ...(regional
@@ -99,11 +99,11 @@ export function ProfessionsTable({
       : [
           {
             key: "change1m",
-            header: "30D",
+            header: WINDOW_HEADER.month,
             align: "right",
             sortable: true,
             from: "md",
-            hint: HINTS.changeMonth,
+            hint: METRICS.changeMonth,
             cell: (row) => <ChangeCell value={row.change1m} />,
           } satisfies Column<ProfessionRow>,
         ]),
@@ -115,7 +115,7 @@ export function ProfessionsTable({
             align: "right",
             sortable: true,
             from: "sm",
-            hint: HINTS.newThisWeek,
+            hint: METRICS.newThisWeek,
             cell: (row) => formatCount(row.newThisWeek),
           } satisfies Column<ProfessionRow>,
         ]
@@ -129,7 +129,7 @@ export function ProfessionsTable({
             align: "right",
             sortable: true,
             from: "xl",
-            hint: HINTS.companiesHiring,
+            hint: METRICS.companiesHiring,
             cell: (row) =>
               row.companies === null ? dash : formatCount(row.companies),
           } satisfies Column<ProfessionRow>,
@@ -140,7 +140,7 @@ export function ProfessionsTable({
       align: "right",
       sortable: true,
       from: "lg",
-      hint: HINTS.payRange,
+      hint: METRICS.payRange,
       cell: (row) =>
         row.pay ? formatPayRange(row.pay.low, row.pay.high) : dash,
     },
@@ -153,7 +153,7 @@ export function ProfessionsTable({
             align: "right",
             sortable: true,
             from: "xl",
-            hint: HINTS.remoteShare,
+            hint: METRICS.remoteShare,
             cell: (row) =>
               row.remoteShare === null ? (
                 dash
@@ -170,7 +170,7 @@ export function ProfessionsTable({
       header: "30 days",
       align: "right",
       from: "md",
-      hint: HINTS.trend,
+      hint: METRICS.trend,
       cell: (row) => <Sparkline values={row.spark} className="ml-auto" />,
     },
   ];

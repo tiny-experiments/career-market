@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { DataTable, type Column } from "@/components/data/DataTable";
+import { MARKET_COPY } from "@/content";
 import { Panel } from "@/components/data/Panel";
 import { ShareBar } from "@/components/data/ShareBar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,7 +57,7 @@ export function WhereJobsPanel({
 
   return (
     <Panel
-      title="Where the jobs are"
+      title={MARKET_COPY.whereTheJobsAre}
       className="[--card-spacing:--spacing(6)]"
       contentClassName="grid items-center gap-8 xl:grid-cols-5"
     >

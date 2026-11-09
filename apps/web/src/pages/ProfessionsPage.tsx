@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ERROR, MARKET_COPY, NO_FIGURE, PAGES } from "@/content";
 import { useResource } from "@/hooks";
 import { professionsIndex } from "@/lib/api";
 import { formatCount, formatPayRange } from "@/lib/format";
@@ -46,14 +47,17 @@ export function ProfessionsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Professions"
+        title={PAGES.professions.title}
         aside={
           <Select value={region ?? WORLDWIDE} onValueChange={chooseRegion}>
-            <SelectTrigger aria-label="Region" className="h-control w-56">
+            <SelectTrigger
+              aria-label={MARKET_COPY.region}
+              className="h-control w-56"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={WORLDWIDE}>Worldwide</SelectItem>
+              <SelectItem value={WORLDWIDE}>{MARKET_COPY.worldwide}</SelectItem>
               {PROFESSION_REGIONS.map((option) => (
                 <SelectItem key={option.id} value={option.id}>
                   {option.label}
@@ -66,35 +70,37 @@ export function ProfessionsPage() {
       <ResourceView
         state={professions}
         skeleton={<PageSkeleton withHeader={false} />}
-        errorTitle="Professions could not be loaded"
+        errorTitle={ERROR.professions.title}
       >
         {({ rows }) => (
           <>
             <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
               <ProfessionListCard
-                title="Gaining"
+                title={MARKET_COPY.gaining}
                 to={viewLink("gaining")}
                 rows={gainingProfessions(rows)}
                 value={(row) => formatCount(row.open)}
                 change={(row) => row.change?.value}
-                empty="No profession grew this week."
+                empty={MARKET_COPY.noneGaining}
               />
               <ProfessionListCard
-                title="Cooling"
+                title={MARKET_COPY.cooling}
                 to={viewLink("cooling")}
                 rows={coolingProfessions(rows)}
                 value={(row) => formatCount(row.open)}
                 change={(row) => row.change?.value}
-                empty="No profession shrank this week."
+                empty={MARKET_COPY.noneCooling}
               />
               <ProfessionListCard
-                title="Best paid"
+                title={MARKET_COPY.bestPaid}
                 to={viewLink("best-paid")}
                 rows={bestPaidProfessions(rows)}
                 value={(row) =>
-                  row.pay ? formatPayRange(row.pay.low, row.pay.high) : "—"
+                  row.pay
+                    ? formatPayRange(row.pay.low, row.pay.high)
+                    : NO_FIGURE
                 }
-                empty="Pay ranges will show here."
+                empty={MARKET_COPY.noPay}
               />
             </div>
             <ProfessionsTable

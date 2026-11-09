@@ -1,6 +1,6 @@
 import { MetricHoverCard } from "@/components/common/MetricHoverCard";
 import { formatCount } from "@/lib/format";
-import { HINTS } from "@/lib/marketCopy";
+import { MARKET_COPY, METRICS } from "@/content";
 
 export interface FlowDay {
   readonly date: string;
@@ -16,19 +16,19 @@ export function FlowBars({ days }: { readonly days: readonly FlowDay[] }) {
     <div className="flex flex-col gap-2 rounded-lg bg-tile px-3 py-2.5">
       <div className="flex items-center justify-between gap-2 text-eyebrow font-semibold text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          {HINTS.flow.title}
-          <MetricHoverCard title={HINTS.flow.title}>
-            {HINTS.flow.text}
+          {METRICS.dailyFlow.title}
+          <MetricHoverCard title={METRICS.dailyFlow.title}>
+            {METRICS.dailyFlow.text}
           </MetricHoverCard>
         </span>
         <span className="inline-flex items-center gap-3 font-medium">
           <span className="inline-flex items-center gap-1">
             <span aria-hidden className="size-2 rounded-sm bg-up" />
-            Opened
+            {MARKET_COPY.opened}
           </span>
           <span className="inline-flex items-center gap-1">
             <span aria-hidden className="size-2 rounded-sm bg-down" />
-            Closed
+            {MARKET_COPY.closed}
           </span>
         </span>
       </div>

@@ -12,6 +12,7 @@ export {
   type MetricKey,
   type SignalState,
 } from "./metrics";
+export { MARKET_COPY, professionsGrowing } from "./market";
 export {
   APPLY,
   COMPARISON,
