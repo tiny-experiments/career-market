@@ -197,18 +197,17 @@ async function runBrandLookups(deps: LogoDeps, due: CompanyState[], limit: numbe
   }
 }
 
-async function runLogoChecks(deps: LogoDeps, limit: number, stats: LogoStats, attempted: Set<string>): Promise<void> {
+async function runLogoChecks(deps: LogoDeps, limit: number, stats: LogoStats, failed: Set<string>): Promise<boolean> {
   const { sql, log, logoProbe, settings } = deps;
-  if (!logoProbe || limit <= 0) return;
+  if (!logoProbe || limit <= 0) return false;
   const staleBefore = daysAgo(settings.recheckDays);
   const placeholderBefore = daysAgo(settings.monogramRecheckDays);
   const due = await sql<{ company_id: string; domain: string }[]>`
     select d.company_id, d.domain from company_domain d join company c using (company_id)
     where d.domain is not null and c.open > 0
-      and d.company_id <> all(${sql.array([...attempted])}::text[])
+      and d.domain <> all(${sql.array([...failed])}::text[])
       and (d.logo is null or d.logo_checked_at < ${staleBefore} or (d.logo = 'monogram' and d.logo_checked_at < ${placeholderBefore}))
     order by c.rank, c.company_id limit ${limit}`;
-  for (const row of due) attempted.add(row.company_id);
   const step = { skips: 0 };
   let stopped = false;
   await concurrentMap(
@@ -219,6 +218,7 @@ async function runLogoChecks(deps: LogoDeps, limit: number, stats: LogoStats, at
       try {
         logo = await logoProbe(row.domain);
       } catch (err) {
+        failed.add(row.domain);
         if (failureAction(err, step, stats, log, 'logo checks') === 'stop') stopped = true;
         return;
       }
@@ -228,6 +228,7 @@ async function runLogoChecks(deps: LogoDeps, limit: number, stats: LogoStats, at
     },
     6,
   );
+  return stopped;
 }
 
 /**
@@ -247,8 +248,8 @@ export async function resolveCompanyDomains(deps: LogoDeps): Promise<LogoStats> 
   const checksLeft = () => Math.min(settings.checksPerRun, settings.dailyChecks - checksSpent) - stats.logoChecks;
 
   // Check the free domains first: a domain with no real logo is worth a paid lookup.
-  const attempted = new Set<string>();
-  await runLogoChecks(deps, checksLeft(), stats, attempted);
+  const failed = new Set<string>();
+  const logoStepStopped = await runLogoChecks(deps, checksLeft(), stats, failed);
   const logos = await sql<{ company_id: string; logo: CompanyState['logo'] }[]>`select company_id, logo from company_domain`;
   const logoOf = new Map(logos.map((r) => [r.company_id, r.logo]));
   for (const c of states) c.logo = logoOf.get(c.company_id) ?? null;
@@ -258,7 +259,7 @@ export async function resolveCompanyDomains(deps: LogoDeps): Promise<LogoStats> 
   await runBrandLookups(deps, due, Math.min(settings.lookupsPerRun, settings.dailyCredits - creditsSpent), stats);
 
   // Brand results are new domains; check them in the same pass when the budget allows.
-  if (!stats.stoppedEarly) await runLogoChecks(deps, checksLeft(), stats, attempted);
+  if (!logoStepStopped) await runLogoChecks(deps, checksLeft(), stats, failed);
   await sql.begin((tx) => applyCompanyDomains(tx as unknown as Sql));
   log.info(stats, 'company domains resolved');
   return stats;

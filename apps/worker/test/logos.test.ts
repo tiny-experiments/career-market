@@ -199,11 +199,26 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('resolveCompanyDomains (dedicate
     await resolveCompanyDomains(deps({ brandSearch, logoProbe }));
     expect(await row('a')).toMatchObject({ domain: 'werkenco.com', source: 'brand', logo: 'real' });
     expect(await published('a')).toBe('werkenco.com');
+    expect(logoProbe.mock.calls.map((c) => c[0])).toEqual(['werkenbijwerkenco.nl', 'werkenco.com']);
 
     await sql`truncate company_domain`;
     await resolveCompanyDomains(deps({ brandSearch: vi.fn(async () => []), logoProbe }));
     expect(await row('a')).toMatchObject({ domain: 'werkenbijwerkenco.nl', logo: 'monogram' });
     expect(await published('a')).toBeNull();
+  });
+
+  it('still checks a brand result from this run when a later brand search is refused', async () => {
+    await company('a', 'Bigcorp', 1);
+    await company('b', 'Nextco', 2);
+    const brandSearch = vi.fn(async (q: string) => {
+      if (q === 'nextco') throw new ContextDevError('brand search answered 429', 429);
+      return [{ domain: 'bigcorp.com', name: 'Bigcorp' }];
+    });
+    const logoProbe = vi.fn(async () => 'real' as const);
+    const stats = await resolveCompanyDomains(deps({ brandSearch, logoProbe }));
+    expect(stats.stoppedEarly).toBe(true);
+    expect(logoProbe).toHaveBeenCalledWith('bigcorp.com');
+    expect(await row('a')).toMatchObject({ domain: 'bigcorp.com', logo: 'real' });
   });
 
   it('stops for the run on a rate limit, without marking the company as checked', async () => {
