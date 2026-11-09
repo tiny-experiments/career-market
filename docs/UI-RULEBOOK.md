@@ -100,21 +100,24 @@ Elevation is one token, two themes:
 apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
-    layout/    SiteHeader, TopNav, SubBar, SearchBox, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
+    layout/    SiteHeader, TopNav, SubBar, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
     data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, RangeTabs
-    common/    EmptyState, ErrorState, MetricHoverCard, Chip
+    common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
     jobs/      VerdictCard (and the job page's parts to come)
-  hooks/       useSlidingIndicator, useElementWidth
-  lib/         utils (cn), format, nav, logo, paging, charts
+  hooks/       useResource, usePagedList, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
+  lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, redirects, prefetch
+  lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
   layouts/     RootLayout
   pages/       route components: assembly only. pages/design holds the /design chapters.
   index.css    the tokens
-  router.tsx   the page map, with each section's sub-bar in its handle
+  routes.ts    the page map: each page's address, sub-bar, chunk and the data it reads
+  router.tsx   the route tree built from it, plus redirects from old addresses
 ```
 
 - One component per file, PascalCase, named after the component. Barrel `index.ts` per folder.
 - Pages assemble; they do not style. Layout Tailwind beyond a little belongs in a component.
 - Formatters live in `lib/format.ts`. Never format a number inline.
+- A page reads through `useResource(read)` or `usePagedList(list, filters)` and draws the result with `ResourceView`. A read a page needs goes in its `data` in `routes.ts` too, with the same arguments, so it starts with the chunk and on hover.
 - Tests live in `apps/web/test`, mirroring `src`; `test/support/renderWithRouter.tsx` gives a component the router and providers the shell gives it.
 
 ## 7. Component rules
