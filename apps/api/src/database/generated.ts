@@ -68,6 +68,11 @@ export interface CompanyDaily {
   open: number;
 }
 
+export interface CompanyOpenCount {
+  company_id: string;
+  open: number;
+}
+
 export interface CompanyProfile {
   as_of: string;
   company_id: string;
@@ -134,6 +139,70 @@ export interface FamilyEstimateDaily {
   family: string;
   open: number;
   opened: number;
+}
+
+export interface JobCounterDaily {
+  closed_today: Generated<number>;
+  date: string;
+  new_today: Generated<number>;
+}
+
+export interface JobMirror {
+  company_id: string;
+  company_name: string;
+  countries: Generated<string[]>;
+  description: string | null;
+  description_present: Generated<boolean>;
+  employment_type: string | null;
+  family: string | null;
+  first_seen_at: string;
+  id: string;
+  last_seen_at: string;
+  level: string | null;
+  locations: Generated<string[]>;
+  mirrored_at: Generated<Timestamp>;
+  opened_at: string;
+  opened_source: string;
+  payload: Json;
+  posted_at: Timestamp | null;
+  remote: boolean;
+  repost_count: number;
+  salary_currency: string | null;
+  salary_max: number | null;
+  salary_min: number | null;
+  specialty: string | null;
+  stale_score: number | null;
+  title: string;
+  work_mode: string | null;
+}
+
+export interface JobMirrorStage {
+  company_id: string;
+  company_name: string;
+  countries: Generated<string[]>;
+  description: string | null;
+  description_present: Generated<boolean>;
+  employment_type: string | null;
+  family: string | null;
+  first_seen_at: string;
+  id: string;
+  last_seen_at: string;
+  level: string | null;
+  locations: Generated<string[]>;
+  mirrored_at: Generated<Timestamp>;
+  opened_at: string;
+  opened_source: string;
+  payload: Json;
+  posted_at: Timestamp | null;
+  remote: boolean;
+  repost_count: number;
+  salary_currency: string | null;
+  salary_max: number | null;
+  salary_min: number | null;
+  specialty: string | null;
+  stale_score: number | null;
+  title: string;
+  work_mode: string | null;
 }
 
 export interface MarketChange {
@@ -405,11 +474,29 @@ export interface SurvivalCurve {
   survival_end: number;
 }
 
+export interface WorkerChange {
+  applied_at: Generated<Timestamp>;
+  company_id: string | null;
+  date: string;
+  event_key: string;
+  job_id: string;
+  kind: string;
+}
+
+export interface WorkerState {
+  cursor: string | null;
+  exported_at: Timestamp | null;
+  name: string;
+  snapshot_date: string | null;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface DB {
   build_run: BuildRun;
   closing_sample: ClosingSample;
   company: Company;
   company_daily: CompanyDaily;
+  company_open_count: CompanyOpenCount;
   company_profile: CompanyProfile;
   company_ref: CompanyRef;
   company_signal: CompanySignal;
@@ -417,6 +504,9 @@ export interface DB {
   family_age_cut: FamilyAgeCut;
   family_daily: FamilyDaily;
   family_estimate_daily: FamilyEstimateDaily;
+  job_counter_daily: JobCounterDaily;
+  job_mirror: JobMirror;
+  job_mirror_stage: JobMirrorStage;
   market_change: MarketChange;
   market_daily: MarketDaily;
   market_note: MarketNote;
@@ -442,4 +532,6 @@ export interface DB {
   skill_summary: SkillSummary;
   skill_tracked: SkillTracked;
   survival_curve: SurvivalCurve;
+  worker_change: WorkerChange;
+  worker_state: WorkerState;
 }
