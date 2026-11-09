@@ -48,7 +48,7 @@ too short to show (`fullWindow` in `@cm/core/changes`), sort last.
 
 Jobs and company roles accept `q`, `company` (id, slug or exact name; other text
 matches inside employer names), `family`, `specialty`, `skill`, `region`, `country`,
-`workMode`, `level`, `postedWithin` (days, 1–365), `salaryMin`, `hasPay=true`,
+`workMode`, `level`, `postedWithin` (calendar days, 1–365, counting today), `salaryMin`, `hasPay=true`,
 `currency` and `sort` (`newest`, `opened`, `oldest`, `salary`). `family`, `workMode`
 and `level` take comma-separated values. A company route always scopes to its
 company. Seniority accepts the entry/mid/senior/staff/management groups and
