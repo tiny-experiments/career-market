@@ -4,7 +4,7 @@ import type { MirrorJob } from './mirror.ts';
 import { allResults } from './concurrent.ts';
 import { snapshotReady } from './watch.ts';
 import { withWorkerLock } from './lock.ts';
-import { captureCursor, stageMirror, promoteMirror } from './mirror.ts';
+import { captureCursor, stageMirror, promoteMirror, mirrorPartitionFamilies } from './mirror.ts';
 import { writeGrowth } from './growth.ts';
 import { familyInfo, rankFamilies } from '@cm/core/codes';
 import type { Config } from '@cm/core/config';
@@ -91,11 +91,12 @@ async function buildUnlocked(deps: BuildDeps, options: BuildOptions): Promise<Bu
   try {
     const plan = await planPull(sql, T, config, options);
     const cursor = await captureCursor(api);
+    const partitions = await mirrorPartitionFamilies(api);
     const snapshot = allResults([
-      stageMirror(sql, api, meta.ats.filter((a) => a.openJobs > 0).map((a) => a.ats)),
+      stageMirror(sql, api, meta.ats.filter((a) => a.openJobs > 0).sort((a, b) => b.openJobs - a.openJobs).map((a) => a.ats), partitions),
       new KrillCompanyApi(api.client).directory(1),
     ]).then(async ([, directory]) => {
-      const jobs = await sql<{ payload: MirrorJob }[]>`select payload from job_mirror_stage`;
+      const jobs = await sql<{ payload: MirrorJob }[]>`select payload - 'description' as payload from job_mirror_stage`;
       return new KrillApi(new SnapshotClient(api.client, jobs.map((row) => row.payload), directory, log));
     });
     void snapshot.catch(() => undefined);

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { concurrentMap } from './concurrent.ts';
 import type { KrillApi } from './krill/api.ts';
 import { KrillHttpError } from './krill/client.ts';
-import { changePageSchema, type KrillChangePage } from './krill/schemas.ts';
+import { changePageSchema, facetsSchema, type KrillChangePage, type KrillFacets } from './krill/schemas.ts';
 import { withWorkerLock } from './lock.ts';
 
 const mirrorJobSchema = krillJobSchema.extend({ description: z.string().nullable().optional() });
@@ -51,13 +51,32 @@ export async function captureCursor(api: KrillApi, today = new Date().toISOStrin
   return (await api.client.get('/v1/changes', { since: addDays(today, 1), pageSize: 100 }, changePageSchema, { cache: false })).data.syncCursor;
 }
 
-/** Page each ATS independently so latency overlaps, but no page chain can be truncated. */
-export async function stageMirror(sql: Sql, api: KrillApi, ats: readonly string[]): Promise<number> {
+/** Use profession partitions only when facets prove they cover the whole inventory. */
+export function mirrorFamilies(facets: KrillFacets): string[] | undefined {
+  const families = facets.facets.family;
+  if (families.length && families.reduce((n, family) => n + family.count, 0) === facets.total) {
+    return families.filter((family) => family.count > 0).map((family) => family.value);
+  }
+  return undefined;
+}
+
+export async function mirrorPartitionFamilies(api: KrillApi): Promise<string[] | undefined> {
+  try {
+    return mirrorFamilies((await api.client.get('/v1/facets', { limit: 100 }, facetsSchema, { cache: false })).data);
+  } catch (error) {
+    if (error instanceof KrillHttpError && error.status === 500) return undefined;
+    throw error;
+  }
+}
+
+/** Partition large inventories by ATS and profession to overlap long page chains without dropping unclassified roles. */
+export async function stageMirror(sql: Sql, api: KrillApi, ats: readonly string[], families?: readonly string[]): Promise<number> {
   await sql`truncate job_mirror_stage`;
-  await concurrentMap(ats, async (source) => {
+  const partitions = ats.flatMap<{ ats: string; family?: string }>((source) => families?.length ? families.map((family) => ({ ats: source, family })) : [{ ats: source, family: undefined }]);
+  await concurrentMap(partitions, async (partition) => {
     let cursor: string | undefined;
     do {
-      const page = (await api.client.get('/v1/jobs', { ats: source, pageSize: 100, cursor }, mirrorPageSchema, { cache: false })).data;
+      const page = (await api.client.get('/v1/jobs', { ...partition, pageSize: 100, cursor }, mirrorPageSchema, { cache: false })).data;
       await upsertJobs(sql, page.items, true);
       cursor = page.nextCursor ?? undefined;
     } while (cursor);

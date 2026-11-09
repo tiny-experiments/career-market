@@ -7,7 +7,7 @@ import { runBuild } from '../src/build.ts';
 import { withWorkerLock } from '../src/lock.ts';
 import { KrillApi } from '../src/krill/api.ts';
 import { KrillClient } from '../src/krill/client.ts';
-import { applyChangePage, mirrorRow, promoteMirror, stageMirror, sweepChanges, upsertJobs, type MirrorJob } from '../src/mirror.ts';
+import { applyChangePage, mirrorFamilies, mirrorRow, promoteMirror, stageMirror, sweepChanges, upsertJobs, type MirrorJob } from '../src/mirror.ts';
 import type { KrillChangePage } from '../src/krill/schemas.ts';
 
 const job = (id = 'j1', extra: Partial<MirrorJob> = {}): MirrorJob => ({
@@ -76,6 +76,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated 
     expect((await sql`select open from company_open_count`)[0]?.open).toBe(2);
     expect(calls).toHaveLength(2);
   });
+  it('follows all profession partitions and deduplicates jobs that moved between them', async () => {
+    const partitions: string[] = [];
+    const api = apiWith((url) => {
+      partitions.push(url.searchParams.get('family')!);
+      return { items: [job()], nextCursor: null };
+    });
+    expect(await stageMirror(sql, api, ['a'], ['swe', 'data'])).toBe(1);
+    expect(partitions.sort()).toEqual(['data', 'swe']);
+  });
   it('applies opened, updated, closed and reopened with replay-safe counters', async () => {
     const open = apiWith(() => job());
     await applyChangePage(sql, open, page('opened'), 'start');
@@ -121,4 +130,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated 
     await sweepChanges(sql, api);
     expect(seen).toEqual(['start', 'middle', 'end']);
   });
+});
+
+it('falls back to whole-ATS pulls if any jobs lack a profession or the facets were truncated', () => {
+  const facets = { total: 2, facets: { family: [{ value: 'swe', count: 1 }], specialty: [], level: [], workMode: [], ats: [], skill: [], language: [], country: [] } };
+  expect(mirrorFamilies(facets)).toBeUndefined();
+  facets.facets.family.push({ value: 'data', count: 1 });
+  expect(mirrorFamilies(facets)).toEqual(['swe', 'data']);
 });

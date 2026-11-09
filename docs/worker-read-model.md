@@ -41,7 +41,10 @@ snapshot must have `exportedAt` for its date; older providers without that field
 must report the date in every enabled ATS's `lastRun`. Already successful dates
 are skipped unless `--force` is supplied. A failed build retries at the next poll.
 
-A complete mirror is staged before publication. The same snapshot supplies
+A complete mirror is staged before publication. Current facets prove whether
+profession partitions cover every open job; when they do, ATS × profession
+partitions overlap long pagination chains. Otherwise the worker falls back to
+whole-ATS pulls, retaining unclassified jobs. The same snapshot supplies
 current facets, age cuts and salary samples locally, avoiding thousands of
 redundant network requests. Historical statistics and closing samples retain
 the original upstream inputs and compute functions. Snapshot publication and
