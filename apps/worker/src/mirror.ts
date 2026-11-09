@@ -101,6 +101,7 @@ export async function promoteMirror(tx: Sql, snapshotDate: string, cursor: strin
   await tx`alter table job_mirror_stage rename to job_mirror`;
   await tx`alter table job_mirror_previous rename to job_mirror_stage`;
   await refreshCounts(tx);
+  await tx`delete from job_description_retry r where not exists(select 1 from job_mirror j where j.id = r.job_id)`;
   await tx`insert into worker_state(name, cursor, snapshot_date, exported_at)
     values ('changes', ${cursor}, ${snapshotDate}, ${exportedAt ?? null})
     on conflict(name) do update set snapshot_date = excluded.snapshot_date,
@@ -132,6 +133,7 @@ export async function applyChangePage(sql: Sql, api: KrillApi, page: KrillChange
         await upsertJobs(tx, [job]);
       } else await tx`delete from job_mirror where id = ${id}`;
     }
+    if (ids.length) await tx`delete from job_description_retry where job_id in ${tx(ids)}`;
     for (const [index, item] of page.items.entries()) {
       const company = jobs.get(item.jobId)?.company.id ?? null;
       const inserted = await tx`insert into worker_change(event_key, job_id, kind, date, company_id)

@@ -1,3 +1,4 @@
+import { job, apiWith } from './fixtures.ts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { pino } from 'pino';
 import { createSql, type Sql } from '@cm/core/db';
@@ -5,23 +6,9 @@ import { migrate } from '@cm/core/migrate';
 import { parseConfig } from '@cm/core/config';
 import { runBuild } from '../src/build.ts';
 import { withWorkerLock } from '../src/lock.ts';
-import { KrillApi } from '../src/krill/api.ts';
-import { KrillClient } from '../src/krill/client.ts';
-import { applyChangePage, mirrorFamilies, mirrorRow, promoteMirror, stageMirror, sweepChanges, upsertJobs, type MirrorJob } from '../src/mirror.ts';
+import { applyChangePage, mirrorFamilies, mirrorRow, promoteMirror, stageMirror, sweepChanges, upsertJobs } from '../src/mirror.ts';
 import type { KrillChangePage } from '../src/krill/schemas.ts';
 
-const job = (id = 'j1', extra: Partial<MirrorJob> = {}): MirrorJob => ({
-  id, status: 'open', title: 'Software Engineer', company: { id: 'c1', name: 'Acme' }, url: 'https://example.com/job', applyUrl: null,
-  employmentType: 'full-time', workMode: 'remote', locations: ['London'], places: [{ label: 'London', countryCode: 'GB' }],
-  salary: { min: 100, max: 200, currency: 'GBP', period: 'year', annualMin: 100, annualMax: 200 },
-  postedAt: '2026-11-09T00:00:00Z', openedAt: '2026-11-09', openedSource: 'posted', firstSeenAt: '2026-11-09', lastSeenAt: '2026-11-09',
-  family: 'software-engineering', specialty: 'backend', level: 'senior', skills: ['lang:typescript'], languages: [], tools: [],
-  ageDays: 1, repostCount: 2, staleScore: 0.4, description: 'Build useful software.', ...extra,
-});
-const apiWith = (handler: (url: URL) => unknown) => new KrillApi(new KrillClient({
-  baseUrl: 'https://source.test', ratePerMinute: 500, timeoutMs: 1000, sleep: async () => {}, logger: pino({ level: 'silent' }),
-  fetchImpl: (async (input) => new Response(JSON.stringify(handler(new URL(String(input)))))) as typeof fetch,
-}));
 const page = (kind: 'opened' | 'closed' | 'updated' | 'reopened', cursor = 'after1'): KrillChangePage => ({
   items: [{ jobId: 'j1', kind, date: '2026-11-09', closeReason: null }], pageSize: 100, nextCursor: null, syncCursor: cursor,
 });
@@ -37,7 +24,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated 
   afterAll(async () => { await sql.end(); });
   beforeEach(async () => {
     await sql`delete from build_run`;
-    await sql`truncate job_mirror, job_mirror_stage, worker_state, worker_change, job_counter_daily, company_open_count, company`;
+    await sql`truncate job_mirror, job_mirror_stage, job_description_retry, worker_state, worker_change, job_counter_daily, company_open_count, company`;
     await sql`insert into worker_state(name, cursor) values ('changes', 'start')`;
   });
   it('skips unfinished snapshots and successful dates without starting another pull', async () => {
@@ -106,19 +93,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('mirror transactions (dedicated 
     expect((await sql`select description, description_present from job_mirror`)[0]).toMatchObject({ description: null, description_present: true });
   });
   it('applies opened, updated, closed and reopened with replay-safe counters', async () => {
-    const open = apiWith(() => job());
+    const open = apiWith(() => job('j1', { description: 'Opened text' }));
     await applyChangePage(sql, open, page('opened'), 'start');
     await applyChangePage(sql, open, page('opened'), 'start');
     expect((await sql`select new_today from job_counter_daily`)[0]?.new_today).toBe(1);
-    await applyChangePage(sql, apiWith(() => job('j1', { title: 'Staff Engineer', level: 'staff' })), page('updated', 'after2'), 'after1');
-    expect((await sql`select title, level from job_mirror`)[0]).toMatchObject({ title: 'Staff Engineer', level: 'staff' });
+    expect((await sql`select description, description_present from job_mirror`)[0]).toMatchObject({ description: 'Opened text', description_present: true });
+    await applyChangePage(sql, apiWith(() => job('j1', { title: 'Staff Engineer', level: 'staff', description: 'Updated text' })), page('updated', 'after2'), 'after1');
+    expect((await sql`select title, level, description from job_mirror`)[0]).toMatchObject({ title: 'Staff Engineer', level: 'staff', description: 'Updated text' });
     await applyChangePage(sql, apiWith(() => ({ id: 'j1', status: 'closed', closedAt: '2026-11-09', openedAt: '2026-11-09', openedSource: 'posted', family: null })), page('closed', 'after3'), 'after2');
     expect(await sql`select id from job_mirror`).toHaveLength(0);
     expect((await sql`select open from company_open_count`)[0]?.open).toBe(0);
-    await applyChangePage(sql, open, page('reopened', 'after4'), 'after3');
+    await applyChangePage(sql, apiWith(() => job('j1', { description: 'Reopened text' })), page('reopened', 'after4'), 'after3');
     expect((await sql`select new_today, closed_today from job_counter_daily`)[0]).toMatchObject({ new_today: 2, closed_today: 1 });
     expect((await sql`select cursor from worker_state`)[0]?.cursor).toBe('after4');
     expect((await sql`select open from company`)[0]?.open).toBe(1);
+    expect((await sql`select description from job_mirror`)[0]?.description).toBe('Reopened text');
   });
   it('does not advance the cursor or mutate jobs when hydration fails', async () => {
     await upsertJobs(sql, [job()]);

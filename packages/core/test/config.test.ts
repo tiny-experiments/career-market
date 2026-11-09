@@ -4,7 +4,7 @@ import { parseConfig } from '../src/config.ts';
 it('defaults to a five-minute watch and fifteen-minute sweep with like-for-like growth', () => {
   const config = parseConfig({});
   expect(config.builder.pollMinutes).toBe(5);
-  expect(config.worker).toEqual({ sweepMinutes: 15, concurrency: 12, growthMode: 'like-for-like' });
+  expect(config.worker).toEqual({ backfillPerMinute: 120, sweepMinutes: 15, concurrency: 12, growthMode: 'like-for-like' });
   expect(config.krill.ratePerMinute).toBe(50);
 });
 it('caps keyed and anonymous request rates and allows slower pacing', () => {

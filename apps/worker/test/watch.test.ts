@@ -45,3 +45,13 @@ it('compares only companies present in both periods unless raw is configured', (
   expect(growthRatio(base, now, 'raw')).toBeCloseTo(610 / 150 - 1);
   expect(growthRatio(new Map(), now, 'like-for-like')).toBeNull();
 });
+
+it('admits backfill only between foreground ticks, after due builds and sweeps', async () => {
+  const calls: string[] = [];
+  const tick = createWatchTick({ pollMs: 300000, sweepMs: 900000,
+    build: async () => { calls.push('build'); }, sweep: async () => { calls.push('sweep'); },
+    backfill: async () => { calls.push('backfill'); }, onError: () => {},
+  });
+  await tick(0); await tick(500); await tick(300000); await tick(900000);
+  expect(calls).toEqual(['build', 'sweep', 'backfill', 'build', 'build', 'sweep']);
+});

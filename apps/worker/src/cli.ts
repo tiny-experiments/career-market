@@ -1,3 +1,4 @@
+import { createDescriptionBackfill, createDescriptionHydrator } from './descriptions.ts';
 import { createWatchTick } from './watch.ts';
 import { sweepChanges } from './mirror.ts';
 import { loadConfig } from '@cm/core/config';
@@ -66,7 +67,12 @@ async function main(argv: string[]): Promise<number> {
       process.once('SIGINT', stop);
       process.once('SIGTERM', stop);
       log.info({ pollMinutes: config.builder.pollMinutes }, 'watching krill for new snapshot days');
+      const backfill = createDescriptionBackfill({ sql, hydrator: createDescriptionHydrator({ sql, api }),
+        ratePerMinute: config.worker.backfillPerMinute,
+        onError: (err) => log.warn({ err: String(err) }, 'description deferred for retry'),
+      });
       const tick = createWatchTick({
+        backfill,
         pollMs: intervalMs, sweepMs: config.worker.sweepMinutes * 60_000,
         build: () => runBuild({ sql, api, config, log }),
         sweep: () => sweepChanges(sql, api),
@@ -74,7 +80,7 @@ async function main(argv: string[]): Promise<number> {
       });
       while (!stopping) {
         await tick(Date.now());
-        if (!stopping) await new Promise((resolve) => setTimeout(resolve, 1_000));
+        if (!stopping) await new Promise((resolve) => setTimeout(resolve, config.worker.backfillPerMinute ? Math.min(1_000, Math.ceil(60_000 / config.worker.backfillPerMinute)) : 1_000));
       }
       return 0;
     }

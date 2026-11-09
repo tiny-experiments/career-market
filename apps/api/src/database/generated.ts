@@ -147,6 +147,12 @@ export interface JobCounterDaily {
   new_today: Generated<number>;
 }
 
+export interface JobDescriptionRetry {
+  attempts: Generated<number>;
+  job_id: string;
+  retry_after: Timestamp;
+}
+
 export interface JobMirror {
   company_id: string;
   company_name: string;
@@ -505,6 +511,7 @@ export interface DB {
   family_daily: FamilyDaily;
   family_estimate_daily: FamilyEstimateDaily;
   job_counter_daily: JobCounterDaily;
+  job_description_retry: JobDescriptionRetry;
   job_mirror: JobMirror;
   job_mirror_stage: JobMirrorStage;
   market_change: MarketChange;

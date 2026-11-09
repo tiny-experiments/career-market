@@ -34,7 +34,8 @@ Verdicts have the original `repostCount`, `staleScore`, `openedSource`, age and
 posting dates in `payload`. Typical hiring windows can join `company_daily` and
 `survival_curve`; those remain nightly facts. Closed jobs are removed from the
 open mirror; the event ledger retains closures. Job and company-role reads,
-search and filters should query Postgres exclusively.
+search and filters query Postgres exclusively; only a missing job description
+may trigger the approved one-time detail hydration described below.
 
 ## Scheduling and consistency
 
@@ -78,12 +79,42 @@ endpoint totals. A complete seven-day baseline is required; no shorter interval
 is labeled as a week. Other existing compute functions retain their established
 series and segment behavior.
 
-## Upstream detail limitation
+## Description coverage
 
-The current `/v1/jobs` listing is capped at 100 jobs/page and omits descriptions.
-The mirror stores every listing field needed for filters and verdicts. Changes
-hydrate full job detail, and later snapshots preserve an existing description.
-A first import cannot contain every job's description with the present API:
-individual detail hydration needs one request per job. A bulk listing/export
-that includes descriptions is needed to complete this bootstrap within the
-nightly build budget. Do not put upstream calls back into public request paths.
+The accepted full keyed build took **9m16.228s** for 297,827 jobs. Historical
+responses were warm; every job listing was fetched fresh. The eight-minute
+figure was a planning target; this measured build time is accepted.
+
+The source listing omits posting text. `description_present` distinguishes a
+missing field from full detail that legitimately returns null. Coverage grows
+through three paths:
+
+- A first job-page visit hydrates the missing description, persists it, and
+  returns the posting from Postgres. Later visits use Postgres. Concurrent first
+  visits through one hydrator instance share one request. Fetch failures remain
+  retryable; closed roles return tombstones and cannot be resurrected.
+- Opened, updated and reopened change events hydrate full detail during the
+  fifteen-minute sweep. Subsequent nightly snapshots preserve known text.
+- The watcher's idle steps backfill missing text in newest-first-seen order.
+  `WORKER_BACKFILL_PER_MIN=120` caps the background rate; 0 disables it. The
+  normal client rate gate also applies. Builds and sweeps run first, and backfill
+  admits only one in-flight job between foreground ticks. Other worker processes
+  holding the build/sweep lock cause the backfill to yield. A completed coverage
+  flag is its durable resume cursor. Failed or closed lookups receive a persisted
+  one-hour deferral in `job_description_retry`, so they cannot pin the queue.
+
+### API integration seam (P5c)
+
+Add `@cm/worker` as a workspace dependency and construct one singleton
+`createDescriptionHydrator({sql, api})` from `@cm/worker/descriptions` at server
+composition. `sql` is a core postgres.js pool; `api` is the keyed worker
+`KrillApi`/`KrillClient` (`@cm/worker/krill` and `@cm/worker/client`). The
+hydrator's `lookup(id)` returns `{kind:'open',job}`, `{kind:'closed',tombstone}`
+or `{kind:'missing'}`, matching the API job repository's lookup result. Open
+results are parsed `KrillJobDetail` records. It updates only text/coverage, so an
+on-demand response cannot overwrite newer sweep metadata. Route wiring stays
+with P5c. Lists, filters, company roles, similar roles and search remain local.
+
+`0012_description_backfill.sql` adds both queue indexes and the persisted retry
+table to the same ordered migration set. Neither mirror may have incoming
+foreign keys because publication rotates its physical table identity.

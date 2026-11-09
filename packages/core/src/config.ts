@@ -24,6 +24,7 @@ const schema = z.object({
   KRILL_CACHE_DIR: z.string().default('.cache/krill'),
   KRILL_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
 
+  WORKER_BACKFILL_PER_MIN: z.coerce.number().int().min(0).max(500).default(120),
   WORKER_SWEEP_MINUTES: z.coerce.number().int().positive().default(15),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(32).default(12),
   GROWTH_MODE: z.enum(['like-for-like', 'raw']).default('like-for-like'),
@@ -58,7 +59,7 @@ export interface Config {
     cacheDir: string;
     timeoutMs: number;
   };
-  worker: { sweepMinutes: number; concurrency: number; growthMode: 'like-for-like' | 'raw' };
+  worker: { backfillPerMinute: number; sweepMinutes: number; concurrency: number; growthMode: 'like-for-like' | 'raw' };
   builder: {
     pollMinutes: number;
     closingSamplePerDay: number;
@@ -98,7 +99,7 @@ export function parseConfig(env: Record<string, string | undefined>, cwd = proce
       cacheDir: path.resolve(cwd, raw.KRILL_CACHE_DIR),
       timeoutMs: raw.KRILL_TIMEOUT_MS,
     },
-    worker: { sweepMinutes: raw.WORKER_SWEEP_MINUTES, concurrency: raw.WORKER_CONCURRENCY, growthMode: raw.GROWTH_MODE },
+    worker: { backfillPerMinute: raw.WORKER_BACKFILL_PER_MIN, sweepMinutes: raw.WORKER_SWEEP_MINUTES, concurrency: raw.WORKER_CONCURRENCY, growthMode: raw.GROWTH_MODE },
     builder: {
       pollMinutes: raw.BUILDER_POLL_MINUTES,
       closingSamplePerDay: raw.BUILDER_CLOSING_SAMPLE_PER_DAY,

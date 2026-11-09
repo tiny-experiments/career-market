@@ -14,6 +14,7 @@ export function snapshotReady(meta: KrillMeta): boolean {
 export function createWatchTick(deps: {
   build: () => Promise<unknown>;
   sweep: () => Promise<unknown>;
+  backfill?: (now: number) => Promise<unknown>;
   onError: (error: unknown) => void;
   pollMs: number;
   sweepMs: number;
@@ -25,13 +26,19 @@ export function createWatchTick(deps: {
     if (running) return;
     running = true;
     try {
+      let priorityWork = false;
       if (now >= nextBuild) {
+        priorityWork = true;
         nextBuild = now + deps.pollMs;
         try { await deps.build(); } catch (error) { deps.onError(error); }
       }
       if (now >= nextSweep) {
+        priorityWork = true;
         nextSweep = now + deps.sweepMs;
         try { await deps.sweep(); } catch (error) { deps.onError(error); }
+      }
+      if (!priorityWork && deps.backfill) {
+        try { await deps.backfill(now); } catch (error) { deps.onError(error); }
       }
     } finally { running = false; }
   };

@@ -17,5 +17,10 @@
   },
   "devDependencies": {
     "pino": "^10.4.0"
+  },
+  "exports": {
+    "./descriptions": "./src/descriptions.ts",
+    "./krill": "./src/krill/api.ts",
+    "./client": "./src/krill/client.ts"
   }
 }
