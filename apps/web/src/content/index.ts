@@ -48,7 +48,6 @@ export {
   ABOUT,
   FOOTER_LINE,
   PAGES,
-  SITE_DESCRIPTION,
   SITE_NAME,
   companyPage,
   documentTitle,

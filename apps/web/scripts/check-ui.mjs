@@ -130,9 +130,56 @@ export function arbitraryValues(text, path) {
   }
 }
 
-const QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
 // Text between tags that is not an expression: `>Open roles<`, but not `>{x}<`.
-const JSX_TEXT = />([^<>{}]+)</g;
+// The `>` must close a tag, so the one in `=>` or `a > b` never opens text.
+const JSX_TEXT = /(?<=[\w"'}/]|\n[ \t]*)>([^<>{}]+)</g;
+
+const blank = (text) => text.replace(/[^\n]/g, " ");
+
+/** Index just past the string that opens at `start`, or -1 when it never closes. */
+function stringEnd(text, start) {
+  const quote = text[start];
+  for (let i = start + 1; i < text.length; i++) {
+    if (text[i] === "\\") i++;
+    else if (text[i] === quote) return i + 1;
+    else if (text[i] === "\n" && quote !== "`") return -1;
+  }
+  return -1;
+}
+
+/**
+ * Splits a source file into its string literals and a copy of the code with
+ * comments and string contents blanked out, so offsets still line up.
+ */
+function scan(text) {
+  const strings = [];
+  let code = "";
+  let i = 0;
+  while (i < text.length) {
+    const char = text[i];
+    const next = text[i + 1];
+    if (char === "/" && (next === "/" || next === "*")) {
+      const close =
+        next === "/" ? text.indexOf("\n", i) : text.indexOf("*/", i + 2);
+      const end = close === -1 ? text.length : next === "/" ? close : close + 2;
+      code += blank(text.slice(i, end));
+      i = end;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") {
+      const end = stringEnd(text, i);
+      if (end !== -1) {
+        strings.push({ text: text.slice(i, end), index: i });
+        code += char + blank(text.slice(i + 1, end - 1)) + char;
+        i = end;
+        continue;
+      }
+    }
+    code += char;
+    i++;
+  }
+  return { strings, code };
+}
 
 /**
  * The parts of a source file a visitor can read: string literals and the
@@ -142,13 +189,14 @@ const JSX_TEXT = />([^<>{}]+)</g;
  */
 export function customerFacingText(text, path) {
   if (path.endsWith(".html")) return [{ text, index: 0 }];
-  const parts = [];
-  for (const match of text.matchAll(QUOTED)) {
-    parts.push({ text: match[0], index: match.index });
-  }
+  const { strings, code } = scan(text);
+  const parts = [...strings];
   if (path.endsWith(".tsx") || path.endsWith(".jsx")) {
-    for (const match of text.matchAll(JSX_TEXT)) {
-      parts.push({ text: match[1], index: match.index + 1 });
+    for (const match of code.matchAll(JSX_TEXT)) {
+      parts.push({
+        text: text.slice(match.index + 1, match.index + 1 + match[1].length),
+        index: match.index + 1,
+      });
     }
   }
   return parts;

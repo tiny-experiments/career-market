@@ -6,10 +6,6 @@
 
 export const SITE_NAME = "Career Market";
 
-/** The `<meta name="description">`; index.html carries the same sentence. */
-export const SITE_DESCRIPTION =
-  "Tech careers charted like markets: open roles, pay and demand by profession, company and skill.";
-
 /** The only sentence on the site about where roles come from. */
 export const FOOTER_LINE =
   "Open roles from 48,000+ company career pages, updated through the day.";

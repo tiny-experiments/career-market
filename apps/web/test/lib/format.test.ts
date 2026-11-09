@@ -100,6 +100,10 @@ describe("format", () => {
     expect(formatMoney(80_000, "EUR")).toBe("€80K");
     expect(formatMoney(1_250_000, "GBP")).toBe("£1.25M");
     expect(formatMoney(90_000, "CHF")).toBe("CHF 90K");
+    expect(formatMoney(80_000, "CAD")).toBe("CAD 80K");
+    expect(formatMoney(80_000, "aud")).toBe("AUD 80K");
+    expect(formatMoney(9_000_000, "JPY")).toBe("JPY 9M");
+    expect(formatMoneyRange(70_000, 90_000, "CAD")).toBe("CAD 70K–CAD 90K");
     expect(formatMoneyRange(144_000, 157_000)).toBe("$144K–$157K");
     expect(formatMoneyRange(80_000, 80_000, "EUR")).toBe("€80K");
   });
@@ -157,6 +161,14 @@ describe("format", () => {
         period: "year",
       }),
     ).toBeNull();
+    expect(
+      formatListedPay({
+        min: 45,
+        max: 60,
+        currency: "AUD",
+        period: "hour",
+      }),
+    ).toBe("AUD 45–AUD 60 an hour");
     expect(formatListedPay(null)).toBeNull();
   });
 });

@@ -128,28 +128,16 @@ export function formatRelativeDay(isoDay: string, today?: Date): string {
 
 /* ---------- Money ---------- */
 
-const symbolCache = new Map<string, string>();
+const SYMBOLS: Readonly<Record<string, string>> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
 
-/** "USD" → "$", "EUR" → "€", "GBP" → "£"; an unknown code stays a code with a space. */
+/** "USD" → "$", "EUR" → "€", "GBP" → "£"; every other code stays a code with a space ("CAD "). */
 function currencySymbol(currency: string): string {
   const code = currency.toUpperCase();
-  const cached = symbolCache.get(code);
-  if (cached !== undefined) return cached;
-  let symbol = `${code} `;
-  try {
-    const part = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: code,
-      currencyDisplay: "narrowSymbol",
-    })
-      .formatToParts(0)
-      .find((item) => item.type === "currency")?.value;
-    if (part && !/^[A-Z]{3}$/.test(part)) symbol = part;
-  } catch {
-    // Not a currency code Intl knows; the code itself is the symbol.
-  }
-  symbolCache.set(code, symbol);
-  return symbol;
+  return SYMBOLS[code] ?? `${code} `;
 }
 
 /** 144000 → "$144K"; (80000, "EUR") → "€80K". The same shape as `formatPay`, in any currency. */

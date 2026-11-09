@@ -43,6 +43,19 @@ describe("check-ui", () => {
     expect(customerFacingText(`a = b // estimated`, "src/x.ts")).toEqual([]);
   });
 
+  it("leaves comparisons, arrows and apostrophes in comments alone", () => {
+    const text = [
+      `const slow = rows.filter((p) => p.estimated < 5);`,
+      `// the user's estimated pay isn't shown`,
+      `/* a survival note, it's old`,
+      `   and isn't used */`,
+      `<p className="x">Open roles</p>`,
+      `<div\n  id="a"\n>Estimated pay</div>`,
+    ].join("\n");
+    const found = retiredWords(text, "src/components/Thing.tsx");
+    expect(found.map((f) => [f.line, f.value])).toEqual([[8, "Estimated"]]);
+  });
+
   it("flags arbitrary values but not arbitrary variants", () => {
     const text = `className="p-[13px] data-[side=top]:mt-1 focus-visible:ring-[3px]"`;
     expect(arbitraryValues(text, "x").map((f) => f.value)).toEqual([

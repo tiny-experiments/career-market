@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as content from "@/content";
 
@@ -84,14 +82,5 @@ describe("content vocabulary", () => {
       content.METRICS.openRoles.text,
       content.FOOTER_LINE,
     ]);
-  });
-
-  it("keeps index.html's description in step with the site description", () => {
-    const html = readFileSync(
-      resolve(import.meta.dirname, "../../index.html"),
-      "utf8",
-    );
-    expect(html).toContain(`content="${content.SITE_DESCRIPTION}"`);
-    expect(html).not.toMatch(RETIRED);
   });
 });
