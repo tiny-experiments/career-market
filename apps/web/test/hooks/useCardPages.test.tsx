@@ -51,7 +51,8 @@ function atWidth(desktop: boolean) {
   query.addEventListener = ((_: string, handler: () => void) => {
     widthChanged = handler;
   }) as MediaQueryList["addEventListener"];
-  query.removeEventListener = (() => undefined) as MediaQueryList["removeEventListener"];
+  query.removeEventListener = (() =>
+    undefined) as MediaQueryList["removeEventListener"];
   vi.spyOn(window, "matchMedia").mockReturnValue(query);
   return query;
 }
