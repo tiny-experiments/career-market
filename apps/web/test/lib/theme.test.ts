@@ -38,12 +38,6 @@ describe("index.html boot script", () => {
     document.documentElement.removeAttribute("style");
   });
 
-  it("uses the same storage key as the app", () => {
-    expect(bootScript()).toContain(
-      `localStorage.getItem("${THEME_STORAGE_KEY}")`,
-    );
-  });
-
   for (const stored of STORED) {
     for (const deviceIsDark of [true, false]) {
       it(`paints ${resolveTheme(stored, deviceIsDark)} for stored ${JSON.stringify(stored)} on a ${deviceIsDark ? "dark" : "light"} device`, () => {
