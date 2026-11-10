@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,6 +9,26 @@
       content="Tech careers charted like markets: open roles, pay and demand by profession, company and skill."
     />
     <title>Career Market</title>
+    <script>
+      // Paint the right theme before React mounts: a stored Light or Dark
+      // pick, else the device setting. Mirrors resolveTheme in src/lib/theme.ts.
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("theme");
+        } catch (e) {}
+        var theme =
+          stored === "light" || stored === "dark"
+            ? stored
+            : window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        var root = document.documentElement;
+        root.classList.add(theme);
+        root.style.colorScheme = theme;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

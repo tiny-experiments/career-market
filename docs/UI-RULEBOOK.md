@@ -18,7 +18,7 @@ The bar is CoinMarketCap, TradingView, Apple: full width, breathing room, bold w
 2. **No magic numbers.** Spacing, radius and type come from the scales below. `p-[13px]` is a bug; name a token instead.
 3. **One blue, one meaning.** `primary` is the single call to action on a page, the active underline and links. Up is green, down is red, warn is amber. Nothing else is coloured.
 4. **shadcn first.** If shadcn/ui has it, we use it (vendored in `components/ui`). We change it through tokens and variants, never by hand-rolling a copy.
-5. **Both themes, always.** Dark is the default; every surface is checked in light before it is done.
+5. **Both themes, always.** The visitor's device picks the theme unless they choose one; every surface is checked in light before it is done.
 6. **Never name the source.** No provider name, no table name, no pipeline word anywhere a visitor can read. The footer's line is the only sentence about where roles come from.
 7. **Twice is a component.** The second time you write the same markup, extract it.
 8. **Tokens > variants > className.** Change the token first, add a `cva` variant second, reach for a one-off `className` last.
