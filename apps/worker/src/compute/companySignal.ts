@@ -1,6 +1,7 @@
 import { addDays, FIRST_COMPARABLE_BASE, isBootstrapDay, RANGE_DAYS, type IsoDay } from '@cm/core/dates';
 import type { CompanySignal } from '@cm/core/professions';
 import type { Change } from '@cm/core/types';
+import { sameBoards } from '../growth.ts';
 
 /** One company's open roles in one family on one snapshot day (krill K2). */
 export interface CompanyDay {
@@ -15,6 +16,8 @@ export interface CompanyChange {
   baseOpen: number;
   newSum: number;
   closedSum: number;
+  /** No day after the base restarts the company's series (sameBoards): the change is hiring. */
+  sameBoards: boolean;
 }
 
 /**
@@ -46,6 +49,7 @@ export function companyChange(days: readonly CompanyDay[], asOf: IsoDay): Compan
     baseOpen: base.open,
     newSum: flow.reduce((n, d) => n + d.new, 0),
     closedSum: flow.reduce((n, d) => n + d.closed, 0),
+    sameBoards: sameBoards(new Map(sorted.map((d) => [d.date, d])), base.date, asOf),
   };
 }
 
@@ -73,4 +77,13 @@ export const COVERAGE_JUMP = 0.5;
 
 export function isCoverageJump(change: Change | null): boolean {
   return change !== null && Math.abs(change.value) > COVERAGE_JUMP;
+}
+
+/**
+ * The change mostly shows krill's coverage of the company changing, not hiring:
+ * open roles moved by more than half, or a day after the base was a board event
+ * or a re-count (see sameBoards), such as the merge of duplicate Oracle records.
+ */
+export function isCoverageChange(c: CompanyChange | null): boolean {
+  return c !== null && (isCoverageJump(c.change) || !c.sameBoards);
 }

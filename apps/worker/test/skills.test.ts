@@ -44,6 +44,9 @@ describe('chainIndexFromRows', () => {
     const rows = made.map((p, i) => ({
       date: p.date,
       open: 1000 + i,
+      new: null,
+      closed: null,
+      new_known: null,
       link: p.link,
       matched_open: panel.get(p.date)?.matchedOpen ?? null,
       matched_previous_open: panel.get(p.date)?.matchedPreviousOpen ?? null,

@@ -11,13 +11,13 @@ import { computeChange } from '../src/compute/changes.ts';
 const row = (date: string, open: number, n = 0, closed = 0) => ({ date, open, new: n, closed });
 
 describe('companySeries', () => {
-  it('leaves out bootstrap days and the day a board is first fetched', () => {
+  it('leaves out bootstrap days, roles that vanished without closing and the day a board is first fetched', () => {
     const s = companySeries([row('2026-11-02', 100, 100), row('2026-11-03', 100), row('2026-11-04', 110, 12, 2), row('2026-11-05', 0), row('2026-11-06', 40, 40)], '2026-11-06');
     expect(s.days.map((d) => [d.date.slice(8), d.excluded])).toEqual([
       ['02', true],
       ['03', true],
       ['04', false],
-      ['05', false],
+      ['05', true],
       ['06', true],
     ]);
     // The board that vanished and returned on the 6th starts a new segment.
