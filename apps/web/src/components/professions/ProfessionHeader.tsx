@@ -13,6 +13,7 @@ import {
 import {
   changeSuffix,
   MARKET_COPY,
+  daysOld,
   METRICS,
   NO_FIGURE,
   WINDOW_HEADER,
@@ -99,13 +100,13 @@ export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
             hint={METRICS.remoteShare}
           />
           <StatCard
-            label={METRICS.typicalTimeOpen.title}
+            label={METRICS.typicalAge.title}
             value={
               page.medianDaysOpen === null
                 ? NO_FIGURE
-                : formatDays(page.medianDaysOpen)
+                : daysOld(formatDays(page.medianDaysOpen))
             }
-            hint={METRICS.typicalTimeOpen}
+            hint={METRICS.typicalAge}
           />
           <StatCard
             label={METRICS.companiesHiring.title}

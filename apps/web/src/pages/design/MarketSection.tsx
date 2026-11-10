@@ -77,10 +77,10 @@ export function MarketSection() {
                 }}
               />
               <KpiTile
-                label="Typical time open"
-                value="38 days"
+                label="Typical open role"
+                value="38 days old"
                 hint={{
-                  text: "How long the middle role stays open before it closes.",
+                  text: "How long ago the typical open role was first posted: half are newer, half older.",
                 }}
               />
               <KpiTile

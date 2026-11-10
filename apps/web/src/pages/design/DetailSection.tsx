@@ -86,11 +86,10 @@ export function DetailSection() {
                   }}
                 />
                 <StatCard
-                  label="Typical time open"
-                  value="42 days"
-                  detail="median"
+                  label="Typical open role"
+                  value="42 days old"
                   hint={{
-                    text: "How long the middle role in this profession stays open.",
+                    text: "How long ago the typical open role was first posted: half are newer, half older.",
                   }}
                 />
                 <StatCard

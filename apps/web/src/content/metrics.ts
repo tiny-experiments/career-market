@@ -114,10 +114,6 @@ export const METRICS = {
   },
 
   // Time
-  typicalTimeOpen: {
-    title: "Typical time open",
-    text: "How long ago the typical open role was first posted: half are newer, half older.",
-  },
   typicalAge: {
     title: "Typical open role",
     text: "How long ago the typical open role was first posted: half are newer, half older.",
