@@ -3,6 +3,7 @@ import type { Logger } from '@cm/core/logger';
 import { concurrentMap } from '../concurrent.ts';
 import { ContextDevError, type BrandSearch, type LogoProbe } from './contextDev.ts';
 import { applyCompanyNames } from './names.ts';
+import { refreshSiteNames, type SitePage } from './siteNames.ts';
 import { brandName, canSearchBrand, freeDomain, matchBrand, type DomainSource } from './domain.ts';
 
 export interface LogoSettings {
@@ -30,6 +31,8 @@ export interface LogoDeps {
   brandSearch?: BrandSearch;
   /** Absent without a public client id: domains are kept unverified. */
   logoProbe?: LogoProbe;
+  /** Reads tenant careers sites for the names of companies known only by a code; absent, those keep the names already read. */
+  sitePage?: SitePage;
 }
 
 export interface LogoStats {
@@ -261,6 +264,7 @@ export async function resolveCompanyDomains(deps: LogoDeps): Promise<LogoStats> 
 
   // Brand results are new domains; check them in the same pass when the budget allows.
   if (!logoStepStopped) await runLogoChecks(deps, checksLeft(), stats, failed);
+  if (deps.sitePage) await refreshSiteNames({ sql, log, sitePage: deps.sitePage, recheckDays: settings.recheckDays });
   await sql.begin(async (tx) => {
     await applyCompanyDomains(tx as unknown as Sql);
     await applyCompanyNames(tx as unknown as Sql);
