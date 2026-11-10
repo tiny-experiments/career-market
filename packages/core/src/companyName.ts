@@ -96,38 +96,95 @@ export function cleanCareerTitle(raw: string): string {
 }
 
 // What an Oracle Recruiting site adds around the employer in its site name: "Candidate Experience
-// Site Polyglass", "Chubb External", "EXL Talent Acquisition Team", "Linamar Career Site - New".
-const SITE_PREFIX = /^(?:candidate\s+experience\s+site\b\s*[-:]?\s*|careers?\s*[-|:]\s*|careers?\s+at\s+|sitio\s+de\s+oportunidades(?:\s+de)?\s+empleo\s+)/i;
-const SITE_SUFFIX = new RegExp(
-  String.raw`(?:_(?:en|fr)|\s*\((?:us|uk)\)|(?<=[A-Za-z]{2})\.|,?\s+(?:inc|llc|ltd|limited)\.?|(?:\s*[-|:]\s*|\s+)(?:` +
+// Site Polyglass", "Chubb External", "EXL Talent Acquisition Team", "Linamar Career Site - New",
+// "Jobs at Acosta", "Trabaja en Interbank", "BCBSM Career Section", "Rice University Minimal Template".
+const SITE_PREFIX = new RegExp(
+  '^(?:' +
     [
-      String.raw`new|careers?|jobs?|global|international|united\s+states`,
-      String.raw`(?:external|global|us|uk|early)?\s*(?:careers?|jobs?)\s+(?:site|portal|center|centre|page)(?:\s+(?:us|uk))?`,
-      String.raw`(?:external|global|early)?\s*careers?(?:\s+(?:french|global))?`,
-      String.raw`candidate\s+experience|talent\s+acquisition(?:\s+team)?|(?:e-)?recruitment(?:\s+(?:team|system))?|human\s+resources`,
-      String.raw`job\s+listings|staff\s+positions|support\s+staff\s+openings|external`,
+      String.raw`candidate\s+experience\s+site\b\s*[-:]?\s*`,
+      String.raw`(?:careers?|job\s+opportunities)\s*[-|:]\s*`,
+      String.raw`(?:careers?|jobs?|job\s+listings|working)\s+(?:at|@)\s+`,
+      String.raw`sitio\s+de\s+oportunidades(?:\s+de)?\s+empleo\s+`,
+      String.raw`trabaja\s+en\s+|lavora\s+con\s+noi\s*[-:]?\s*|sito\s+|explore\s+(?=\S+\s+careers?$)`,
+    ].join('|') +
+    ')',
+  'i',
+);
+const SITE_SUFFIX = new RegExp(
+  String.raw`(?:\s+(?:EN|FR)|\s*\([^)]*\)|(?<=[A-Za-z]{2})\.|\s*[-|:]|,?\s+(?:inc|llc|ltd|limited)\.?|(?<=[a-z])CareerSite|(?:\s*[-|:]\s*|\s+)(?:` +
+    [
+      String.raw`new|careers?|jobs?|global|international|united\s+states|english|french`,
+      String.raw`(?:external|global|us|uk|early)?\s*(?:careers?|jobs?)\s+(?:site|portal|center|centre|page|section|opportunities|connection)(?:\s+(?:us|uk))?`,
+      String.raw`(?:external|global|early)?\s*careers?(?:\s+(?:french|global))?|careersite|opportunities(?:\s*-\s*join\s+us)?`,
+      String.raw`candidate(?:\s+experience)?(?:\s+external)?(?:\s+site)?|talent\s+acquisition(?:\s+team)?|(?:e-)?recruitment(?:\s+(?:team|system))?|human\s+resources`,
+      String.raw`job\s+(?:listings|board)|staff\s+positions|support\s+staff\s+openings|external|all\s+(?:open\s+)?jobs`,
+      String.raw`minimal(?:\s+template)?|professional|experienced|campus|lateral|student|additional`,
     ].join('|') +
     '))$',
   'i',
 );
-/** Site names that name no one: Oracle's default, and one-word labels. */
-const SITE_GENERIC = /^(?:candidate\s+experience(?:\s+site)?|site\s+kandidaatervaring|global|join|careers?|jobs?|new|external|)$/i;
+/**
+ * Site names that name no one: Oracle's default and error pages, one-word labels, the audience
+ * a site is for ("Campus", "Experienced Professionals"), and Oracle's demo company "Vision".
+ */
+const SITE_GENERIC = new RegExp(
+  '^(?:' +
+    [
+      String.raw`candidate\s+experience(?:\s+site)?|site\s+kandidaatervaring|career\s+site\b.*|page\s+not\s+found|home(?:\s+page)?`,
+      String.raw`global|join(?:\s+us)?|careers?|jobs?|new|external|all|campus|lateral|students?(?:\s+employment)?`,
+      String.raw`(?:experienced\s+)?professionals?|experienced|talent(?:\s+acquisition)?|enterprise\s+wide|full\s+service|vision`,
+      String.raw`business\s+operations(?:\s+and\s+legal)?`,
+    ].join('|') +
+    ')?$',
+  'i',
+);
 
 /**
  * The employer an Oracle Recruiting careers site names, cleaned of what the site adds
  * around it, or null when the site names no one ("Candidate Experience site").
  */
 export function cleanSiteName(raw: string): string | null {
-  let name = raw.replace(/\\'/g, "'").replace(/\s+/g, ' ').trim();
+  let name = raw.replace(/\\'/g, "'").replace(/_/g, ' ').replace(/\s+/g, ' ').trim().replace(/^the\s+(?=[A-Z])/, '');
   for (;;) {
     const next = name.replace(SITE_PREFIX, '').replace(SITE_SUFFIX, '').trim();
     if (next === name || !next) break;
     name = next;
   }
-  // "Verisk Careers | Verisk": the brand repeated after a separator.
-  const halves = name.split(/\s*\|\s*/);
-  if (halves.length === 2 && halves[1] && halves[0]!.toLowerCase().startsWith(halves[1].toLowerCase())) name = halves[1];
+  // "Verisk Careers | Verisk", "Texas Woman's University | TWU": the first part that names someone.
+  if (name.includes('|')) {
+    for (const part of name.split('|')) {
+      const named = part.trim() ? cleanSiteName(part) : null;
+      if (named) return named;
+    }
+    return null;
+  }
   return SITE_GENERIC.test(name) || TENANT.test(name) ? null : name;
+}
+
+/**
+ * True when a company's directory name is the code of one of its Oracle Recruiting tenants:
+ * "fa-eqzh-saasfaprod1", "Fa Ewgu Saasfaprod1", "Hcwx (CX_3001)" or "eexs.fa.us2.oraclecloud.com"
+ * at eexs.fa.us2.oraclecloud.com. Only then may a tenant's site name rename the company.
+ */
+export function isTenantCode(raw: string, hosts: readonly string[]): boolean {
+  if (/saasfa/i.test(raw)) return true;
+  const key = raw.trim().replace(PARENTHETICAL, '').trim().toLowerCase().replace(/\s+/g, '-');
+  return hosts.some((host) => key === host.toLowerCase() || key === host.toLowerCase().split('.')[0]);
+}
+
+const letters = (name: string) => name.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+
+/**
+ * The name a company's Oracle careers sites give it, as far as it may be used: a tenant code
+ * takes the site's name; any other name the directory holds only takes the site's spelling
+ * of that same name ("Kpmg" becomes KPMG), never another name ("Masimo" stays Masimo when its
+ * site says "Page not found").
+ */
+export function siteNameFor(raw: string, hosts: readonly string[], site: string | null): string | null {
+  const stated = site?.trim();
+  if (!stated) return null;
+  if (isTenantCode(raw, hosts)) return stated;
+  return letters(cleanCareerTitle(raw)) === letters(stated) ? stated : null;
 }
 
 /** True when all we hold for a company is a hiring-platform code, not a name. */

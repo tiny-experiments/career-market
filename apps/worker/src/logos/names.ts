@@ -1,10 +1,11 @@
-import { companyDisplay } from '@cm/core/companyName';
+import { companyDisplay, siteNameFor } from '@cm/core/companyName';
 import type { Sql } from '@cm/core/db';
 import { pickSiteName } from './siteNames.ts';
 
 /**
  * Names every company from its hand-checked name, or else the name its careers site
- * states when the directory holds only a platform code, or else its directory name and
+ * states when the directory holds only that tenant's code (a site only confirms the
+ * spelling of any other name), or else its directory name and
  * resolved domain, and copies the result to the tables that hold a company's name.
  * Runs after the domains are published, so a newly resolved site improves the name
  * at once. A site whose logo is only a placeholder still names the company: the
@@ -19,22 +20,25 @@ export async function applyCompanyNames(tx: Sql): Promise<void> {
       checked: string | null;
       site_names: (string | null)[] | null;
       site_jobs: number[] | null;
+      site_urls: string[] | null;
       display_name: string | null;
       named: boolean | null;
     }[]
   >`
     select c.company_id, c.name, coalesce(c.domain, d.domain) as domain, o.name as checked,
-      s.site_names, s.site_jobs, c.display_name, c.named
+      s.site_names, s.site_jobs, s.site_urls, c.display_name, c.named
     from company c
     left join company_domain d using (company_id)
     left join company_name_override o using (company_id)
     left join (
-      select company_id, array_agg(site_name) as site_names, array_agg(jobs) as site_jobs
+      select company_id, array_agg(site_name) as site_names, array_agg(jobs) as site_jobs, array_agg(site_url) as site_urls
       from company_site_name where site_name is not null group by company_id
     ) s using (company_id)`;
   const changed = rows.flatMap((row) => {
-    const sites = (row.site_names ?? []).map((name, i) => ({ name, jobs: row.site_jobs?.[i] ?? 0 }));
-    const display = companyDisplay(row.name, row.domain, row.checked, pickSiteName(sites));
+    const urls = row.site_urls ?? [];
+    const sites = (row.site_names ?? []).map((name, i) => ({ name, jobs: row.site_jobs?.[i] ?? 0, url: urls[i] }));
+    const hosts = urls.map((url) => new URL(url).host);
+    const display = companyDisplay(row.name, row.domain, row.checked, siteNameFor(row.name, hosts, pickSiteName(sites)));
     return display.name === row.display_name && display.named === row.named ? [] : [{ id: row.company_id, ...display }];
   });
   for (let i = 0; i < changed.length; i += 2000) {

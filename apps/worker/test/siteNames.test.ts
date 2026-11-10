@@ -20,6 +20,12 @@ describe('Oracle careers sites', () => {
     expect(oracleSiteUrl('https://EEHO.fa.us2.oraclecloud.com:443/hcmUI/CandidateExperience/fr-FR/sites/jobsearch/requisitions?x=1')).toBe(
       'https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/jobsearch',
     );
+    expect(oracleSiteUrl('https://eoff.fa.em1.ukg.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/job/2826')).toBe(
+      'https://eoff.fa.em1.ukg.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX',
+    );
+    expect(oracleSiteUrl('https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210260943')).toBe(
+      'https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001',
+    );
     expect(oracleSiteUrl('https://careers.avient.com/job/1')).toBeNull();
     expect(oracleSiteUrl('https://evil.example.com/x.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX')).toBeNull();
   });
@@ -29,6 +35,9 @@ describe('Oracle careers sites', () => {
     expect(siteNameFromPage('<head><title>Chili&#39;s &amp; Friends</title></head>')).toBe("Chili's & Friends");
     expect(siteNameFromPage(`<meta content='Steen &amp; Strom' property='og:site_name'>`)).toBe('Steen & Strom');
     expect(siteNameFromPage('<head><meta property="og:site_name" content=" "><title> </title></head>')).toBeNull();
+    expect(siteNameFromPage('<title>Uisce &Eacute;ireann</title>')).toBe('Uisce Éireann');
+    expect(siteNameFromPage('<title>Startek&reg; &mdash; Texas Woman&rsquo;s &oslash;</title>')).toBe('Startek® — Texas Woman’s ø');
+    expect(siteNameFromPage('<title>Caf&#233; &unknown;</title>')).toBe('Café &unknown;');
   });
 
   it('names the company by the site that covers the most open roles', () => {
@@ -37,12 +46,26 @@ describe('Oracle careers sites', () => {
         { name: 'Staples Inc.', jobs: 40 },
         { name: 'Staples Business', jobs: 30 },
         { name: 'Staples Inc.', jobs: 5 },
-        { name: 'Candidate Experience site', jobs: 500 },
+        { name: 'Candidate Experience site', jobs: 50 },
       ]),
     ).toBe('Staples');
     expect(pickSiteName([{ name: 'Penske Careers', jobs: 2 }, { name: 'Penske Careers French', jobs: 1 }])).toBe('Penske');
     expect(pickSiteName([{ name: 'Join', jobs: 3 }, { name: null, jobs: 1 }])).toBeNull();
     expect(pickSiteName([])).toBeNull();
+  });
+
+  it('breaks a tie by the tenant default site, and names no one when unnamed sites hold more roles', () => {
+    const site = (id: string) => `https://hdga.fa.em3.oraclecloud.com/hcmUI/CandidateExperience/en/sites/${id}`;
+    expect(
+      pickSiteName([
+        { name: 'Lawson Fuses', jobs: 9, url: site('Lawsonfuses') },
+        { name: 'Lucy Group', jobs: 9, url: site('CX') },
+        { name: 'Lucy Electric', jobs: 9, url: site('CX_1') },
+      ]),
+    ).toBe('Lucy Group');
+    expect(pickSiteName([{ name: 'Lucy Electric', jobs: 9, url: site('CX_12') }, { name: 'Lawson Fuses', jobs: 9, url: site('CX_2') }])).toBe('Lawson Fuses');
+    expect(pickSiteName([{ name: 'Lawson Fuses', jobs: 1 }, { name: 'Abbott', jobs: 1 }])).toBe('Abbott');
+    expect(pickSiteName([{ name: 'Global', jobs: 38 }, { name: 'MRT', jobs: 2 }, { name: 'Carboline', jobs: 1 }])).toBeNull();
   });
 
   it('fetches a page and refuses an error answer', async () => {
@@ -88,7 +111,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
           ('site_generic','site-generic','Fa Eocc Saasfaprod1',null,1,900103,'2026-11-09'),
           ('site_checked','site-checked','Fa Ewjt Saasfaprod1',null,1,900104,'2026-11-09'),
           ('site_named','site-named','Bluelight Consulting',null,1,900105,'2026-11-09'),
-          ('site_down','site-down','fa-exdu-dev2-saasfaprod1',null,1,900106,'2026-11-09')`;
+          ('site_down','site-down','fa-exdu-dev2-saasfaprod1',null,1,900106,'2026-11-09'),
+          ('site_ukg','site-ukg','Eoff',null,1,900107,'2026-11-09'),
+          ('site_word','site-word','Masimo',null,1,900108,'2026-11-09'),
+          ('site_case','site-case','nokia',null,1,900109,'2026-11-09')`;
         await tx`insert into company_name_override (company_id,name,note) values ('site_checked','EXL','test')`;
         await addJob(tx, 'site_j1', 'site_avient', `${host('fa-eqzh-saasfaprod1')}/CX_1/job/1`);
         await addJob(tx, 'site_j2', 'site_avient', `${host('fa-eqzh-saasfaprod1')}/CX_1/job/2`);
@@ -100,12 +126,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
         await addJob(tx, 'site_j8', 'site_checked', `${host('fa-ewjt-saasfaprod1')}/CX/job/8`);
         await addJob(tx, 'site_j9', 'site_named', `${host('fa-zzzz-saasfaprod1')}/CX/job/9`);
         await addJob(tx, 'site_j10', 'site_down', `${host('fa-exdu-dev2-saasfaprod1')}/CX_1/job/10`);
+        await addJob(tx, 'site_j11', 'site_ukg', 'https://eoff.fa.em1.ukg.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/job/11');
+        await addJob(tx, 'site_j12', 'site_word', 'https://egcu.fa.us6.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/job/12');
+        await addJob(tx, 'site_j13', 'site_case', 'https://ekpz.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/job/13');
 
         const names: Record<string, string> = {
           [`${host('fa-eqzh-saasfaprod1')}/CX_1`]: '<meta property="og:site_name" content="Avient"/>',
           [`${host('fa-exhh-saasfaprod1')}/StaplesRetail`]: '<title>Staples Retail</title>',
           [`${host('fa-exhh-saasfaprod1')}/CX`]: '<title>Staples Inc.</title>',
           [`${host('fa-eocc-saasfaprod1')}/CX`]: '<title>Candidate Experience site</title>',
+          'https://eoff.fa.em1.ukg.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX': '<title>Bank of England Job Board -</title>',
+          'https://egcu.fa.us6.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX': '<title>Student Employment</title>',
+          'https://ekpz.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX': '<title>Nokia</title>',
         };
         const page = (reads: string[]): SitePage => async (url) => {
           reads.push(url);
@@ -137,24 +169,39 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
         `${host('fa-exhh-saasfaprod1')}/CX`,
         `${host('fa-eocc-saasfaprod1')}/CX`,
         `${host('fa-exdu-dev2-saasfaprod1')}/CX_1`,
+        'https://eoff.fa.em1.ukg.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX',
+        'https://egcu.fa.us6.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX',
+        'https://ekpz.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX',
       ].sort(),
     );
     expect(result.again).toEqual([`${host('fa-exdu-dev2-saasfaprod1')}/CX_1`]);
     expect(result.rows).toEqual([
       { company_id: 'site_avient', site_url: `${host('fa-eqzh-saasfaprod1')}/CX_1`, jobs: 2, site_name: 'Avient', checked: true },
+      { company_id: 'site_case', site_url: 'https://ekpz.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX', jobs: 1, site_name: 'Nokia', checked: true },
       { company_id: 'site_down', site_url: `${host('fa-exdu-dev2-saasfaprod1')}/CX_1`, jobs: 1, site_name: null, checked: false },
       { company_id: 'site_generic', site_url: `${host('fa-eocc-saasfaprod1')}/CX`, jobs: 1, site_name: 'Candidate Experience site', checked: true },
       { company_id: 'site_staples', site_url: `${host('fa-exhh-saasfaprod1')}/CX`, jobs: 2, site_name: 'Staples Inc.', checked: true },
       { company_id: 'site_staples', site_url: `${host('fa-exhh-saasfaprod1')}/StaplesRetail`, jobs: 1, site_name: 'Staples Retail', checked: true },
+      { company_id: 'site_ukg', site_url: 'https://eoff.fa.em1.ukg.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX', jobs: 1, site_name: 'Bank of England Job Board -', checked: true },
+      { company_id: 'site_word', site_url: 'https://egcu.fa.us6.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX', jobs: 1, site_name: 'Student Employment', checked: true },
     ]);
     expect(result.company).toEqual([
       { company_id: 'site_avient', display_name: 'Avient', named: true },
+      { company_id: 'site_case', display_name: 'Nokia', named: true },
       { company_id: 'site_checked', display_name: 'EXL', named: true },
       { company_id: 'site_down', display_name: 'fa-exdu-dev2-saasfaprod1', named: false },
       { company_id: 'site_generic', display_name: 'Fa Eocc Saasfaprod1', named: false },
       { company_id: 'site_named', display_name: 'Bluelight Consulting', named: true },
       { company_id: 'site_staples', display_name: 'Staples', named: true },
+      // A UK government pod tenant is named; a one-word name is not renamed by a site that names someone else.
+      { company_id: 'site_ukg', display_name: 'Bank of England', named: true },
+      { company_id: 'site_word', display_name: 'Masimo', named: false },
     ]);
     expect(result.afterLoss).toEqual([{ display_name: 'fa-eqzh-saasfaprod1', named: false }]);
+  });
+
+  it('names fa-eqzh-saasfaprod1 Avient Corporation by hand', async () => {
+    const [row] = await sql<{ name: string }[]>`select name from company_name_override where company_id = 'co_cg5b0j5aeq3m1gcw'`;
+    expect(row?.name).toBe('Avient Corporation');
   });
 });
