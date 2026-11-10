@@ -132,12 +132,18 @@ the worker needs `CONTEXT_DEV_PUBLIC_CLIENT_ID` and, for paid lookups, `CONTEXT_
 
 The same pass names each company (`company.display_name`): a row in `company_name_override` wins, then
 the directory's name cleaned of careers-page wording and checked against the resolved site. When the
-directory holds only an Oracle Recruiting tenant code (`fa-eqzh-saasfaprod1`, `Eeho`), the pass reads
-the name each of the company's Oracle careers sites states (`og:site_name`, else the page title; the
-sites come from its job links), keeps it in `company_site_name`, reads it again after `LOGO_RECHECK_DAYS`,
-and takes the cleaned name that covers the most open roles ("Chubb External" becomes Chubb). Where a
-site states only an abbreviation or Oracle's default "Candidate Experience site", a hand-checked
-`company_name_override` row names it instead. A company we can only call by a hiring-platform code
+directory holds only an Oracle Recruiting tenant code (`fa-eqzh-saasfaprod1`, `Eeho` at
+`eeho.fa.us2.oraclecloud.com`, any pod), the pass reads the name each of the company's Oracle careers
+sites states (`og:site_name`, else the page title; the sites come from its job links), keeps it in
+`company_site_name`, reads every new site in the same run and each again after `LOGO_RECHECK_DAYS`, and
+takes the cleaned name that covers the most open roles ("Chubb External" becomes Chubb), the one on the
+tenant's default site `CX` when names tie. Sites that name no one ("Candidate Experience site", "Page
+not found", "Campus") never name a company, and when they hold more roles than the named sites the
+company stays unnamed. Any other directory name only takes its site's spelling of the same name ("Kpmg"
+becomes KPMG). Where a site's own name is a sub-brand or a label but its name or logo text states the
+employer, a hand-checked `company_name_override` row names it instead; a tenant whose sites never state
+it stays unnamed, and a `company_site_name_hold` row keeps a tenant unnamed until its name is confirmed.
+A company we can only call by a hiring-platform code
 (`named = false`) stays listed and searchable, but every sort of the Companies table lists it after the
 named companies.
 

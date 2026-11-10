@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanCareerTitle, cleanSiteName, companyDisplay, isCodeName } from '@cm/core/companyName';
+import { cleanCareerTitle, cleanSiteName, companyDisplay, isCodeName, isTenantCode, siteNameFor } from '@cm/core/companyName';
 
 describe('cleanCareerTitle', () => {
   it.each([
@@ -137,11 +137,57 @@ describe('cleanSiteName', () => {
     ['The Lottery Corporation', 'The Lottery Corporation'],
     ['L.F. Driscoll  Careers', 'L.F. Driscoll'],
     ['St. Olaf', 'St. Olaf'],
+    ['Pearson Candidate Experience Site', 'Pearson'],
+    ['Cheniere Candidate Experience External Site', 'Cheniere'],
+    ['the Myriad Genetics Candidate site', 'Myriad Genetics'],
+    ['BDO USA Experienced Career Site', 'BDO USA'],
+    ['Bank Negara Malaysia - Professional Career Site', 'Bank Negara Malaysia'],
+    ['BCBSM Career Section', 'BCBSM'],
+    ['Co-op External Career Section', 'Co-op'],
+    ['Midmark Corporation Career Opportunities', 'Midmark Corporation'],
+    ['Legrand Group Opportunities - Join us', 'Legrand Group'],
+    ['DENSO Career Connection', 'DENSO'],
+    ['Rice University Minimal Template External Career Site', 'Rice University'],
+    ['Jobs at Acosta', 'Acosta'],
+    ['Jobs @ Carmeuse', 'Carmeuse'],
+    ['Working at Signature Aviation', 'Signature Aviation'],
+    ['Job Listings at Liquidity Services Inc.', 'Liquidity Services'],
+    ['Job Opportunities | MCB Group', 'MCB Group'],
+    ['Trabaja en Interbank', 'Interbank'],
+    ['Lavora con Noi - Gruppo Credem', 'Gruppo Credem'],
+    ['Explore RH Careers', 'RH'],
+    ['Bank of England Job Board -', 'Bank of England'],
+    ['FAB |', 'FAB'],
+    ['Texas Woman’s University | TWU', 'Texas Woman’s University'],
+    ['Omnicell (temp)', 'Omnicell'],
+    ['Blackmore_Career_Site_New', 'Blackmore'],
+    ['NemoursCareerSite', 'Nemours'],
+    ['Chartwell Career Site English', 'Chartwell'],
+    ['daa All Open Jobs', 'daa'],
   ])('%s -> %s', (raw, expected) => {
     expect(cleanSiteName(raw)).toBe(expected);
   });
 
-  it.each([['Candidate Experience site'], ['Global Career Site'], ['Join'], ['Site kandidaatervaring'], ['fa-eqzh-saasfaprod1'], ['Careers']])(
+  it.each([
+    ['Candidate Experience site'],
+    ['Global Career Site'],
+    ['Join'],
+    ['Site kandidaatervaring'],
+    ['fa-eqzh-saasfaprod1'],
+    ['Careers'],
+    ['Page not found'],
+    ['All Jobs'],
+    ['Candidate Experience Site - Campus'],
+    ['Experienced Professionals'],
+    ['Student'],
+    ['Home Page'],
+    ['Talent Acquisition'],
+    ['Career Site - Mexico'],
+    ['Career Site Configuration Documentation'],
+    ['Vision Jobs'],
+    ['Business Operations and Legal'],
+    ['Hill Minimal 112022'],
+  ])(
     'names no one: %s',
     (raw) => {
       expect(cleanSiteName(raw)).toBeNull();
@@ -149,3 +195,41 @@ describe('cleanSiteName', () => {
   );
 });
 
+
+describe('isTenantCode', () => {
+  it.each([
+    ['fa-eqzh-saasfaprod1', []],
+    ['Fa Evxn Saasfaukgovprod1', []],
+    ['Eexs', ['eexs.fa.us2.oraclecloud.com']],
+    ['Hcwx (CX_3001)', ['hcwx.fa.us2.oraclecloud.com']],
+    ['ibqbjb-dev1', ['ibqbjb-dev1.fa.ocs.oraclecloud.com']],
+    ['ibnjjb.fa.ocs.oraclecloud.com', ['ibnjjb.fa.ocs.oraclecloud.com']],
+    ['Eoff', ['eoff.fa.em1.ukg.oraclecloud.com']],
+  ])('%s is a tenant code', (raw, hosts) => {
+    expect(isTenantCode(raw, hosts)).toBe(true);
+  });
+
+  it.each([
+    ['Masimo', ['egcu.fa.us6.oraclecloud.com']],
+    ['Baylor Careers', ['ejof.fa.us2.oraclecloud.com']],
+    ['Eexs', []],
+  ])('%s is not a tenant code', (raw, hosts) => {
+    expect(isTenantCode(raw, hosts)).toBe(false);
+  });
+});
+
+describe('siteNameFor', () => {
+  it('lets a site name a tenant code', () => {
+    expect(siteNameFor('Hcwp', ['hcwp.fa.us2.oraclecloud.com'], 'Coherent Corp. US')).toBe('Coherent Corp. US');
+    expect(siteNameFor('Fa Ewgu Saasfaprod1', ['fa-ewgu-saasfaprod1.fa.ocs.oraclecloud.com'], 'Chubb')).toBe('Chubb');
+    expect(siteNameFor('Fa Ewgu Saasfaprod1', [], null)).toBeNull();
+  });
+
+  it('lets a site only respell any other name', () => {
+    expect(siteNameFor('Kpmg', ['ekpm.fa.us2.oraclecloud.com'], 'KPMG')).toBe('KPMG');
+    expect(siteNameFor('Ford Global Career Site', ['efds.fa.us2.oraclecloud.com'], 'Ford')).toBe('Ford');
+    expect(siteNameFor('RAKBANK', ['x.fa.em2.oraclecloud.com'], 'Rak Bank')).toBe('Rak Bank');
+    expect(siteNameFor('Masimo', ['egcu.fa.us6.oraclecloud.com'], 'Student Employment')).toBeNull();
+    expect(siteNameFor('Baylor Careers', ['ejof.fa.us2.oraclecloud.com'], 'Student Employment')).toBeNull();
+  });
+});

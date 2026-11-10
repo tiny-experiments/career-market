@@ -158,6 +158,12 @@ export interface CompanySiteName {
   site_url: string;
 }
 
+export interface CompanySiteNameHold {
+  company_id: string;
+  note: Generated<string>;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface CompanySliceDaily {
   closed: number;
   company_id: string;
@@ -576,6 +582,7 @@ export interface DB {
   company_ref: CompanyRef;
   company_signal: CompanySignal;
   company_site_name: CompanySiteName;
+  company_site_name_hold: CompanySiteNameHold;
   company_slice_daily: CompanySliceDaily;
   family_age_cut: FamilyAgeCut;
   family_daily: FamilyDaily;
