@@ -19,7 +19,7 @@ import {
   openRoles,
   openRolesAtOverTime,
 } from "@/content";
-import { daysEndingOn } from "@/lib/charts";
+import { datedSeries } from "@/lib/charts";
 import { formatPay } from "@/lib/format";
 import { yearlyPay } from "@/lib/jobRows";
 import { cn } from "@/lib/utils";
@@ -28,15 +28,6 @@ type Job = JobPagePayload["job"];
 type Context = JobPagePayload["context"];
 
 const TREND_HEIGHT = 132;
-
-/** A daily series ending on `end`, as dated points for a chart. */
-function dated(values: readonly number[], end: string) {
-  const dates = daysEndingOn(end, values.length);
-  return values.flatMap((value, index) => {
-    const date = dates[index];
-    return date ? [{ date, value }] : [];
-  });
-}
 
 function PanelLink({
   to,
@@ -154,7 +145,7 @@ export function CompanyPanel({
         </div>
         {trend.available && trend.spark.length > 1 ? (
           <AreaChart
-            series={dated(trend.spark, asOf)}
+            series={datedSeries(trend.spark, asOf)}
             height={TREND_HEIGHT}
             label={openRolesAtOverTime(company.name)}
           />
@@ -200,7 +191,7 @@ export function ProfessionPanel({
         </div>
         {trend.spark.length > 1 ? (
           <AreaChart
-            series={dated(trend.spark, asOf)}
+            series={datedSeries(trend.spark, asOf)}
             height={TREND_HEIGHT}
             label={`Open roles in ${trend.name} over time`}
           />

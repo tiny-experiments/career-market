@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useResource } from "@/hooks";
 import { JOBS_LIST, METRICS, changeSuffix } from "@/content";
 import { jobsPulse, siteMeta, type JobsPulse } from "@/lib/api";
-import { daysEndingOn } from "@/lib/charts";
+import { datedSeries } from "@/lib/charts";
 import { formatCount, formatShare } from "@/lib/format";
 
 const GRID = "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
@@ -30,13 +30,9 @@ function PulseTrend({
 }) {
   if (values.length < 2) return null;
   if (day === null) return <Sparkline values={values} />;
-  const dates = daysEndingOn(day, values.length);
   return (
     <AreaChart
-      series={values.flatMap((value, index) => {
-        const date = dates[index];
-        return date ? [{ date, value }] : [];
-      })}
+      series={datedSeries(values, day)}
       height={TREND_HEIGHT}
       label={label}
     />

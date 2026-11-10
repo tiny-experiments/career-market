@@ -41,3 +41,15 @@ export function daysEndingOn(end: string, count: number): string[] {
     new Date(last - (count - 1 - index) * DAY_MS).toISOString().slice(0, 10),
   );
 }
+
+/** A daily series ending on `end`, as dated points for a chart. */
+export function datedSeries(
+  values: readonly number[],
+  end: string,
+): { date: string; value: number }[] {
+  const dates = daysEndingOn(end, values.length);
+  return values.flatMap((value, index) => {
+    const date = dates[index];
+    return date ? [{ date, value }] : [];
+  });
+}
