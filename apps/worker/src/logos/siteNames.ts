@@ -140,7 +140,7 @@ export interface SiteNameStats {
 
 /**
  * Brings `company_site_name` up to date: one row per (company, Oracle site) among
- * companies known only by a code and without a hand-checked name, with that site's open
+ * companies known only by a code and without a hand-checked name or a hold, with that site's open
  * roles, then reads the sites that are new or older than `recheckDays`.
  */
 export async function refreshSiteNames(deps: { sql: Sql; log: Logger; sitePage: SitePage; recheckDays: number }): Promise<SiteNameStats> {
@@ -152,6 +152,7 @@ export async function refreshSiteNames(deps: { sql: Sql; log: Logger; sitePage: 
     cross join lateral regexp_match(j.payload->>'url', ${ORACLE_SITE_SQL}, 'i') m
     where m is not null
       and not exists (select 1 from company_name_override o where o.company_id = j.company_id)
+      and not exists (select 1 from company_site_name_hold h where h.company_id = j.company_id)
     group by 1, 2, 3, 4`;
   const rows = found
     .filter((r) => isCodeName(r.name))

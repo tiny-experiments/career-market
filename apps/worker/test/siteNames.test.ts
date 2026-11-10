@@ -114,7 +114,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
           ('site_down','site-down','fa-exdu-dev2-saasfaprod1',null,1,900106,'2026-11-09'),
           ('site_ukg','site-ukg','Eoff',null,1,900107,'2026-11-09'),
           ('site_word','site-word','Masimo',null,1,900108,'2026-11-09'),
-          ('site_case','site-case','nokia',null,1,900109,'2026-11-09')`;
+          ('site_case','site-case','nokia',null,1,900109,'2026-11-09'),
+          ('site_held','site-held','Eexs',null,2,900110,'2026-11-09')`;
+        await tx`insert into company_site_name_hold (company_id,note) values ('site_held','test')`;
         await tx`insert into company_name_override (company_id,name,note) values ('site_checked','EXL','test')`;
         await addJob(tx, 'site_j1', 'site_avient', `${host('fa-eqzh-saasfaprod1')}/CX_1/job/1`);
         await addJob(tx, 'site_j2', 'site_avient', `${host('fa-eqzh-saasfaprod1')}/CX_1/job/2`);
@@ -130,7 +132,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
         await addJob(tx, 'site_j12', 'site_word', 'https://egcu.fa.us6.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/job/12');
         await addJob(tx, 'site_j13', 'site_case', 'https://ekpz.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX/job/13');
 
+        await addJob(tx, 'site_j14', 'site_held', `${host('fa-eexs-saasfaprod1')}/CX_1/job/14`);
+        await addJob(tx, 'site_j15', 'site_held', `${host('fa-eexs-saasfaprod1')}/CX_1/job/15`);
+
         const names: Record<string, string> = {
+          [`${host('fa-eexs-saasfaprod1')}/CX_1`]: '<title>Aldersly</title>',
           [`${host('fa-eqzh-saasfaprod1')}/CX_1`]: '<meta property="og:site_name" content="Avient"/>',
           [`${host('fa-exhh-saasfaprod1')}/StaplesRetail`]: '<title>Staples Retail</title>',
           [`${host('fa-exhh-saasfaprod1')}/CX`]: '<title>Staples Inc.</title>',
@@ -191,6 +197,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
       { company_id: 'site_checked', display_name: 'EXL', named: true },
       { company_id: 'site_down', display_name: 'fa-exdu-dev2-saasfaprod1', named: false },
       { company_id: 'site_generic', display_name: 'Fa Eocc Saasfaprod1', named: false },
+      { company_id: 'site_held', display_name: 'Eexs', named: false },
       { company_id: 'site_named', display_name: 'Bluelight Consulting', named: true },
       { company_id: 'site_staples', display_name: 'Staples', named: true },
       // A UK government pod tenant is named; a one-word name is not renamed by a site that names someone else.
@@ -198,6 +205,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
       { company_id: 'site_word', display_name: 'Masimo', named: false },
     ]);
     expect(result.afterLoss).toEqual([{ display_name: 'fa-eqzh-saasfaprod1', named: false }]);
+  });
+
+  it('keeps the tenants on hold unnamed until the owner confirms them', async () => {
+    const held = await sql<{ company_id: string }[]>`select company_id from company_site_name_hold order by company_id`;
+    expect(held.map((r) => r.company_id)).toEqual(['co_a91d11f55d17nz6t', 'co_k5bzv7gc5xma0nh2', 'co_prwgwcnwvpr5565s', 'co_vzmmz2sr1pgftzf5']);
+    const overridden = await sql`select 1 from company_name_override where company_id in (select company_id from company_site_name_hold)`;
+    expect(overridden).toHaveLength(0);
   });
 
   it('names fa-eqzh-saasfaprod1 Avient Corporation by hand', async () => {
