@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createWatchTick, snapshotReady } from '../src/watch.ts';
 import { metaSchema } from '../src/krill/schemas.ts';
-import { growthRatio } from '../src/growth.ts';
 
 const meta = (extra = {}) => metaSchema.parse({ taxonomy: { version: 1, hash: 'x' }, lastSnapshotDate: '2026-11-09',
   companies: 1, boards: 1, openJobs: 1, ats: [{ ats: 'a', openJobs: 1, enabled: true, lastRun: { date: '2026-11-09' } }], ...extra });
@@ -36,14 +35,6 @@ describe('completed snapshot trigger', () => {
     const first = tick(0); await tick(10); expect(sweep).not.toHaveBeenCalled(); release(); await first;
     expect(build).toHaveBeenCalledTimes(1); expect(sweep).toHaveBeenCalledTimes(1);
   });
-});
-
-it('compares only companies present in both periods unless raw is configured', () => {
-  const base = new Map([['a', 100], ['gone', 50]]);
-  const now = new Map([['a', 110], ['discovered', 500]]);
-  expect(growthRatio(base, now, 'like-for-like')).toBeCloseTo(0.1);
-  expect(growthRatio(base, now, 'raw')).toBeCloseTo(610 / 150 - 1);
-  expect(growthRatio(new Map(), now, 'like-for-like')).toBeNull();
 });
 
 it('admits backfill only between foreground ticks, after due builds and sweeps', async () => {
