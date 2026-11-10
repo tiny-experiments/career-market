@@ -124,7 +124,8 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       await setup`insert into skill_series (skill,family,date,open,estimated) values
         ('lang:python','software','2026-11-08',60,false),('lang:python','software','2026-11-09',70,false)`;
       await setup`insert into skill_pair_daily (date,skill,other,open) values
-        ('2026-11-09','lang:python','cloud:aws',35),('2026-11-09','lang:python','lang:java',7)`;
+        ('2026-11-09','lang:python','cloud:aws',35),('2026-11-09','lang:python','lang:java',7),
+        ('2026-11-09','lang:python','sec:gdpr',50)`;
       await setup`insert into skill_salary_effect (date,skill,family,currency,n_with,n_without,median_with,median_without,sample_size) values
         ('2026-11-09','lang:python','software','USD',60,60,180000,165000,120)`;
       for (const [index, mode] of ['remote', 'remote', 'onsite', 'onsite', null].entries()) {
@@ -450,6 +451,9 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       const index = await request(app).get('/api/skills').expect(200);
       expect(
         index.body.skills.map((s: { id: string }) => s.id),
+      ).not.toContain('sec:gdpr');
+      expect(
+        index.body.skills.map((s: { topPair: { id: string } | null }) => s.topPair?.id),
       ).not.toContain('sec:gdpr');
       await request(app).get('/api/skills/gdpr').expect(404);
       const search = await request(app).get('/api/search?q=gdpr').expect(200);

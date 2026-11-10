@@ -1,6 +1,7 @@
 import {
   familyInfo,
   isNonTechnicalSkill,
+  NON_TECHNICAL_SKILLS,
   isTileSkill,
   skillLabel,
 } from '@cm/core/codes';
@@ -453,6 +454,7 @@ export async function skillIndex(sql: Sql): Promise<SkillIndexPayload> {
         sql<{ skill: string; other: string; open: number }[]>`
           select distinct on (skill) skill, other, open from skill_pair_daily
           where date = ${D} and skill in ${sql(ids)}
+            and other not in ${sql([...NON_TECHNICAL_SKILLS])}
           order by skill, open desc, other`,
       ])
     : [[], [], [], [], []];
