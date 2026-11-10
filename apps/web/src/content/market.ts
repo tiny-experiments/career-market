@@ -29,6 +29,9 @@ export const MARKET_COPY = {
   remote: "Remote",
   seniorRolesUs: "Senior roles, US",
   openRolesUnit: "open roles",
+  atAGlance: "The market at a glance",
+  movers: "Biggest movers this week",
+  keyFigures: "Key figures",
 } as const;
 
 /** "42 days old": the age of the typical open role. */

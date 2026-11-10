@@ -9,7 +9,13 @@ import {
   type Column,
   type SortDirection,
 } from "@/components/data";
-import { DIRECTORY_COPY, METRICS, NO_FIGURE, WINDOW_HEADER } from "@/content";
+import {
+  DIRECTORY_COPY,
+  METRICS,
+  NO_FIGURE,
+  WINDOW_HEADER,
+  PHONE_OPEN_HEADER,
+} from "@/content";
 import { useDataDay } from "@/hooks";
 import type { CompanyDirectoryRow } from "@/lib/api";
 import { formatCount, formatShare } from "@/lib/format";
@@ -24,7 +30,6 @@ function columns(
     {
       key: "rank",
       header: DIRECTORY_COPY.columns.rank,
-      from: "sm",
       hint: METRICS.rank,
       cell: (row) => (
         <span className="text-muted-foreground">{formatCount(row.rank)}</span>
@@ -49,12 +54,15 @@ function columns(
       sortable: true,
       hint: METRICS.openRolesCompany,
       cell: (row) => formatCount(row.open),
+      phoneLine: (row) => <ChangeCell change={row.change} size="sm" />,
+      phoneHeader: PHONE_OPEN_HEADER,
     },
     {
       key: "change1w",
       header: WINDOW_HEADER.week,
       align: "right",
       sortable: true,
+      from: "md",
       hint: METRICS.changeWeek,
       cell: (row) => <ChangeCell change={row.change} />,
     },

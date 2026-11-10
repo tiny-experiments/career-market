@@ -58,7 +58,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between",
+        "flex flex-col gap-6 max-md:gap-4 xl:flex-row xl:items-end xl:justify-between",
         className,
       )}
     >
@@ -89,7 +89,7 @@ export function PageHeader({
           {code === undefined ? null : <Badge variant="code">{code}</Badge>}
         </div>
         {description === undefined ? null : (
-          <p className="max-w-2xl text-body text-muted-foreground">
+          <p className="max-w-2xl text-body text-muted-foreground max-md:text-small">
             {description}
           </p>
         )}

@@ -4,12 +4,14 @@ import {
   AreaChart,
   Delta,
   MarketCard,
+  MiniRow,
+  MiniStat,
   RankedList,
   SegmentBar,
   Sparkline,
 } from "@/components/data";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useResource } from "@/hooks";
+import { useIsMobile, useResource } from "@/hooks";
 import { JOBS_LIST, METRICS, changeSuffix } from "@/content";
 import { jobsPulse, siteMeta, type JobsPulse } from "@/lib/api";
 import { datedSeries } from "@/lib/charts";
@@ -149,13 +151,73 @@ function BusiestCard({ pulse }: { readonly pulse: JobsPulse }) {
   );
 }
 
+/** The strip on a phone: a mini tile per card, each still a door into its view. */
+function JobsPulseTiles({
+  pulse,
+  day,
+}: {
+  readonly pulse: JobsPulse;
+  readonly day: string | null;
+}) {
+  const spark = (values: readonly number[]) =>
+    values.length > 1 ? (
+      <Sparkline
+        values={values}
+        end={day}
+        width={112}
+        height={18}
+        className="mt-1"
+      />
+    ) : null;
+  return (
+    <MiniRow label={JOBS_LIST.pulse}>
+      <MiniStat
+        label={JOBS_LIST.pulseOpen}
+        value={formatCount(pulse.open)}
+        hint={METRICS.openRoles}
+        to="/"
+        {...(pulse.change1w === null
+          ? {}
+          : { change: pulse.change1w, suffix: changeSuffix("week") })}
+      >
+        {spark(pulse.openSpark)}
+      </MiniStat>
+      <MiniStat
+        label={JOBS_LIST.pulseNew}
+        value={formatCount(pulse.newToday)}
+        hint={METRICS.newLastDay}
+        to="/jobs?posted=1d"
+      >
+        {spark(pulse.newSpark)}
+      </MiniStat>
+      <MiniStat
+        label={JOBS_LIST.pulseRemote}
+        value={formatCount(pulse.workModes.remote)}
+        hint={METRICS.remoteRoles}
+        to="/jobs?mode=remote"
+      />
+    </MiniRow>
+  );
+}
+
 /** The market at a glance, above the filters: a door into each view of the list. */
 export function JobsPulseStrip() {
   const { data, error } = useResource(jobsPulse());
   // The day dates the trend lines; without it they still draw, undated.
   const meta = useResource(siteMeta());
+  const mobile = useIsMobile();
   if (data === null && error !== null) return null;
-  if (data === null || (meta.data === null && meta.error === null)) {
+  const loading = data === null || (meta.data === null && meta.error === null);
+  if (loading && mobile) {
+    return (
+      <Skeleton
+        role="status"
+        aria-label="Loading"
+        className="h-24 rounded-lg"
+      />
+    );
+  }
+  if (loading) {
     return (
       <div className={GRID} role="status" aria-label="Loading">
         {["a", "b", "c", "d"].map((key) => (
@@ -164,10 +226,12 @@ export function JobsPulseStrip() {
       </div>
     );
   }
+  const day = meta.data?.asOf ?? null;
+  if (mobile) return <JobsPulseTiles pulse={data} day={day} />;
   return (
     <div className={GRID}>
-      <OpenRolesCard pulse={data} day={meta.data?.asOf ?? null} />
-      <NewTodayCard pulse={data} day={meta.data?.asOf ?? null} />
+      <OpenRolesCard pulse={data} day={day} />
+      <NewTodayCard pulse={data} day={day} />
       <WorkModeCard pulse={data} />
       <BusiestCard pulse={data} />
     </div>

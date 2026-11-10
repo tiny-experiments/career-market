@@ -1,15 +1,14 @@
 import { Link } from "react-router";
 import { MetricHoverCard } from "@/components/common/MetricHoverCard";
-import { Logo } from "@/components/data/Logo";
 import { MarketCard } from "@/components/data/MarketCard";
 import { RankedList } from "@/components/data/RankedList";
 import type { Signal } from "@/components/data/SignalBadge";
-import { Sparkline } from "@/components/data/Sparkline";
 import { useCardPages } from "@/hooks";
 import type { MarketOverview } from "@/lib/api";
 import { formatCount } from "@/lib/format";
 import { MARKET_COPY, METRICS, SIGNALS as SIGNAL_COPY } from "@/content";
 import { cn } from "@/lib/utils";
+import { rampingCompanyItems } from "./MarketRankedItems";
 
 const SIGNALS: readonly {
   readonly signal: Signal;
@@ -79,23 +78,11 @@ export function CompaniesRampingCard({
           className="flex-1 lg:min-h-rows-min-compact lg:contain-size"
         >
           <RankedList
-            items={rows.slice(start, end).map((row, index) => ({
-              rank: start + index + 1,
-              logo: <Logo name={row.name} domain={row.domain} size="sm" />,
-              name: row.name,
-              value: formatCount(row.open),
-              trend: (
-                <Sparkline
-                  values={row.spark}
-                  end={market.asOf}
-                  width={64}
-                  height={24}
-                  className="hidden xl:block"
-                />
-              ),
-              to: `/companies/${row.slug}`,
-              ...(row.change ? { change: row.change.value } : {}),
-            }))}
+            items={rampingCompanyItems(rows.slice(start, end), {
+              start,
+              trend: true,
+              end: market.asOf,
+            })}
           />
         </div>
       )}

@@ -11,6 +11,7 @@ export const DIRECTORY_COPY = {
   fastestGrowing: "Fastest growing",
   bestPaid: "Best paid",
   mostPaired: "Most paired",
+  skillMovers: "Skills at a glance",
   hiringFlow: "Openings and closings",
   openRolesChart: "Open roles",
   rolesByProfession: "Roles by profession",

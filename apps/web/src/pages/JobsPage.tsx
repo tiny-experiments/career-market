@@ -126,7 +126,8 @@ export function JobsPage() {
                 {JOBS_LIST.clearAll}
               </Button>
             ) : null}
-            <div className="ml-auto flex items-center gap-2">
+            {/* On a phone Filters and Sort share the row as two equal buttons. */}
+            <div className="ml-auto flex items-center gap-2 max-md:ml-0 max-md:w-full max-md:*:flex-1">
               <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="lg:hidden">

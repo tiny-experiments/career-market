@@ -23,6 +23,9 @@ export const WINDOW_HEADER: Record<Window, string> = {
   year: "1Y",
 };
 
+/** A table's open-roles header on a phone, where the week's change sits under each count. */
+export const PHONE_OPEN_HEADER = `Open · ${WINDOW_HEADER.week}`;
+
 /** The comparison in words, as it follows a change: "▲ 1.3% this week". */
 export const COMPARISON: Record<Window, string> = {
   day: "vs yesterday",

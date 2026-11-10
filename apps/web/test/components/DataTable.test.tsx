@@ -115,4 +115,24 @@ describe("DataTable", () => {
       screen.getByText("No professions match this view"),
     ).toBeInTheDocument();
   });
+  it("gives a phone a second line under a cell and its own header", () => {
+    renderWithRouter(
+      <DataTable
+        columns={[
+          COLUMNS[0]!,
+          {
+            ...COLUMNS[1]!,
+            phoneHeader: "Open · 7D",
+            phoneLine: (row: Row) => `${row.code} week`,
+          },
+        ]}
+        rows={ROWS}
+        rowKey={(row) => row.code}
+      />,
+    );
+    const line = screen.getByText("swe week");
+    expect(line).toHaveClass("md:hidden");
+    expect(screen.getByText("Open · 7D")).toHaveClass("md:hidden");
+    expect(screen.getByText("Open roles")).toHaveClass("max-md:hidden");
+  });
 });

@@ -14,7 +14,14 @@ import {
   PageSkeleton,
   ResourceView,
 } from "@/components/common";
-import { Delta, Logo, Panel, SignalBadge, StatCard } from "@/components/data";
+import {
+  Delta,
+  Logo,
+  MiniRow,
+  Panel,
+  SignalBadge,
+  StatCard,
+} from "@/components/data";
 import { RolesTable, type RoleRow } from "@/components/jobs";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +32,7 @@ import {
   EMPTY,
   ERROR,
   daysOld,
+  MARKET_COPY,
   METRICS,
   NO_FIGURE,
   openRolesAt,
@@ -115,7 +123,10 @@ function CompanyHeader({ page }: { readonly page: CompanyPayload }) {
       }
       aside={
         facets ? (
-          <div className="grid grid-cols-2 gap-2 xl:w-96">
+          <MiniRow
+            label={MARKET_COPY.keyFigures}
+            className="grid grid-cols-2 gap-2 xl:w-96"
+          >
             <StatCard
               label={METRICS.remoteShare.title}
               value={
@@ -148,7 +159,7 @@ function CompanyHeader({ page }: { readonly page: CompanyPayload }) {
               value={facets.families[0]?.label ?? NO_FIGURE}
               hint={{ text: METRICS.topProfession.text }}
             />
-          </div>
+          </MiniRow>
         ) : undefined
       }
     />

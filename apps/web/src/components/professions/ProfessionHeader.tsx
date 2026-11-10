@@ -1,5 +1,6 @@
 import { Delta } from "@/components/data/Delta";
 import { Logo } from "@/components/data/Logo";
+import { MiniRow } from "@/components/data/MiniRow";
 import { ShareBar } from "@/components/data/ShareBar";
 import { StatCard } from "@/components/data/StatCard";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -78,7 +79,10 @@ export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
         </>
       }
       aside={
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        <MiniRow
+          label={MARKET_COPY.keyFigures}
+          className="grid grid-cols-2 gap-2 xl:grid-cols-4"
+        >
           <StatCard
             label={METRICS.payRange.title}
             value={
@@ -117,7 +121,7 @@ export function ProfessionHeader({ page }: { readonly page: ProfessionPage }) {
             }
             hint={METRICS.companiesHiring}
           />
-        </div>
+        </MiniRow>
       }
     />
   );

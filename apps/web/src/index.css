@@ -292,6 +292,24 @@
 }
 
 /*
+ * Phones (below `md`): 16 px gutters, so a row of mini tiles and a compact
+ * table get the width back. Tablet and desktop keep 24 px.
+ */
+@media (width < 48rem) {
+  :root {
+    --spacing-gutter: 1rem;
+  }
+}
+
+/* A sideways row of mini tiles scrolls by touch and shows no bar; the next tile peeking at the edge says there is more. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
  * Reduced motion: every transition and animation on the site (the sliding
  * underline, hover cards, sheets, the ticker) settles at once.
  */

@@ -5,7 +5,12 @@ import { ShareBar } from "@/components/data/ShareBar";
 import { Sparkline } from "@/components/data/Sparkline";
 import { useDataDay } from "@/hooks";
 import { formatCount, formatPayRange, formatShare } from "@/lib/format";
-import { METRICS, NO_FIGURE, WINDOW_HEADER } from "@/content";
+import {
+  METRICS,
+  NO_FIGURE,
+  WINDOW_HEADER,
+  PHONE_OPEN_HEADER,
+} from "@/content";
 import {
   professionHref,
   sortProfessions,
@@ -77,9 +82,12 @@ export function ProfessionsTable({
       cell: (row) => (
         <span className="flex items-center gap-3">
           <Logo name={row.name} shape="square" size="sm" />
-          <span className="truncate font-bold">{row.name}</span>
-          <span className="hidden text-small font-medium text-muted-foreground sm:inline">
-            {row.code}
+          {/* On a phone the code sits under the name, like a ticker. */}
+          <span className="flex min-w-0 items-center gap-3 max-md:flex-col max-md:items-start max-md:gap-0">
+            <span className="truncate font-bold">{row.name}</span>
+            <span className="text-small font-medium text-muted-foreground max-md:text-xs">
+              {row.code}
+            </span>
           </span>
         </span>
       ),
@@ -91,6 +99,10 @@ export function ProfessionsTable({
       sortable: true,
       hint: METRICS.openRolesProfession,
       cell: (row) => formatCount(row.open),
+      phoneLine: (row) => (
+        <ChangeCell value={row.change?.value ?? null} size="sm" />
+      ),
+      phoneHeader: PHONE_OPEN_HEADER,
     },
     {
       key: "change1d",
@@ -106,6 +118,7 @@ export function ProfessionsTable({
       header: WINDOW_HEADER.week,
       align: "right",
       sortable: true,
+      from: "md",
       hint: METRICS.changeWeek,
       cell: (row) => <ChangeCell value={row.change?.value ?? null} />,
     },
