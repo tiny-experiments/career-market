@@ -109,7 +109,7 @@ apps/web/src/
     companies/ the Companies and Company pages' tables, market cards and panels
     skills/    the Skills and Skill pages' tables, market cards and panels
   content/     every customer-facing sentence: metrics (hover cards), phrasing, jobs, site (titles, About, footer), states
-  hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth
+  hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth, useChartScrub, useDataDay
   lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, skillViews, redirects, prefetch
   lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
   layouts/     RootLayout
@@ -186,6 +186,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **A change names a real window.** A 7-day or 30-day figure shows only once its window nearly covers that span (`fullWindow` in `@cm/core/changes`); until then the cell is a dash.
 - **Never state the total number of companies.** Per-profession and per-signal counts are fine; a grand total is not.
 - **A series is one solid line.** No estimated-history styling and no caveat sentence under the chart.
+- **Every trend chart reads its day and value on hover or tap**, through `ChartTooltip` and `useChartScrub`; `AreaChart` also carries a labelled value axis. A sparkline is dated by passing `end`, the site's day from `useDataDay`, so a page that draws one loads `siteMeta()` in its route data.
 - **Pay is a range**, `$144K–$157K`, and its method ("the middle half of listed pay for senior roles in the United States") is a hover card. No "estimated base pay" labels.
 - **Whole figures with separators** (`99,923`), **percentages with one decimal** for changes and none for shares, **units after numbers** (`38 days`).
 - **The row is the link.** A name in a table is bold text inside the row link, never a bare blue link. The link is named by what it shows (no `aria-label` that drops the visible words), and a `Logo` is hidden from assistive tech because the name beside it does the naming. A job row opens our job page; the only outbound link on the site is the apply button.
@@ -219,3 +220,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **2026-11-09** — Companies and Skills pages: `BreakdownList`, `ChangeCell`, `ListSearch`, `PagedRankedCard`, `RolesTable`, and `DataTable`'s `inset` for tables inside cards.
 - **2026-11-09** — Final review: AA contrast for `muted-foreground`, `up`, `down`, `warn` in both themes; reduced-motion rule; row links named by their content and `Logo` decorative; 24 px hover-card triggers; `PageSkeleton` `market` variant; ranked-card sparklines only from `xl`; Jobs company links carry the company's slug (its name only when it has none) and the filter chip shows the name the API returns as `filterCompany`.
 - **2026-11-10** — Feedback round 1: the sub-bar is gone; each section's views are `TableFilter` chips on its own table, labelled in plain words with a line saying what they show (old `?view=` and `?signal=` addresses still open the matching filter). `Gauge` removed: the Tech Hiring Index is the figure, its week change and a 30-day line (`HiringIndexPanel`); Hiring signals is a sentence and a hiring-more against hiring-less bar. `KpiTile` takes a `caption` and a small picture. GDPR and other compliance items are never listed as skills (`NON_TECHNICAL_SKILLS` in `@cm/core/codes`).
+- **2026-11-10** — Every trend chart reads its day and value on hover or tap: `ChartTooltip` and `useChartScrub` are shared by `AreaChart`, `Sparkline` and the market flow bars; `AreaChart` gains a value axis; sparklines are dated from the site's day (`useDataDay`, `daysEndingOn` and `datedSeries` in `lib/charts.ts`). Before and after shots are in `docs/screenshots/charts-1`.
