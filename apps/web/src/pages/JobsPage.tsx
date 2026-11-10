@@ -140,11 +140,13 @@ export function JobsPage() {
                   <SheetHeader>
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
-                  <div className="px-4 pb-6">
+                  {/* The sheet is the surface here: the rail drops its own card so it is not a card inside a panel. */}
+                  <div className="pb-6">
                     <JobFiltersRail
                       filters={filters}
                       facets={facets}
                       companyName={companyName}
+                      className="bg-transparent py-0 shadow-none"
                     />
                   </div>
                 </SheetContent>

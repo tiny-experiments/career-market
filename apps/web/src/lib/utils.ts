@@ -12,6 +12,7 @@ export const cn = createCn({
         "row",
         "row-compact",
         "control",
+        "touch",
         "rail",
         "gutter",
         "spark",

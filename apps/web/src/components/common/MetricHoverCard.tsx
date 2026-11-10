@@ -49,7 +49,7 @@ export function MetricHoverCard({
             }
           }}
           className={cn(
-            "relative z-10 inline-flex items-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+            "relative touch-target z-10 inline-flex items-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
             // The icon alone is a 24 px target: the margin gives the room back.
             trigger === undefined && "-m-1 size-6 justify-center",
             className,

@@ -36,7 +36,7 @@ export function MiniList({
     >
       <Link
         to={to}
-        className="group/door inline-flex items-center gap-1 self-start rounded-sm text-sm font-bold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+        className="group/door relative touch-target inline-flex items-center gap-1 self-start rounded-sm text-sm font-bold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
       >
         {title}
         <ChevronRight
@@ -52,7 +52,7 @@ export function MiniList({
             <li key={item.to}>
               <Link
                 to={item.to}
-                className="flex h-8 items-center gap-2 rounded-md px-1.5 text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-8 items-center gap-2 rounded-md px-1.5 max-md:h-row-compact text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {item.logo}
                 <span className="min-w-0 flex-1 truncate font-semibold">

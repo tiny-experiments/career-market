@@ -67,6 +67,13 @@ jobs:
       - name: Build web app
         run: pnpm web:build
 
+      # Every page at 360, 375, 390 and 414 px in both themes: the page never scrolls sideways.
+      - name: Install Chromium for phone checks
+        run: pnpm --filter @cm/web exec playwright install --with-deps chromium
+
+      - name: Phone width check (web)
+        run: pnpm --filter @cm/web run test:phone
+
       # The previous Next.js app stays runnable until the new pages replace it.
       - name: Build previous web app (web-next)
         run: pnpm web-next:build

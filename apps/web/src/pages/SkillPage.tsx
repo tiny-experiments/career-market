@@ -155,7 +155,7 @@ function SkillBody({ page }: { readonly page: SkillPagePayload }) {
           action={
             <Link
               to={`/jobs?skill=${encodeURIComponent(page.id)}`}
-              className="rounded-sm text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+              className="relative touch-target rounded-sm text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
               {seeAll(page.totalOpen)}
             </Link>

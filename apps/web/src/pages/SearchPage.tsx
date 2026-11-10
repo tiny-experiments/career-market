@@ -57,7 +57,7 @@ function Results({
             <h2 className="text-h2 font-bold">Jobs</h2>
             <Link
               to={`/jobs?q=${encodeURIComponent(q)}`}
-              className="text-small font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+              className="relative touch-target text-small font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
               {seeAll(found.rolesTotal)}
             </Link>

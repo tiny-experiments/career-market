@@ -199,7 +199,7 @@ function CompanyBody({
           <Link
             to={`/jobs?company=${encodeURIComponent(page.company.slug)}`}
             aria-label={seeAllAt(name)}
-            className="rounded-sm text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            className="relative touch-target rounded-sm text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
           >
             {seeAll(total)}
           </Link>

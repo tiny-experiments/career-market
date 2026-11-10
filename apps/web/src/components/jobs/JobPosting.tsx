@@ -32,7 +32,8 @@ function Skills({
       <h3 className="text-eyebrow font-semibold text-muted-foreground">
         Skills
       </h3>
-      <ul className="flex flex-wrap gap-2">
+      {/* On a touch screen each skill link gets a 40 px touch area; the taller row gap keeps them apart. */}
+      <ul className="flex flex-wrap gap-2 max-md:gap-y-4">
         {skills.map((skill) => (
           <li key={skill.id}>
             {skill.slug === null ? (
@@ -40,7 +41,12 @@ function Skills({
                 {skill.label}
               </Badge>
             ) : (
-              <Badge asChild variant="flat" size="md">
+              <Badge
+                asChild
+                variant="flat"
+                size="md"
+                className="relative touch-target overflow-visible"
+              >
                 <Link to={`/skills/${skill.slug}`}>{skill.label}</Link>
               </Badge>
             )}

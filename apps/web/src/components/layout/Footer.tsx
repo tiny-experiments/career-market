@@ -13,19 +13,22 @@ export function Footer() {
           <BrandLockup />
           <p className="text-small text-muted-foreground">{FOOTER_LINE}</p>
         </div>
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
+        <nav
+          aria-label="Footer"
+          className="flex flex-wrap gap-x-6 gap-y-2 max-md:gap-y-0"
+        >
           {SECTIONS.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              className="text-small font-medium text-muted-foreground hover:text-foreground"
+              className="relative touch-target text-small font-medium text-muted-foreground hover:text-foreground max-md:inline-flex max-md:min-h-touch max-md:items-center"
             >
               {item.label}
             </Link>
           ))}
           <Link
             to="/about"
-            className="text-small font-medium text-muted-foreground hover:text-foreground"
+            className="relative touch-target text-small font-medium text-muted-foreground hover:text-foreground max-md:inline-flex max-md:min-h-touch max-md:items-center"
           >
             About
           </Link>

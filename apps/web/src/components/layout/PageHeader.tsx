@@ -70,7 +70,9 @@ export function PageHeader({
                 <Fragment key={crumb.to}>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                      <Link to={crumb.to}>{crumb.label}</Link>
+                      <Link to={crumb.to} className="relative touch-target">
+                        {crumb.label}
+                      </Link>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
@@ -85,8 +87,13 @@ export function PageHeader({
         {eyebrow}
         <div className="flex items-center gap-3">
           {logo}
-          <h1 className="text-h1 font-extrabold">{title}</h1>
-          {code === undefined ? null : <Badge variant="code">{code}</Badge>}
+          {/* The code follows the name and drops under it when the name wraps, never stranded at the far edge. */}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="min-w-0 text-h1 font-extrabold wrap-break-word">
+              {title}
+            </h1>
+            {code === undefined ? null : <Badge variant="code">{code}</Badge>}
+          </div>
         </div>
         {description === undefined ? null : (
           <p className="max-w-2xl text-body text-muted-foreground max-md:text-small">

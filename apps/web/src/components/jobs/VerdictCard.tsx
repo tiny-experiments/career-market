@@ -94,15 +94,19 @@ export function VerdictCard({
           <Icon className="size-5" aria-hidden />
         </span>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="flex items-center gap-2">
+          {/* On a phone a wrapped headline keeps its (i) after the last word, not stranded at the edge. */}
+          <div className="flex items-center gap-2 max-md:block">
             {headline === undefined ? (
               <Badge variant={variant} size="md" className="bg-card">
                 {label}
               </Badge>
             ) : (
-              <p className="text-h2 font-bold">{headline}</p>
+              <p className="text-h2 font-bold max-md:inline">{headline}</p>
             )}
-            <MetricHoverCard title={label}>
+            <MetricHoverCard
+              title={label}
+              className="max-md:ml-2 max-md:align-middle"
+            >
               {VERDICT_HINT[verdict]}
             </MetricHoverCard>
           </div>

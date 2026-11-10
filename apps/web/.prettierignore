@@ -2,3 +2,6 @@ dist
 node_modules
 coverage
 pnpm-lock.yaml
+e2e/fixtures
+test-results
+playwright-report
