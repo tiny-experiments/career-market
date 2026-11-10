@@ -2,7 +2,7 @@ import { MarketCard } from "@/components/data/MarketCard";
 import { Logo } from "@/components/data/Logo";
 import { RankedList } from "@/components/data/RankedList";
 import { Sparkline } from "@/components/data/Sparkline";
-import { useCardPages } from "@/hooks";
+import { useCardPages, useDataDay } from "@/hooks";
 import { professionHref, type ProfessionRow } from "@/lib/professions";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +32,7 @@ export function ProfessionListCard({
   comfortable = false,
 }: ProfessionListCardProps) {
   const { listRef, start, end, pager } = useCardPages(rows.length);
+  const day = useDataDay();
 
   return (
     <MarketCard title={title} to={to} pager={pager}>
@@ -60,6 +61,7 @@ export function ProfessionListCard({
                 trend: (
                   <Sparkline
                     values={row.spark}
+                    end={day}
                     width={64}
                     height={24}
                     className="hidden xl:block"

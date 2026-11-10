@@ -27,3 +27,29 @@ export function linePath(points: readonly Point[]): string {
     .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
     .join(" ");
 }
+
+const DAY_MS = 86_400_000;
+
+/**
+ * The ISO days of a daily series that ends on `end`, oldest first: every
+ * sparkline is one point a day up to the day the numbers are from.
+ */
+export function daysEndingOn(end: string, count: number): string[] {
+  const last = Date.parse(`${end.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(last) || count <= 0) return [];
+  return Array.from({ length: count }, (_, index) =>
+    new Date(last - (count - 1 - index) * DAY_MS).toISOString().slice(0, 10),
+  );
+}
+
+/** A daily series ending on `end`, as dated points for a chart. */
+export function datedSeries(
+  values: readonly number[],
+  end: string,
+): { date: string; value: number }[] {
+  const dates = daysEndingOn(end, values.length);
+  return values.flatMap((value, index) => {
+    const date = dates[index];
+    return date ? [{ date, value }] : [];
+  });
+}

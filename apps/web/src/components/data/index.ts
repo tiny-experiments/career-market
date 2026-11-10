@@ -7,6 +7,11 @@ export {
 } from "./DataTable";
 export { BreakdownList, type BreakdownItem } from "./BreakdownList";
 export { ChangeCell } from "./ChangeCell";
+export {
+  ChartTooltip,
+  type ChartReading,
+  type ChartTooltipProps,
+} from "./ChartTooltip";
 export { Delta, type DeltaProps } from "./Delta";
 export { KpiTile, type KpiTileProps } from "./KpiTile";
 export { Legend, type LegendItem } from "./Legend";

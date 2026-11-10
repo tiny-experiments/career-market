@@ -410,6 +410,20 @@ async function professionTrendFor(
 
 // ---------- Company trend ----------
 
+/** One open-role count per day from the first usable day through `to`, last SPARK_DAYS only; a day krill sent no row for is 0. */
+function dailyOpen(
+  usable: readonly { date: IsoDay; open: number }[],
+  to: IsoDay,
+): number[] {
+  const first = usable[0];
+  if (!first) return [];
+  const byDay = new Map(usable.map((i) => [i.date, i.open]));
+  const values: number[] = [];
+  for (let d = first.date; d <= to; d = addDays(d, 1))
+    values.push(byDay.get(d) ?? 0);
+  return values.slice(-SPARK_DAYS);
+}
+
 /** The employer's domain (for the logo), its page and its trend. */
 async function companyFor(
   deps: JobDeps,
@@ -460,7 +474,7 @@ async function companyFor(
     trend: {
       available: true,
       open,
-      spark: usable.slice(-SPARK_DAYS).map((i) => i.open),
+      spark: dailyOpen(usable, to),
       firstDay: usable[0]?.date ?? null,
       signal,
       signalNote:

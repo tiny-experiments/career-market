@@ -10,6 +10,7 @@ import {
   type SortDirection,
 } from "@/components/data";
 import { DIRECTORY_COPY, METRICS, NO_FIGURE, WINDOW_HEADER } from "@/content";
+import { useDataDay } from "@/hooks";
 import type { CompanyDirectoryRow } from "@/lib/api";
 import { formatCount, formatShare } from "@/lib/format";
 
@@ -17,6 +18,7 @@ const dash = <span className="text-subtle">{NO_FIGURE}</span>;
 
 function columns(
   rows: readonly CompanyDirectoryRow[],
+  day: string | null,
 ): Column<CompanyDirectoryRow>[] {
   return [
     {
@@ -110,7 +112,9 @@ function columns(
       align: "right",
       from: "md",
       hint: METRICS.trend,
-      cell: (row) => <Sparkline values={row.spark} className="ml-auto block" />,
+      cell: (row) => (
+        <Sparkline values={row.spark} end={day} className="ml-auto block" />
+      ),
     },
   ];
 }
@@ -125,9 +129,10 @@ export function CompaniesTable({
   readonly sort: { readonly key: string; readonly direction: SortDirection };
   readonly onSort: (key: string) => void;
 }) {
+  const day = useDataDay();
   return (
     <DataTable
-      columns={columns(rows)}
+      columns={columns(rows, day)}
       rows={rows}
       rowKey={(row) => row.slug}
       rowHref={(row) => `/companies/${row.slug}`}

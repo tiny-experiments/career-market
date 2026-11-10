@@ -87,6 +87,7 @@ export function CompaniesRampingCard({
               trend: (
                 <Sparkline
                   values={row.spark}
+                  end={market.asOf}
                   width={64}
                   height={24}
                   className="hidden xl:block"

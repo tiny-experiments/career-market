@@ -7,10 +7,14 @@ import {
   type RankedItem,
 } from "@/components/data";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDataDay } from "@/hooks";
 import type { CompanyMover, CompanySignalsOverview } from "@/lib/api";
 import { formatCount } from "@/lib/format";
 
-function ranked(movers: readonly CompanyMover[]): RankedItem[] {
+function ranked(
+  movers: readonly CompanyMover[],
+  day: string | null,
+): RankedItem[] {
   return movers.map((mover, index) => ({
     rank: index + 1,
     logo: <Logo name={mover.name} domain={mover.domain} size="sm" />,
@@ -20,6 +24,7 @@ function ranked(movers: readonly CompanyMover[]): RankedItem[] {
     trend: (
       <Sparkline
         values={mover.spark}
+        end={day}
         width={56}
         height={22}
         className="hidden xl:block"
@@ -37,6 +42,7 @@ export function CompaniesMarketRow({
 }: {
   readonly overview: CompanySignalsOverview | null;
 }) {
+  const day = useDataDay();
   if (overview === null) {
     return (
       <div className={GRID} role="status" aria-label="Loading">
@@ -52,13 +58,13 @@ export function CompaniesMarketRow({
       <PagedRankedCard
         title={DIRECTORY_COPY.rampingFastest}
         to="/companies?signal=ramping"
-        items={ranked(overview.ramping)}
+        items={ranked(overview.ramping, day)}
         empty={DIRECTORY_COPY.noMovers}
       />
       <PagedRankedCard
         title={DIRECTORY_COPY.coolingFastest}
         to="/companies?signal=cooling"
-        items={ranked(overview.cooling)}
+        items={ranked(overview.cooling, day)}
         empty={DIRECTORY_COPY.noMovers}
       />
     </div>

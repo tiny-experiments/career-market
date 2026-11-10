@@ -116,7 +116,13 @@ function columns(rank: ReadonlyMap<string, number>): Column<SkillIndexRow>[] {
       align: "right",
       from: "md",
       hint: METRICS.trend,
-      cell: (row) => <Sparkline values={row.spark} className="ml-auto block" />,
+      cell: (row) => (
+        <Sparkline
+          values={row.spark}
+          end={row.asOf}
+          className="ml-auto block"
+        />
+      ),
     },
   ];
 }

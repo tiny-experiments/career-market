@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { MetricHoverCard } from "@/components/common";
 import {
+  AreaChart,
   Delta,
   MarketCard,
   RankedList,
@@ -10,10 +11,33 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useResource } from "@/hooks";
 import { JOBS_LIST, METRICS, changeSuffix } from "@/content";
-import { jobsPulse, type JobsPulse } from "@/lib/api";
+import { jobsPulse, siteMeta, type JobsPulse } from "@/lib/api";
+import { datedSeries } from "@/lib/charts";
 import { formatCount, formatShare } from "@/lib/format";
 
 const GRID = "grid gap-4 sm:grid-cols-2 xl:grid-cols-4";
+const TREND_HEIGHT = 88;
+
+/** A day-by-day line with its values and dates; a bare line if the day is unknown. */
+function PulseTrend({
+  values,
+  day,
+  label,
+}: {
+  readonly values: readonly number[];
+  readonly day: string | null;
+  readonly label: string;
+}) {
+  if (values.length < 2) return null;
+  if (day === null) return <Sparkline values={values} />;
+  return (
+    <AreaChart
+      series={datedSeries(values, day)}
+      height={TREND_HEIGHT}
+      label={label}
+    />
+  );
+}
 
 function BigFigure({
   value,
@@ -32,22 +56,29 @@ function BigFigure({
   );
 }
 
-function OpenRolesCard({ pulse }: { readonly pulse: JobsPulse }) {
+interface CardProps {
+  readonly pulse: JobsPulse;
+  readonly day: string | null;
+}
+
+function OpenRolesCard({ pulse, day }: CardProps) {
   return (
     <MarketCard title={JOBS_LIST.pulseOpen} to="/">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <BigFigure
-            value={formatCount(pulse.open)}
-            title={METRICS.openRoles.title}
-            hint={METRICS.openRoles.text}
-          />
-          {pulse.change1w === null ? null : (
-            <Delta value={pulse.change1w} suffix={changeSuffix("week")} />
-          )}
-        </div>
-        <Sparkline values={pulse.openSpark} />
+      <div className="flex flex-col gap-1">
+        <BigFigure
+          value={formatCount(pulse.open)}
+          title={METRICS.openRoles.title}
+          hint={METRICS.openRoles.text}
+        />
+        {pulse.change1w === null ? null : (
+          <Delta value={pulse.change1w} suffix={changeSuffix("week")} />
+        )}
       </div>
+      <PulseTrend
+        values={pulse.openSpark}
+        day={day}
+        label={JOBS_LIST.pulseOpen}
+      />
       <Link
         to="/jobs?pay=listed"
         className="mt-auto text-small text-muted-foreground hover:text-foreground"
@@ -60,17 +91,19 @@ function OpenRolesCard({ pulse }: { readonly pulse: JobsPulse }) {
   );
 }
 
-function NewTodayCard({ pulse }: { readonly pulse: JobsPulse }) {
+function NewTodayCard({ pulse, day }: CardProps) {
   return (
     <MarketCard title={JOBS_LIST.pulseNew} to="/jobs?posted=1d">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <BigFigure
-          value={formatCount(pulse.newToday)}
-          title={METRICS.newLastDay.title}
-          hint={METRICS.newLastDay.text}
-        />
-        <Sparkline values={pulse.newSpark} />
-      </div>
+      <BigFigure
+        value={formatCount(pulse.newToday)}
+        title={METRICS.newLastDay.title}
+        hint={METRICS.newLastDay.text}
+      />
+      <PulseTrend
+        values={pulse.newSpark}
+        day={day}
+        label={JOBS_LIST.pulseNewCaption}
+      />
       <p className="mt-auto text-small text-muted-foreground">
         {JOBS_LIST.pulseNewCaption}
       </p>
@@ -119,8 +152,10 @@ function BusiestCard({ pulse }: { readonly pulse: JobsPulse }) {
 /** The market at a glance, above the filters: a door into each view of the list. */
 export function JobsPulseStrip() {
   const { data, error } = useResource(jobsPulse());
+  // The day dates the trend lines; without it they still draw, undated.
+  const meta = useResource(siteMeta());
   if (data === null && error !== null) return null;
-  if (data === null) {
+  if (data === null || (meta.data === null && meta.error === null)) {
     return (
       <div className={GRID} role="status" aria-label="Loading">
         {["a", "b", "c", "d"].map((key) => (
@@ -131,8 +166,8 @@ export function JobsPulseStrip() {
   }
   return (
     <div className={GRID}>
-      <OpenRolesCard pulse={data} />
-      <NewTodayCard pulse={data} />
+      <OpenRolesCard pulse={data} day={meta.data?.asOf ?? null} />
+      <NewTodayCard pulse={data} day={meta.data?.asOf ?? null} />
       <WorkModeCard pulse={data} />
       <BusiestCard pulse={data} />
     </div>
