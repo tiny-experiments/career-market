@@ -14,6 +14,7 @@ import {
   professionDetail,
   professionsIndex,
   SEARCH_MIN_LENGTH,
+  siteMeta,
   siteSearch,
   skillDetail,
   skillsIndex,
@@ -64,7 +65,8 @@ export const pageRoutes: readonly PageRoute[] = [
     handle: handleFor("market"),
     page: () =>
       import("@/pages/MarketPage").then((m) => ({ Component: m.MarketPage })),
-    data: () => [marketOverview(), professionsIndex()],
+    // The site's day dates the trend lines.
+    data: () => [marketOverview(), professionsIndex(), siteMeta()],
   },
   {
     path: "/professions",
@@ -73,7 +75,10 @@ export const pageRoutes: readonly PageRoute[] = [
       import("@/pages/ProfessionsPage").then((m) => ({
         Component: m.ProfessionsPage,
       })),
-    data: ({ search }) => [professionsIndex(professionRegionFrom(search))],
+    data: ({ search }) => [
+      professionsIndex(professionRegionFrom(search)),
+      siteMeta(),
+    ],
   },
   {
     path: "/professions/:code",
@@ -98,6 +103,7 @@ export const pageRoutes: readonly PageRoute[] = [
         pageSize: LIST_PAGE_SIZE,
       }),
       companySignals(),
+      siteMeta(),
     ],
   },
   {
@@ -142,6 +148,7 @@ export const pageRoutes: readonly PageRoute[] = [
       }),
       jobsPulse(),
       jobFacets(),
+      siteMeta(),
     ],
   },
   {

@@ -158,8 +158,15 @@ export function JobView({ page }: { readonly page: JobPagePayload }) {
         />
         <div className="flex w-full shrink-0 flex-col gap-4 lg:w-rail 2xl:grid 2xl:w-3xl 2xl:grid-cols-2">
           <PayPanel job={job} band={context.salaryBand} />
-          <CompanyPanel company={job.company} trend={context.companyTrend} />
-          <ProfessionPanel trend={context.professionTrend} />
+          <CompanyPanel
+            company={job.company}
+            trend={context.companyTrend}
+            asOf={page.asOf ?? job.lastSeenAt}
+          />
+          <ProfessionPanel
+            trend={context.professionTrend}
+            asOf={page.asOf ?? job.lastSeenAt}
+          />
           <SimilarRolesPanel similar={context.similar} />
         </div>
       </div>

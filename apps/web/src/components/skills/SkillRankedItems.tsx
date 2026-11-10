@@ -26,6 +26,7 @@ export function growingItems(rows: readonly SkillIndexRow[]): RankedItem[] {
     trend: (
       <Sparkline
         values={row.spark}
+        end={row.asOf}
         width={56}
         height={22}
         className="hidden xl:block"

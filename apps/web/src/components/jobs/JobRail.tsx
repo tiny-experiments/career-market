@@ -3,16 +3,23 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { MetricHoverCard } from "@/components/common";
 import {
+  AreaChart,
   Delta,
   Logo,
   Panel,
   SignalBadge,
-  Sparkline,
   type Signal,
 } from "@/components/data";
 import { Badge } from "@/components/ui/badge";
 import type { JobPagePayload } from "@/lib/api";
-import { JOB_PAGE, METRICS, PAY_POSITION, openRoles } from "@/content";
+import {
+  JOB_PAGE,
+  METRICS,
+  PAY_POSITION,
+  openRoles,
+  openRolesAtOverTime,
+} from "@/content";
+import { daysEndingOn } from "@/lib/charts";
 import { formatPay } from "@/lib/format";
 import { yearlyPay } from "@/lib/jobRows";
 import { cn } from "@/lib/utils";
@@ -20,8 +27,16 @@ import { cn } from "@/lib/utils";
 type Job = JobPagePayload["job"];
 type Context = JobPagePayload["context"];
 
-const SPARK_WIDTH = 248;
-const SPARK_HEIGHT = 48;
+const TREND_HEIGHT = 132;
+
+/** A daily series ending on `end`, as dated points for a chart. */
+function dated(values: readonly number[], end: string) {
+  const dates = daysEndingOn(end, values.length);
+  return values.flatMap((value, index) => {
+    const date = dates[index];
+    return date ? [{ date, value }] : [];
+  });
+}
 
 function PanelLink({
   to,
@@ -109,9 +124,12 @@ const SIGNAL_OF: Record<string, Signal> = {
 export function CompanyPanel({
   company,
   trend,
+  asOf,
 }: {
   readonly company: Job["company"];
   readonly trend: Context["companyTrend"];
+  /** The day the trend's last value is from. */
+  readonly asOf: string;
 }) {
   const jobsHref = `/jobs?company=${encodeURIComponent(company.slug ?? company.name)}`;
   return (
@@ -135,11 +153,10 @@ export function CompanyPanel({
           ) : null}
         </div>
         {trend.available && trend.spark.length > 1 ? (
-          <Sparkline
-            values={trend.spark}
-            width={SPARK_WIDTH}
-            height={SPARK_HEIGHT}
-            className="w-full"
+          <AreaChart
+            series={dated(trend.spark, asOf)}
+            height={TREND_HEIGHT}
+            label={openRolesAtOverTime(company.name)}
           />
         ) : null}
         <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -157,8 +174,11 @@ export function CompanyPanel({
 
 export function ProfessionPanel({
   trend,
+  asOf,
 }: {
   readonly trend: Context["professionTrend"];
+  /** The day the trend's last value is from. */
+  readonly asOf: string;
 }) {
   if (!trend.available) return null;
   return (
@@ -179,11 +199,10 @@ export function ProfessionPanel({
           )}
         </div>
         {trend.spark.length > 1 ? (
-          <Sparkline
-            values={trend.spark}
-            width={SPARK_WIDTH}
-            height={SPARK_HEIGHT}
-            className="w-full"
+          <AreaChart
+            series={dated(trend.spark, asOf)}
+            height={TREND_HEIGHT}
+            label={`Open roles in ${trend.name} over time`}
           />
         ) : null}
         <div className="flex flex-wrap gap-x-4 gap-y-1">

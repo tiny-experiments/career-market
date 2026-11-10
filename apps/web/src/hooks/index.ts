@@ -1,4 +1,6 @@
 export { CARD_MIN_ROWS, useCardPages, type CardPages } from "./useCardPages";
+export { useChartScrub, type ChartScrubOptions } from "./useChartScrub";
+export { useDataDay } from "./useDataDay";
 export { useElementWidth } from "./useElementWidth";
 export { useListSearch } from "./useListSearch";
 export { useListSort } from "./useListSort";

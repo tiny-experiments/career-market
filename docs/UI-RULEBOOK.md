@@ -101,7 +101,7 @@ apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
     layout/    SiteHeader, TopNav, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
-    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard, TableFilter
+    data/      DataTable, Pager, Sparkline, AreaChart, ChartTooltip, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard, TableFilter
     market/    the Market and Professions pieces: MarketStatusCard, HiringIndexPanel, ProfessionListCard, CompaniesRampingCard, ProfessionsBoard, ProfessionsTable, WhereJobsPanel, WorldMap
     professions/  the profession detail page: ProfessionHeader, ProfessionChartPanel, ProfessionPanels, ProfessionTables
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback

@@ -3,6 +3,7 @@ import { DataTable, type Column } from "@/components/data/DataTable";
 import { Logo } from "@/components/data/Logo";
 import { ShareBar } from "@/components/data/ShareBar";
 import { Sparkline } from "@/components/data/Sparkline";
+import { useDataDay } from "@/hooks";
 import { formatCount, formatPayRange, formatShare } from "@/lib/format";
 import { METRICS, NO_FIGURE, WINDOW_HEADER } from "@/content";
 import {
@@ -48,6 +49,7 @@ export function ProfessionsTable({
       : VIEW_SORT[view],
   );
 
+  const day = useDataDay();
   const rankOf = useMemo(() => {
     const ranks = new Map<string, number>();
     sortProfessions(rankFrom, "open", "desc").forEach((row, index) =>
@@ -184,7 +186,9 @@ export function ProfessionsTable({
       align: "right",
       from: "md",
       hint: METRICS.trend,
-      cell: (row) => <Sparkline values={row.spark} className="ml-auto" />,
+      cell: (row) => (
+        <Sparkline values={row.spark} end={day} className="ml-auto" />
+      ),
     },
   ];
 
