@@ -1,5 +1,6 @@
 import { DIRECTORY_COPY } from "@/content";
-import { PagedRankedCard } from "@/components/data";
+import { MiniList, MiniRow, PagedRankedCard } from "@/components/data";
+import { useIsMobile } from "@/hooks";
 import {
   growingItems,
   paidItems,
@@ -32,26 +33,48 @@ export function SkillsMarketRow({
     "desc",
   ).slice(0, CARD_ROWS);
 
+  const mobile = useIsMobile();
+  const lists = [
+    {
+      title: DIRECTORY_COPY.fastestGrowing,
+      to: "/skills?view=growing",
+      items: growingItems(growing),
+    },
+    {
+      title: DIRECTORY_COPY.bestPaid,
+      to: "/skills?view=best-paid",
+      items: paidItems(paid),
+    },
+    {
+      title: DIRECTORY_COPY.mostPaired,
+      to: "/skills?view=paired",
+      items: pairedItems(paired),
+    },
+  ];
+
+  // On a phone each card shrinks to its top three in a row that slides sideways.
+  if (mobile) {
+    return (
+      <MiniRow label={DIRECTORY_COPY.skillMovers}>
+        {lists.map((list) => (
+          <MiniList
+            key={list.title}
+            {...list}
+            empty={DIRECTORY_COPY.noMovers}
+          />
+        ))}
+      </MiniRow>
+    );
+  }
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <PagedRankedCard
-        title={DIRECTORY_COPY.fastestGrowing}
-        to="/skills?view=growing"
-        items={growingItems(growing)}
-        empty={DIRECTORY_COPY.noMovers}
-      />
-      <PagedRankedCard
-        title={DIRECTORY_COPY.bestPaid}
-        to="/skills?view=best-paid"
-        items={paidItems(paid)}
-        empty={DIRECTORY_COPY.noMovers}
-      />
-      <PagedRankedCard
-        title={DIRECTORY_COPY.mostPaired}
-        to="/skills?view=paired"
-        items={pairedItems(paired)}
-        empty={DIRECTORY_COPY.noMovers}
-      />
+      {lists.map((list) => (
+        <PagedRankedCard
+          key={list.title}
+          {...list}
+          empty={DIRECTORY_COPY.noMovers}
+        />
+      ))}
     </div>
   );
 }

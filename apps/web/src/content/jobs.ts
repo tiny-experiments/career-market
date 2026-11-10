@@ -100,6 +100,10 @@ export const JOB_PAGE = {
   copyLink: "Copy link",
   linkCopied: "Link copied",
   verdictRegion: "What kind of posting this is",
+  pay: "Pay",
+  company: "Company",
+  profession: "Profession",
+  keyFacts: "This role at a glance",
 } as const;
 
 /** "It was open for 37 days." or, when only the closing is known, the plain fact. */
@@ -114,6 +118,7 @@ export const seeOpenRoles = (profession: string | null) =>
   profession ? `See open roles in ${profession}` : "See open roles";
 
 export const JOBS_LIST = {
+  pulse: "Jobs at a glance",
   pulseOpen: "Open roles",
   pulseNew: "New today",
   pulseNewCaption: "New roles posted each day, over the last month.",

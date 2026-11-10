@@ -1,6 +1,10 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
+/** On a phone a row of chips stays on one line that scrolls sideways, edge to edge. */
+export const PHONE_CHIP_ROW =
+  "max-md:-mx-gutter max-md:w-auto max-md:flex-nowrap max-md:overflow-x-auto max-md:px-gutter max-md:scrollbar-none";
+
 export interface TableFilterOption<T extends string> {
   readonly value: T;
   readonly label: string;
@@ -20,7 +24,8 @@ export interface TableFilterProps<T extends string> {
 /**
  * The choices that narrow the table right under them: a row of chips, one on
  * at a time, with a line that says what the chosen one shows. It sits on the
- * table it filters, never above the page.
+ * table it filters, never above the page. On a phone the row is one line
+ * that scrolls sideways.
  */
 export function TableFilter<T extends string>({
   label,
@@ -44,7 +49,7 @@ export function TableFilter<T extends string>({
           const chosen = options.find((option) => option.value === next);
           if (chosen) onChange(chosen.value);
         }}
-        className="w-full flex-wrap"
+        className={cn("w-full flex-wrap", PHONE_CHIP_ROW)}
       >
         {options.map((option) => (
           <ToggleGroupItem key={option.value} value={option.value}>

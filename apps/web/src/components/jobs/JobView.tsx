@@ -17,6 +17,8 @@ import {
   verdictHeadline,
 } from "@/content";
 import { yearlyPay } from "@/lib/jobRows";
+import { useIsMobile } from "@/hooks";
+import { JobMiniFacts } from "./JobMiniFacts";
 import { JobPosting } from "./JobPosting";
 import {
   CompanyPanel,
@@ -115,6 +117,7 @@ function JobActions({ job }: { readonly job: JobPagePayload["job"] }) {
 export function JobView({ page }: { readonly page: JobPagePayload }) {
   const { job, context } = page;
   const { verdict } = context;
+  const mobile = useIsMobile();
   return (
     <>
       <PageHeader
@@ -146,6 +149,7 @@ export function JobView({ page }: { readonly page: JobPagePayload }) {
           />
         ) : undefined}
       </VerdictCard>
+      {mobile ? <JobMiniFacts page={page} /> : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <JobPosting
           job={job}

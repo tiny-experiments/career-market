@@ -7,7 +7,13 @@ import {
   type SortDirection,
 } from "@/components/data";
 import { skillLogo } from "@/components/skills/SkillRankedItems";
-import { DIRECTORY_COPY, METRICS, NO_FIGURE, WINDOW_HEADER } from "@/content";
+import {
+  DIRECTORY_COPY,
+  METRICS,
+  NO_FIGURE,
+  WINDOW_HEADER,
+  PHONE_OPEN_HEADER,
+} from "@/content";
 import type { SkillIndexRow } from "@/lib/api";
 import { formatCount, formatPay, formatShare } from "@/lib/format";
 
@@ -18,7 +24,6 @@ function columns(rank: ReadonlyMap<string, number>): Column<SkillIndexRow>[] {
     {
       key: "rank",
       header: DIRECTORY_COPY.columns.rank,
-      from: "sm",
       cell: (row) => (
         <span className="text-muted-foreground">{rank.get(row.id)}</span>
       ),
@@ -31,9 +36,10 @@ function columns(rank: ReadonlyMap<string, number>): Column<SkillIndexRow>[] {
       cell: (row) => (
         <span className="flex min-w-0 items-center gap-3">
           {skillLogo(row)}
-          <span className="flex min-w-0 items-baseline gap-2">
+          {/* On a phone the category sits under the name. */}
+          <span className="flex min-w-0 items-baseline gap-2 max-md:flex-col max-md:gap-0">
             <span className="truncate font-bold">{row.label}</span>
-            <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+            <span className="truncate text-xs text-muted-foreground">
               {row.category}
             </span>
           </span>
@@ -47,6 +53,8 @@ function columns(rank: ReadonlyMap<string, number>): Column<SkillIndexRow>[] {
       sortable: true,
       hint: METRICS.openRolesSkill,
       cell: (row) => formatCount(row.open),
+      phoneLine: (row) => <ChangeCell change={row.change7d} size="sm" />,
+      phoneHeader: PHONE_OPEN_HEADER,
     },
     {
       key: "change7d",
@@ -62,6 +70,7 @@ function columns(rank: ReadonlyMap<string, number>): Column<SkillIndexRow>[] {
       header: WINDOW_HEADER.month,
       align: "right",
       sortable: true,
+      from: "md",
       hint: METRICS.changeMonth,
       cell: (row) => <ChangeCell change={row.change} />,
     },

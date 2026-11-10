@@ -61,7 +61,7 @@ Rules:
 | Token                   | Value    | Class                         | Use                                                                      |
 | ----------------------- | -------- | ----------------------------- | ------------------------------------------------------------------------ |
 | `--container-page`      | 1920 px  | `max-w-page`                  | the fluid page column                                                    |
-| `--spacing-gutter`      | 24 px    | `px-gutter`                   | page gutters at every width                                              |
+| `--spacing-gutter`      | 24 px    | `px-gutter`                   | page gutters; 16 px on a phone (below `md`)                              |
 | `--spacing-nav`         | 56 px    | `h-nav`                       | the top bar                                                              |
 | `--spacing-row`         | 52 px    | `h-row`                       | a table row                                                              |
 | `--spacing-row-compact` | 40 px    | `h-row-compact`               | a list row inside a card                                                 |
@@ -76,6 +76,7 @@ Rules:
 - **Two surface levels, never three.** A card on the page; flat tinted tiles inside the card. Never a card inside a card inside a card.
 - Detail pages: header with the facts rail, a full-width chart panel, then three panels on one row, then full-width tables.
 - Works at 400 px and at 1920 px. Columns that do not fit hide below a breakpoint (`Column.from`); the body never scrolls sideways.
+- **A phone gets mini versions, not stacked cards.** Below `md` (`useIsMobile`), a page's market cards turn into one sideways row of `MiniStat` tiles and one of `MiniList` short lists (`MiniRow`, snapping tile by tile), filter chips stay on one line that scrolls, and the table starts on the first screen. A table row on a phone is rank, logo, name with its code under it, and the figure with the week's change under it (`Column.phoneLine`, `Column.phoneHeader`). A detail page's stat rail is the same `MiniRow` with its desktop grid as `className`. From `md` up nothing changes.
 
 ## 5. Shape and elevation
 
@@ -101,15 +102,15 @@ apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
     layout/    SiteHeader, TopNav, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
-    data/      DataTable, Pager, Sparkline, AreaChart, ChartTooltip, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard, TableFilter
-    market/    the Market and Professions pieces: MarketStatusCard, HiringIndexPanel, ProfessionListCard, CompaniesRampingCard, ProfessionsBoard, ProfessionsTable, WhereJobsPanel, WorldMap
+    data/      DataTable, Pager, Sparkline, AreaChart, ChartTooltip, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard, TableFilter, MiniStat, MiniList, MiniRow
+    market/    the Market and Professions pieces: MarketStatusCard, HiringIndexPanel, ProfessionListCard, CompaniesRampingCard, MarketMiniBoard, MarketRankedItems, ProfessionsBoard, ProfessionsTable, WhereJobsPanel, WorldMap
     professions/  the profession detail page: ProfessionHeader, ProfessionChartPanel, ProfessionPanels, ProfessionTables
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
     jobs/      JobsTable, RolesTable, JobsPulseStrip, JobsQuickFilters, JobFiltersRail, CompanyFilter, VerdictCard, TypicalWindowBar, JobView, JobPosting, JobRail panels, ClosedJob
     companies/ the Companies and Company pages' tables, market cards and panels
     skills/    the Skills and Skill pages' tables, market cards and panels
   content/     every customer-facing sentence: metrics (hover cards), phrasing, jobs, site (titles, About, footer), states
-  hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth, useChartScrub, useDataDay
+  hooks/       useResource, usePagedList, useListSearch, useListSort, useSiteSearch, usePrefetching, useSlidingIndicator, useElementWidth, useChartScrub, useDataDay, useIsMobile
   lib/         utils (cn), format, nav, logo, paging, charts, failure, listFilters, skillViews, redirects, prefetch
   lib/api/     client (request<T>, ApiError), resource (the shared cache), one file per API module, types
   layouts/     RootLayout
@@ -157,6 +158,8 @@ apps/web/src/
 | The parts of something, with a bar each          | `BreakdownList`                                                                                                                      |
 | A fact on a detail page's rail                   | `StatCard`                                                                                                                           |
 | A small fact inside a market card                | `KpiTile`                                                                                                                            |
+| A card's headline, shrunk for a phone            | `MiniStat` in a `MiniRow` (label, figure, small change or caption, the (i) beside it)                                                |
+| A ranked card shrunk for a phone                 | `MiniList` in a `MiniRow`: the title opens the full list, three rows under it                                                        |
 | A change                                         | `Delta` (text in a cell, pill beside a headline)                                                                                     |
 | A company's hiring signal                        | `SignalBadge`                                                                                                                        |
 | A share of a whole                               | `ShareBar` under the percentage; `SegmentBar` for parts                                                                              |
@@ -222,3 +225,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **2026-11-10** — Feedback round 1: the sub-bar is gone; each section's views are `TableFilter` chips on its own table, labelled in plain words with a line saying what they show (old `?view=` and `?signal=` addresses still open the matching filter). `Gauge` removed: the Tech Hiring Index is the figure, its week change and a 30-day line (`HiringIndexPanel`); Hiring signals is a sentence and a hiring-more against hiring-less bar. `KpiTile` takes a `caption` and a small picture. GDPR and other compliance items are never listed as skills (`NON_TECHNICAL_SKILLS` in `@cm/core/codes`).
 - **2026-11-10** — Every trend chart reads its day and value on hover or tap: `ChartTooltip` and `useChartScrub` are shared by `AreaChart`, `Sparkline` and the market flow bars; `AreaChart` gains a value axis; sparklines are dated from the site's day (`useDataDay`, `daysEndingOn` and `datedSeries` in `lib/charts.ts`). Before and after shots are in `docs/screenshots/charts-1`.
 - **2026-11-10** — Theme follows the visitor's device by default (live when the device switches); the `ThemeToggle` menu has Light, Dark and System, and only an explicit Light or Dark pick is stored. Rule 5 no longer calls dark the default.
+- **2026-11-10** — Mobile: below `md` the cards turn into mini versions (`MiniStat`, `MiniList`, `MiniRow`, `useIsMobile`) on Market, Professions, Companies, Skills, Jobs and the job page; detail stat rails slide sideways; filter chips stay on one scrolling line; table rows are rank, logo, name over code, figure over the week's change (`Column.phoneLine`, `phoneHeader`); 16 px gutters on a phone. Tablet and desktop unchanged.

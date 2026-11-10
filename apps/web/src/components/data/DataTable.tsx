@@ -31,6 +31,14 @@ export interface Column<Row> {
   readonly sortable?: boolean;
   /** Hide the column below this breakpoint. */
   readonly from?: "sm" | "md" | "lg" | "xl" | "2xl";
+  /**
+   * A small second line under the cell on a phone, below `md`: the code under
+   * a name, the week's change under a count, so a row stays rank, logo, name
+   * and figure when the columns that carry them hide.
+   */
+  readonly phoneLine?: (row: Row) => ReactNode;
+  /** The header on a phone, when the phone line changes what the column shows: "Open · 7D". */
+  readonly phoneHeader?: ReactNode;
   readonly className?: string;
 }
 
@@ -69,6 +77,25 @@ const FROM = {
   xl: "hidden xl:table-cell",
   "2xl": "hidden 2xl:table-cell",
 } as const;
+
+function headerOf<Row>(column: Column<Row>): ReactNode {
+  if (column.phoneHeader === undefined) return column.header;
+  return (
+    <>
+      <span className="max-md:hidden">{column.header}</span>
+      <span className="md:hidden">{column.phoneHeader}</span>
+    </>
+  );
+}
+
+function phoneLine<Row>(column: Column<Row>, row: Row): ReactNode {
+  if (column.phoneLine === undefined) return null;
+  return (
+    <span className="mt-0.5 block text-xs font-medium text-muted-foreground md:hidden">
+      {column.phoneLine(row)}
+    </span>
+  );
+}
 
 /**
  * The market table: full width, 44 px header, 52 px rows, every number
@@ -138,7 +165,7 @@ export function DataTable<Row>({
                       onClick={() => onSort(column.key)}
                       className="-mx-1.5 h-6 gap-1 px-1.5 text-eyebrow font-semibold text-muted-foreground hover:text-foreground"
                     >
-                      {column.header}
+                      {headerOf(column)}
                       {sorted === "asc" ? (
                         <ArrowUp />
                       ) : sorted === "desc" ? (
@@ -148,7 +175,7 @@ export function DataTable<Row>({
                       )}
                     </Button>
                   ) : (
-                    <span>{column.header}</span>
+                    <span>{headerOf(column)}</span>
                   )}
                   {column.hint ? (
                     <MetricHoverCard
@@ -225,9 +252,13 @@ export function DataTable<Row>({
                             className="outline-none after:absolute after:inset-0 after:rounded-sm focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
                           >
                             {column.cell(row, index)}
+                            {phoneLine(column, row)}
                           </Link>
                         ) : (
-                          column.cell(row, index)
+                          <>
+                            {column.cell(row, index)}
+                            {phoneLine(column, row)}
+                          </>
                         )}
                       </TableCell>
                     );

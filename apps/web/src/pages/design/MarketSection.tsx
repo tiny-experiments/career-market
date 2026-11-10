@@ -4,6 +4,9 @@ import {
   KpiTile,
   Logo,
   MarketCard,
+  MiniList,
+  MiniRow,
+  MiniStat,
   RankedList,
   Sparkline,
 } from "@/components/data";
@@ -142,6 +145,52 @@ export function MarketSection() {
               }))}
             />
           </MarketCard>
+        </div>
+      </Example>
+
+      <Example
+        title="On a phone"
+        note="Below md the cards shrink to mini versions: a sideways row of tiles (label, figure, small change, the (i) a tap away), then the lists cut to their top three, so the table starts on the first screen."
+      >
+        <div className="flex max-w-sm flex-col gap-3 overflow-hidden rounded-xl border px-gutter py-4">
+          <MiniRow label="The market at a glance" className="flex gap-2">
+            <MiniStat
+              label="Tech Hiring Index"
+              value="262,845"
+              change={0.013}
+              suffix="this week"
+              hint={{ text: "How many tech roles are open right now." }}
+              to="/jobs"
+            >
+              <Sparkline
+                values={PROFESSIONS[0]?.trend ?? []}
+                width={112}
+                height={18}
+                className="mt-1"
+              />
+            </MiniStat>
+            <MiniStat
+              label="New today"
+              value="576"
+              caption="newly posted roles"
+            />
+            <MiniStat label="Ramping" value="214" tone="up" />
+          </MiniRow>
+          <MiniRow label="Biggest movers this week" className="flex gap-2">
+            <MiniList
+              title="Professions gaining"
+              to="/professions?view=gaining"
+              items={gaining.map((row, index) => ({
+                rank: index + 1,
+                logo: <Logo name={row.name} shape="square" size="sm" />,
+                name: row.name,
+                value: formatCount(row.openRoles),
+                change: row.change7d,
+                to: `/professions/${row.code.toLowerCase()}`,
+              }))}
+              empty="No profession grew this week."
+            />
+          </MiniRow>
         </div>
       </Example>
 

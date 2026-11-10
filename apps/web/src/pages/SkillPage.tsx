@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router";
 import { NotFoundState, PageSkeleton, ResourceView } from "@/components/common";
-import { Delta, Logo, Panel, StatCard } from "@/components/data";
+import { Delta, Logo, MiniRow, Panel, StatCard } from "@/components/data";
 import { RolesTable, type RoleRow } from "@/components/jobs";
 import { PageContainer, PageHeader } from "@/components/layout";
 import {
@@ -15,6 +15,7 @@ import {
   DIRECTORY_COPY,
   ERROR,
   latestJobsNaming,
+  MARKET_COPY,
   METRICS,
   NO_FIGURE,
   PAGES,
@@ -94,7 +95,10 @@ function SkillHeader({ page }: { readonly page: SkillPagePayload }) {
         </>
       }
       aside={
-        <div className="grid grid-cols-2 gap-2 xl:w-96">
+        <MiniRow
+          label={MARKET_COPY.keyFigures}
+          className="grid grid-cols-2 gap-2 xl:w-96"
+        >
           <StatCard
             label={METRICS.skillPayRange.title}
             value={
@@ -125,7 +129,7 @@ function SkillHeader({ page }: { readonly page: SkillPagePayload }) {
             value={formatShare(page.primary.share)}
             hint={{ text: METRICS.professionShare.text }}
           />
-        </div>
+        </MiniRow>
       }
     />
   );

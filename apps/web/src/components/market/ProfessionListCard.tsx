@@ -1,10 +1,9 @@
 import { MarketCard } from "@/components/data/MarketCard";
-import { Logo } from "@/components/data/Logo";
 import { RankedList } from "@/components/data/RankedList";
-import { Sparkline } from "@/components/data/Sparkline";
 import { useCardPages, useDataDay } from "@/hooks";
-import { professionHref, type ProfessionRow } from "@/lib/professions";
+import type { ProfessionRow } from "@/lib/professions";
 import { cn } from "@/lib/utils";
+import { professionItems } from "./MarketRankedItems";
 
 export interface ProfessionListCardProps {
   readonly title: string;
@@ -50,26 +49,12 @@ export function ProfessionListCard({
         >
           <RankedList
             density={comfortable ? "comfortable" : "compact"}
-            items={rows.slice(start, end).map((row, index) => {
-              const delta = change?.(row);
-              return {
-                rank: start + index + 1,
-                logo: <Logo name={row.name} shape="square" size="sm" />,
-                name: row.name,
-                code: row.code,
-                value: value(row),
-                trend: (
-                  <Sparkline
-                    values={row.spark}
-                    end={day}
-                    width={64}
-                    height={24}
-                    className="hidden xl:block"
-                  />
-                ),
-                to: professionHref(row.code),
-                ...(delta === undefined ? {} : { change: delta }),
-              };
+            items={professionItems(rows.slice(start, end), {
+              value,
+              change,
+              start,
+              trend: true,
+              end: day,
             })}
           />
         </div>
