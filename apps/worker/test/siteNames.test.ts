@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import pino from 'pino';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createSql, type Sql } from '@cm/core/db';
@@ -208,6 +209,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
   });
 
   it('names the four confirmed tenants and releases their hold', async () => {
+    // The database is shared with suites that empty company_domain_override, so apply the migration
+    // again (it is idempotent) and assert what it leaves behind.
+    await sql.unsafe(await readFile(new URL('../../../packages/core/migrations/0024_oracle_name_override_confirmed.sql', import.meta.url), 'utf8'));
     const held = await sql`select 1 from company_site_name_hold where company_id in ('co_a91d11f55d17nz6t','co_k5bzv7gc5xma0nh2','co_prwgwcnwvpr5565s','co_vzmmz2sr1pgftzf5')`;
     expect(held).toHaveLength(0);
     const rows = await sql<{ company_id: string; name: string; domain: string | null }[]>`
