@@ -141,8 +141,30 @@ export function skillLabel(id: string): string {
 /** Skill namespaces that describe a field or practice, not a tool someone learns. */
 const NON_TOOL_NAMESPACES = new Set(['concept', 'lead', 'practice', 'domain']);
 
+/**
+ * Regulations and compliance audits that postings name like skills. They are
+ * not technical skills, so Career Market never lists them as one.
+ */
+export const NON_TECHNICAL_SKILLS: ReadonlySet<string> = new Set([
+  'sec:gdpr',
+  'sec:ccpa',
+  'sec:hipaa',
+  'sec:sox',
+  'sec:pci-dss',
+  'sec:soc2',
+  'sec:iso-27001',
+  'sec:nist-csf',
+  'sec:fedramp',
+]);
+
+/** Whether a skill id is a regulation or compliance item rather than a technical skill. */
+export function isNonTechnicalSkill(id: string): boolean {
+  return NON_TECHNICAL_SKILLS.has(id);
+}
+
 /** Skills the "Hottest skills" tiles can show: languages, frameworks, platforms, ML tools. */
 export function isTileSkill(id: string): boolean {
+  if (isNonTechnicalSkill(id)) return false;
   const ns = id.includes(':') ? id.slice(0, id.indexOf(':')) : '';
   return !NON_TOOL_NAMESPACES.has(ns) || id === 'domain:machine-learning';
 }

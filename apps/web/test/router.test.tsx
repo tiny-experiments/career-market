@@ -240,14 +240,14 @@ describe("the router", () => {
     );
   });
 
-  it("keeps the section's tabs in the chrome", async () => {
+  it("has no sub-navigation: an old view address opens its filter on the table", async () => {
     stubFetch(API);
-    open("/companies");
+    open("/companies?signal=ramping");
     await heading("Companies");
-    expect(screen.getByRole("link", { name: "Ramping" })).toHaveAttribute(
-      "href",
-      "/companies?signal=ramping",
-    );
+    expect(screen.queryByRole("navigation", { name: "Views" })).toBeNull();
+    expect(
+      await screen.findByRole("radio", { name: "Hiring more" }),
+    ).toHaveAttribute("aria-checked", "true");
   });
 });
 

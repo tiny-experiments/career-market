@@ -1,26 +1,23 @@
-import { useSearchParams } from "react-router";
 import { PageSkeleton, ResourceView } from "@/components/common";
 import { PageContainer } from "@/components/layout";
 import {
   CompaniesRampingCard,
   MarketStatusCard,
   ProfessionListCard,
-  ProfessionsTable,
+  ProfessionsBoard,
   WhereJobsPanel,
 } from "@/components/market";
 import { ERROR, MARKET_COPY, PAGES } from "@/content";
 import { useResource } from "@/hooks";
 import { marketOverview, professionsIndex } from "@/lib/api";
 import { formatCount } from "@/lib/format";
-import { gainingProfessions, professionViewFrom } from "@/lib/professions";
+import { gainingProfessions } from "@/lib/professions";
 
 const skeleton = <PageSkeleton variant="market" withHeader={false} />;
 
 export function MarketPage() {
   const market = useResource(marketOverview());
   const professions = useResource(professionsIndex());
-  const [search] = useSearchParams();
-  const view = professionViewFrom(search);
 
   return (
     <PageContainer>
@@ -39,7 +36,7 @@ export function MarketPage() {
             {({ rows }) => (
               <>
                 <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                  <MarketStatusCard market={overview} professions={rows} />
+                  <MarketStatusCard market={overview} />
                   <ProfessionListCard
                     title={MARKET_COPY.professionsGaining}
                     to="/professions?view=gaining"
@@ -55,7 +52,7 @@ export function MarketPage() {
                   <h2 className="text-h2 font-bold">
                     {MARKET_COPY.professions}
                   </h2>
-                  <ProfessionsTable key={view} rows={rows} view={view} />
+                  <ProfessionsBoard rows={rows} />
                 </section>
                 <WhereJobsPanel countries={overview.countries} />
               </>

@@ -6,12 +6,17 @@
 export const MARKET_COPY = {
   status: "Market status",
   hiringIndex: "Tech Hiring Index",
+  openTechRoles: "tech roles open right now",
+  lastThirtyDays: "Open roles, last 30 days",
+  newlyPosted: "newly posted roles",
+  posted: "Posted",
+  today: "Today",
   professionsGaining: "Professions gaining",
   companiesRamping: "Companies ramping",
   professions: "Professions",
   whereTheJobsAre: "Where the jobs are",
-  gaining: "Gaining",
-  cooling: "Cooling",
+  gaining: "More roles than last week",
+  cooling: "Fewer roles than last week",
   bestPaid: "Best paid",
   noneGaining: "No profession grew this week.",
   noneCooling: "No profession shrank this week.",
@@ -26,7 +31,7 @@ export const MARKET_COPY = {
   openRolesUnit: "open roles",
 } as const;
 
-/** "7 of 18 growing". */
-export function professionsGrowing(up: number, total: number): string {
-  return `${up} of ${total} growing`;
+/** "42 days old": the age of the typical open role. */
+export function daysOld(days: string): string {
+  return `${days} old`;
 }

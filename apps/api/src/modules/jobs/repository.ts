@@ -1,4 +1,9 @@
-import { familyInfo, skillLabel, titleCase } from '@cm/core/codes';
+import {
+  familyInfo,
+  isNonTechnicalSkill,
+  skillLabel,
+  titleCase,
+} from '@cm/core/codes';
 import {
   addDays,
   FIRST_COMPARABLE_BASE,
@@ -168,7 +173,8 @@ function toPosting(
   const evidence = new Map(
     (job.skillEvidence ?? []).map((e) => [e.id, e.count]),
   );
-  const skills = [...job.skills]
+  const skills = job.skills
+    .filter((id) => !isNonTechnicalSkill(id))
     .map((id) => ({ id, label: skillLabel(id), count: evidence.get(id) ?? 0 }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
     .map(({ id, label }) => ({

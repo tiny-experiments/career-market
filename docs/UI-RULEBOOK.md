@@ -63,7 +63,6 @@ Rules:
 | `--container-page`      | 1920 px  | `max-w-page`        | the fluid page column                           |
 | `--spacing-gutter`      | 24 px    | `px-gutter`         | page gutters at every width                     |
 | `--spacing-nav`         | 56 px    | `h-nav`             | the top bar                                     |
-| `--spacing-subbar`      | 46 px    | `h-subbar`          | the section's view tabs under the top bar       |
 | `--spacing-row`         | 52 px    | `h-row`             | a table row                                     |
 | `--spacing-row-compact` | 40 px    | `h-row-compact`     | a list row inside a card                        |
 | `--spacing-control`     | 32 px    | `h-control`         | every toolbar control (buttons, selects, chips) |
@@ -71,7 +70,7 @@ Rules:
 | `--spacing-spark`       | 120 × 34 | `w-spark h-spark-h` | a sparkline                                     |
 
 - **Fluid to 1920 px.** No 1600 px cap, no centred narrow column. Tables run edge to edge of the column (`-mx-gutter` when inside a padded container).
-- **Nav and sub-bar are one sticky unit** (`SiteHeader`). The sub-bar comes from the route's `handle.subBar`; a page never draws its own.
+- **One level of navigation** (`SiteHeader`): the five sections. There is no sub-navigation anywhere. A section's views are filters on the table they change (`TableFilter`), placed directly on that table.
 - **Active navigation is ink plus a 2 px underline that slides** (`UnderlineIndicator`). No filled pills anywhere in navigation.
 - **Two surface levels, never three.** A card on the page; flat tinted tiles inside the card. Never a card inside a card inside a card.
 - Detail pages: header with the facts rail, a full-width chart panel, then three panels on one row, then full-width tables.
@@ -100,12 +99,12 @@ Elevation is one token, two themes:
 apps/web/src/
   components/
     ui/        shadcn primitives. Vendored (kebab-case). Edit via tokens and variants, not internals.
-    layout/    SiteHeader, TopNav, SubBar, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
-    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, Gauge, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard
-    market/    the Market and Professions pieces: MarketStatusCard, ProfessionListCard, CompaniesRampingCard, ProfessionsTable, WhereJobsPanel, WorldMap
+    layout/    SiteHeader, TopNav, SearchBox, GlobalSearch, ThemeToggle, Footer, TickerStrip, PageContainer, PageHeader
+    data/      DataTable, Pager, Sparkline, AreaChart, Delta, SignalBadge, ShareBar, Logo, StatCard, KpiTile, SegmentBar, Legend, MarketCard, RankedList, Panel, TablePanel, BreakdownList, RangeTabs, ChangeCell, ListSearch, PagedRankedCard, TableFilter
+    market/    the Market and Professions pieces: MarketStatusCard, HiringIndexPanel, ProfessionListCard, CompaniesRampingCard, ProfessionsBoard, ProfessionsTable, WhereJobsPanel, WorldMap
     professions/  the profession detail page: ProfessionHeader, ProfessionChartPanel, ProfessionPanels, ProfessionTables
     common/    EmptyState, ErrorState, NotFoundState, MetricHoverCard, Chip, ResourceView, PageSkeleton, RouteErrorPage, RouteFallback
-    jobs/      JobsTable, RolesTable, JobsPulseStrip, JobFiltersRail, CompanyFilter, VerdictCard, TypicalWindowBar, JobView, JobPosting, JobRail panels, ClosedJob
+    jobs/      JobsTable, RolesTable, JobsPulseStrip, JobsQuickFilters, JobFiltersRail, CompanyFilter, VerdictCard, TypicalWindowBar, JobView, JobPosting, JobRail panels, ClosedJob
     companies/ the Companies and Company pages' tables, market cards and panels
     skills/    the Skills and Skill pages' tables, market cards and panels
   content/     every customer-facing sentence: metrics (hover cards), phrasing, jobs, site (titles, About, footer), states
@@ -115,7 +114,7 @@ apps/web/src/
   layouts/     RootLayout
   pages/       route components: assembly only. pages/design holds the /design chapters.
   index.css    the tokens
-  routes.ts    the page map: each page's address, sub-bar, chunk and the data it reads
+  routes.ts    the page map: each page's address, chunk and the data it reads
   router.tsx   the route tree built from it, plus redirects from old addresses
 ```
 
@@ -143,10 +142,10 @@ apps/web/src/
 | Need                                            | Use                                                                   |
 | ----------------------------------------------- | --------------------------------------------------------------------- |
 | Move between the five sections                  | `TopNav` (from `SECTIONS`); never add a sixth                         |
-| Switch a section's view (Gaining, Remote…)      | the route's `handle.subBar` → `SubBar`; the view is a query parameter |
+| Filter a section's main table (growing, remote…) | `TableFilter` on the table, labels in plain words, one line saying what it shows; the choice is a query parameter (`useTableFilter`) |
 | Tabs inside a page (Chart · Companies · Skills) | `Tabs` with `TabsList variant="underline"`                            |
 | A chart's range (1W 1M 3M 1Y All)               | `RangeTabs` (segmented)                                               |
-| Filter a table above it                         | `Chip` row; the chosen chip is the one blue tint                      |
+| Toggle several filters above a table            | `Chip` row, or `ToggleGroup variant="chip"`; the chosen chip is the one blue tint |
 | A filter rail's controls                        | `Input`, `Select`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Switch`  |
 | A change that may not exist yet in a table cell | `ChangeCell` (the figure, or a quiet dash)                            |
 | A ranked list of things with their change       | `DataTable` (full width, 52 px rows) or `RankedList` inside a card    |
@@ -169,10 +168,10 @@ apps/web/src/
 
 ## 8. Using shadcn
 
-shadcn owns **behaviour**: overlays, focus, keyboard, portals, form controls. We own the market pieces that are plain markup and SVG: tables' row links, sparklines, charts, gauges, the ticker.
+shadcn owns **behaviour**: overlays, focus, keyboard, portals, form controls. We own the market pieces that are plain markup and SVG: tables' row links, sparklines, charts, the ticker.
 
 - Vendored files import `cn` from `@/lib/utils`, never from the `cn` package directly: only ours knows the type and layout tokens.
-- `shadcn add --overwrite` clobbers local edits. Patched for this repo: `card.tsx` (`shadow-card`, bold `CardTitle`), `hover-card.tsx` (320 wide, 14 px padding, arrow, instant), `tabs.tsx` (`underline` list variant), `badge.tsx` (`up` `down` `flat` `warn` `code` variants and a `md` size), `button.tsx` (`chip` variant), `progress.tsx` (`indicatorClassName`), `sonner.tsx` (strict TS). Re-add any of them and re-apply.
+- `shadcn add --overwrite` clobbers local edits. Patched for this repo: `card.tsx` (`shadow-card`, bold `CardTitle`), `hover-card.tsx` (320 wide, 14 px padding, arrow, instant), `tabs.tsx` (`underline` list variant), `badge.tsx` (`up` `down` `flat` `warn` `code` variants and a `md` size), `button.tsx` (`chip` variant), `progress.tsx` (`indicatorClassName`), `sonner.tsx` (strict TS), `toggle.tsx` (`chip` variant). Re-add any of them and re-apply.
 - Arbitrary values inside `components/ui` are shadcn's own and are allow-listed in `scripts/check-ui.allowlist.json`; ours are not.
 - shadcn Charts (Recharts) are not used: sparklines, area and segment charts are hand-drawn SVG (`lib/charts.ts`), smaller and under our control.
 
@@ -218,3 +217,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **2026-11-09** — Copy module `src/content` (hover-card sentences, comparison phrasing, page titles and meta, states, About, footer line); time and money formatters in `lib/format.ts`; `check:ui` gains the retired-word rule.
 - **2026-11-09** — Companies and Skills pages: `BreakdownList`, `ChangeCell`, `ListSearch`, `PagedRankedCard`, `RolesTable`, and `DataTable`'s `inset` for tables inside cards.
 - **2026-11-09** — Final review: AA contrast for `muted-foreground`, `up`, `down`, `warn` in both themes; reduced-motion rule; row links named by their content and `Logo` decorative; 24 px hover-card triggers; `PageSkeleton` `market` variant; ranked-card sparklines only from `xl`; Jobs company links carry the company's slug (its name only when it has none) and the filter chip shows the name the API returns as `filterCompany`.
+- **2026-11-10** — Feedback round 1: the sub-bar is gone; each section's views are `TableFilter` chips on its own table, labelled in plain words with a line saying what they show (old `?view=` and `?signal=` addresses still open the matching filter). `Gauge` removed: the Tech Hiring Index is the figure, its week change and a 30-day line (`HiringIndexPanel`); Hiring signals is a sentence and a hiring-more against hiring-less bar. `KpiTile` takes a `caption` and a small picture. GDPR and other compliance items are never listed as skills (`NON_TECHNICAL_SKILLS` in `@cm/core/codes`).

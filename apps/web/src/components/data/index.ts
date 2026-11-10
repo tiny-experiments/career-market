@@ -8,7 +8,6 @@ export {
 export { BreakdownList, type BreakdownItem } from "./BreakdownList";
 export { ChangeCell } from "./ChangeCell";
 export { Delta, type DeltaProps } from "./Delta";
-export { Gauge, type GaugeProps } from "./Gauge";
 export { KpiTile, type KpiTileProps } from "./KpiTile";
 export { Legend, type LegendItem } from "./Legend";
 export { Logo, type LogoProps } from "./Logo";
@@ -29,3 +28,8 @@ export { SignalBadge, type Signal } from "./SignalBadge";
 export { Sparkline, type SparklineProps } from "./Sparkline";
 export { StatCard, type StatCardProps } from "./StatCard";
 export { TablePanel, type TablePanelProps } from "./TablePanel";
+export {
+  TableFilter,
+  type TableFilterOption,
+  type TableFilterProps,
+} from "./TableFilter";

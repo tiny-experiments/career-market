@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** The mark alone: a rising line in a rounded square. Identity only, never a button. */
+/** The mark alone: a rising step chart in a rounded square. Identity only, never a button. */
 export function BrandMark({ className }: { readonly className?: string }) {
   return (
     <svg
@@ -10,21 +10,19 @@ export function BrandMark({ className }: { readonly className?: string }) {
     >
       <rect width="32" height="32" rx="8" className="fill-primary" />
       <path
-        d="M7 22 L13 15 L18 19 L25 10"
-        fill="none"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="stroke-primary-foreground"
+        d="M6.5 22.5 H12.5 V16.5 H18.5 V10.5 H24.5 V26 H6.5 Z"
+        fillOpacity="0.2"
+        className="fill-primary-foreground"
       />
       <path
-        d="M19 10 H25 V16"
+        d="M6.5 22.5 H12.5 V16.5 H18.5 V10.5 H24.5"
         fill="none"
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
         className="stroke-primary-foreground"
       />
+      <circle cx="24.5" cy="10.5" r="3.5" className="fill-primary-foreground" />
     </svg>
   );
 }

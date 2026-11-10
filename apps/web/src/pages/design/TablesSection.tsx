@@ -1,6 +1,6 @@
 import { Inbox } from "lucide-react";
 import { useState } from "react";
-import { Chip, EmptyState } from "@/components/common";
+import { EmptyState } from "@/components/common";
 import {
   DataTable,
   Delta,
@@ -9,6 +9,7 @@ import {
   ShareBar,
   SignalBadge,
   Sparkline,
+  TableFilter,
   type Column,
   type SortDirection,
 } from "@/components/data";
@@ -210,15 +211,35 @@ const COMPANY_COLUMNS: readonly Column<CompanyRow>[] = [
 ];
 
 const VIEWS = [
-  "All",
-  "Gaining",
-  "Cooling",
-  "Remote-friendly",
-  "Best paid",
+  {
+    value: "all",
+    label: "All professions",
+    description: "Every profession, most open roles first.",
+  },
+  {
+    value: "gaining",
+    label: "More roles than last week",
+    description: "Professions with more open roles than a week ago.",
+  },
+  {
+    value: "cooling",
+    label: "Fewer roles than last week",
+    description: "Professions with fewer open roles than a week ago.",
+  },
+  {
+    value: "remote",
+    label: "Remote-friendly",
+    description: "Professions where a quarter or more of roles are remote.",
+  },
+  {
+    value: "best-paid",
+    label: "Best paid",
+    description: "Professions whose pay range tops $160K.",
+  },
 ] as const;
 
 export function TablesSection() {
-  const [view, setView] = useState<(typeof VIEWS)[number]>("All");
+  const [view, setView] = useState<(typeof VIEWS)[number]["value"]>("all");
   const [sort, setSort] = useState<{ key: string; direction: SortDirection }>({
     key: "openRoles",
     direction: "desc",
@@ -233,10 +254,10 @@ export function TablesSection() {
     );
   const professions = [...PROFESSIONS]
     .filter((row) => {
-      if (view === "Gaining") return row.change7d > 0;
-      if (view === "Cooling") return row.change7d < 0;
-      if (view === "Remote-friendly") return row.remoteShare >= 0.25;
-      if (view === "Best paid") return row.payHigh >= 160_000;
+      if (view === "gaining") return row.change7d > 0;
+      if (view === "cooling") return row.change7d < 0;
+      if (view === "remote") return row.remoteShare >= 0.25;
+      if (view === "best-paid") return row.payHigh >= 160_000;
       return true;
     })
     .sort((a, b) => {
@@ -253,18 +274,19 @@ export function TablesSection() {
       title="The market table"
       description="Full width, the row is the link, numbers right-aligned in tabular figures, a sparkline per row coloured by direction and a share bar under a percentage. Hints sit behind the (i) in the header. No column is a bare link."
     >
-      <Example title="Professions" note="Chips filter, headers sort.">
+      <Example
+        title="Professions"
+        note="The filter row sits on the table it filters, with a line saying what it shows; headers sort."
+      >
         <div className="-mx-gutter flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2 px-gutter">
-            {VIEWS.map((label) => (
-              <Chip
-                key={label}
-                pressed={view === label}
-                onClick={() => setView(label)}
-              >
-                {label}
-              </Chip>
-            ))}
+          <div className="flex flex-wrap items-start gap-2 px-gutter">
+            <TableFilter
+              label="Show professions"
+              options={VIEWS}
+              value={view}
+              onChange={setView}
+              className="min-w-0 flex-1"
+            />
             <Button
               variant="outline"
               size="sm"

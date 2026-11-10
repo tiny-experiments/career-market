@@ -58,6 +58,43 @@ describe("CompaniesPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("says how hiring leans in words, with no gauge", async () => {
+    stubFetch({
+      "/api/companies?page=1&pageSize=50": page([companyRow()], 1),
+      "/api/company-signals": { body: signalsOverview },
+    });
+    renderWithRouter(<CompaniesPage />, { path: "/companies" });
+    expect(
+      await screen.findByText(
+        "About as many companies are ramping as cooling.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("587 hiring more")).toBeInTheDocument();
+    expect(screen.getByText("528 hiring less")).toBeInTheDocument();
+  });
+
+  it("filters by signal through the address, from the first page", async () => {
+    stubFetch({
+      "/api/companies?page=2&pageSize=50": page([companyRow()], 200),
+      "/api/companies?page=1&pageSize=50&signal=cooling": page(
+        [companyRow({ slug: "acme", name: "Acme" })],
+        1,
+      ),
+      "/api/company-signals": { body: signalsOverview },
+    });
+    renderWithRouter(<CompaniesPage />, { path: "/companies?page=2" });
+    await userEvent.click(
+      await screen.findByRole("radio", { name: "Hiring less" }),
+    );
+    await screen.findByRole("link", { name: "Acme" });
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/companies?signal=cooling",
+    );
+    expect(
+      screen.getByText(/Cooling: companies with fewer open roles/),
+    ).toBeInTheDocument();
+  });
+
   it("sorts through the address and resets to the first page", async () => {
     stubFetch({
       "/api/companies?page=2&pageSize=50": page([companyRow()], 200),

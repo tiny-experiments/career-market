@@ -1,9 +1,16 @@
 import { Link } from "react-router";
 import { MetricHoverCard } from "@/components/common";
-import { Gauge, MarketCard } from "@/components/data";
-import { DIRECTORY_COPY, METRICS, SIGNALS, type SignalState } from "@/content";
+import { MarketCard, SegmentBar } from "@/components/data";
+import {
+  DIRECTORY_COPY,
+  hiringLess,
+  hiringMore,
+  METRICS,
+  SIGNALS,
+  type SignalState,
+} from "@/content";
 import type { CompanySignalsOverview } from "@/lib/api";
-import { formatCount, type Direction } from "@/lib/format";
+import { formatCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const TILES: readonly { state: SignalState; tone: string }[] = [
@@ -13,19 +20,23 @@ const TILES: readonly { state: SignalState; tone: string }[] = [
   { state: "FREEZING", tone: "text-down" },
 ];
 
-/** Where the market leans: a gauge of ramping against cooling, and a door into each signal. */
+/**
+ * Where hiring leans: the companies hiring more set against the ones hiring
+ * less, in a sentence and one bar, then a door into each signal.
+ */
 export function CompanySignalsCard({
   counts,
 }: {
   readonly counts: CompanySignalsOverview["counts"];
 }) {
-  const moving = counts.RAMPING + counts.COOLING + counts.FREEZING;
-  const lean = moving === 0 ? 0.5 : counts.RAMPING / moving;
-  const tone: Direction = lean > 0.55 ? "up" : lean < 0.45 ? "down" : "flat";
+  const more = counts.RAMPING;
+  const less = counts.COOLING + counts.FREEZING;
+  const moving = more + less;
+  const lean = moving === 0 ? 0.5 : more / moving;
   const sentence =
-    tone === "up"
+    lean > 0.55
       ? DIRECTORY_COPY.mostlyRamping
-      : tone === "down"
+      : lean < 0.45
         ? DIRECTORY_COPY.mostlyCooling
         : DIRECTORY_COPY.balanced;
 
@@ -34,14 +45,24 @@ export function CompanySignalsCard({
       title={DIRECTORY_COPY.hiringSignals}
       to="/companies?signal=ramping"
     >
-      <div className="flex items-center gap-4">
-        <Gauge value={lean} tone={tone} className="shrink-0" />
+      <div className="flex flex-col gap-3 rounded-lg bg-tile px-3 py-3">
         <p className="flex items-start gap-1.5 text-sm font-semibold">
           {sentence}
           <MetricHoverCard title={METRICS.hiringSignals.title}>
             {METRICS.hiringSignals.text}
           </MetricHoverCard>
         </p>
+        <SegmentBar
+          legend={false}
+          segments={[
+            { label: "more", share: lean, swatch: "bg-up" },
+            { label: "less", share: 1 - lean, swatch: "bg-down" },
+          ]}
+        />
+        <div className="flex justify-between gap-3 text-small font-semibold">
+          <span className="text-up">{hiringMore(formatCount(more))}</span>
+          <span className="text-down">{hiringLess(formatCount(less))}</span>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {TILES.map(({ state, tone: colour }) => (

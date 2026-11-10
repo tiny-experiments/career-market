@@ -3,11 +3,12 @@ import type { SortDirection } from "@/components/data/DataTable";
 
 export type ProfessionRow = ProfessionIndex["rows"][number];
 
-/** A view of the professions table: the sub-bar's `?view=` on Market and Professions. */
+/** A filter on the professions table: `?view=` on Market and Professions. */
 export type ProfessionView =
   "overview" | "gaining" | "cooling" | "remote" | "best-paid" | "new";
 
-const VIEWS: readonly ProfessionView[] = [
+export const PROFESSION_VIEWS: readonly ProfessionView[] = [
+  "overview",
   "gaining",
   "cooling",
   "remote",
@@ -15,8 +16,34 @@ const VIEWS: readonly ProfessionView[] = [
   "new",
 ];
 
+/** Under a region the remote share is not known, so that filter steps aside. */
+export const REGIONAL_PROFESSION_VIEWS: readonly ProfessionView[] =
+  PROFESSION_VIEWS.filter((view) => view !== "remote");
+
 export function professionViewFrom(search: URLSearchParams): ProfessionView {
-  return VIEWS.find((view) => view === search.get("view")) ?? "overview";
+  return (
+    PROFESSION_VIEWS.find((view) => view === search.get("view")) ?? "overview"
+  );
+}
+
+/** The rows a filter keeps: the ones that carry the figure it is about. */
+export function professionsInView(
+  rows: readonly ProfessionRow[],
+  view: ProfessionView,
+): readonly ProfessionRow[] {
+  switch (view) {
+    case "gaining":
+      return rows.filter((row) => (row.change?.value ?? 0) > 0);
+    case "cooling":
+      return rows.filter((row) => (row.change?.value ?? 0) < 0);
+    case "remote":
+      return rows.filter((row) => row.remoteShare !== null);
+    case "best-paid":
+      return rows.filter((row) => row.pay !== null);
+    case "overview":
+    case "new":
+      return rows;
+  }
 }
 
 /** The regions the table can be scoped to; the ids match the Jobs region filter. */
@@ -129,19 +156,4 @@ export function bestPaidProfessions(
     "pay",
     "desc",
   );
-}
-
-/** How many professions are up on the week, of those with a comparison. */
-export function marketBreadth(rows: readonly ProfessionRow[]): {
-  readonly up: number;
-  readonly total: number;
-  readonly share: number;
-} {
-  const known = rows.filter((row) => row.change !== null);
-  const up = known.filter((row) => (row.change?.value ?? 0) > 0).length;
-  return {
-    up,
-    total: known.length,
-    share: known.length === 0 ? 0 : up / known.length,
-  };
 }

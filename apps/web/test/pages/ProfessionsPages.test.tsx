@@ -37,17 +37,39 @@ describe("MarketPage", () => {
     expect(names()[0]).toContain("Software");
   });
 
-  it("colours the gauge by the direction of the headline change", async () => {
+  it("says in words what the headline figures are", async () => {
     const { container } = renderWithRouter(<MarketPage />);
     await screen.findByText("Market status");
-    expect(container.querySelector("svg .stroke-up")).toBeInTheDocument();
-    expect(container.querySelector("svg .stroke-down")).toBeNull();
+    expect(screen.getByText("tech roles open right now")).toBeInTheDocument();
+    expect(screen.getByText("newly posted roles")).toBeInTheDocument();
+    expect(screen.getByText("Typical open role")).toBeInTheDocument();
+    expect(screen.getByText("Open roles, last 30 days")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/of \d+ growing/);
   });
 
-  it("re-sorts the table for a view", async () => {
+  it("filters the table for an old view address", async () => {
     renderWithRouter(<MarketPage />, { path: "/?view=cooling" });
     await screen.findByText("Market status");
     expect(names()[0]).toContain("Data");
+    expect(names().every((name) => !name?.includes("Software"))).toBe(true);
+    expect(
+      screen.getByRole("radio", { name: "Fewer roles than last week" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("puts the filter in the address when a chip is chosen", async () => {
+    renderWithRouter(<MarketPage />);
+    await screen.findByText("Market status");
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("radio", { name: "Fewer roles than last week" }),
+    );
+    expect(screen.getByTestId("location")).toHaveTextContent("/?view=cooling");
+    expect(
+      screen.getByText(/fewer open roles than a week ago/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "All professions" }));
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/);
   });
 
   it("shows the new-roles column only on its view", async () => {
@@ -76,7 +98,10 @@ describe("ProfessionsPage", () => {
     renderWithRouter(<ProfessionsPage />, {
       path: "/professions?region=europe",
     });
-    expect(await screen.findByText("Best paid")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("radio", { name: "Best paid" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Remote-friendly" })).toBeNull();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/professions?region=europe",
       expect.anything(),

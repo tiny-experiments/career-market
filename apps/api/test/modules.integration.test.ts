@@ -115,9 +115,10 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         ('2026-11-08','acme','*',90,5,1),('2026-11-09','acme','*',100,10,0)`;
       await setup`insert into company_signal (as_of,company_id,state,window_from,window_days,opened,closed,open_base,partial,explainer)
         values ('2026-11-09','acme','RAMPING','2026-11-02',7,20,1,80,false,'Private upstream wording')`;
-      await setup`insert into skill_tracked (date,skill) values ('2026-11-09','lang:python'),('2026-11-09','ml:jax')`;
+      await setup`insert into skill_tracked (date,skill) values ('2026-11-09','lang:python'),('2026-11-09','ml:jax'),('2026-11-09','sec:gdpr')`;
       await setup`insert into skill_summary (date,skill,slug,open_total,primary_family) values
-        ('2026-11-09','lang:python','python',70,'software'),('2026-11-08','ml:jax','jax',10,'software')`;
+        ('2026-11-09','lang:python','python',70,'software'),('2026-11-08','ml:jax','jax',10,'software'),
+        ('2026-11-09','sec:gdpr','gdpr',40,'software')`;
       await setup`insert into skill_daily (date,skill,family,country,open) values
         ('2026-11-09','lang:python','software','*',70),('2026-11-08','ml:jax','software','*',10)`;
       await setup`insert into skill_series (skill,family,date,open,estimated) values
@@ -135,6 +136,7 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       await setup`insert into search_entry (as_of,kind,id,slug,label,open,domain,keywords) values
         ('2026-11-09','company','acme','acme','Acme',100,'acme.example','acme'),
         ('2026-11-09','skill','lang:python','python','Python',70,null,'python'),
+        ('2026-11-09','skill','sec:gdpr','gdpr','GDPR',40,null,'gdpr'),
         ('2026-11-09','company','literal','literal','100%_literal',1,null,'literal')`;
       await setup`insert into screener_facet (as_of,kind,value,count) values
         ('2026-11-09','total','*',100),('2026-11-09','country','GB',100)`;
@@ -442,6 +444,16 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
       });
       await request(app).get('/api/skills/unknown').expect(404);
       expect(JSON.stringify(detail.body)).not.toMatch(/krill/i);
+    });
+
+    it('never lists a regulation such as GDPR as a skill', async () => {
+      const index = await request(app).get('/api/skills').expect(200);
+      expect(
+        index.body.skills.map((s: { id: string }) => s.id),
+      ).not.toContain('sec:gdpr');
+      await request(app).get('/api/skills/gdpr').expect(404);
+      const search = await request(app).get('/api/search?q=gdpr').expect(200);
+      expect(search.body.groups).toEqual([]);
     });
   });
   describe('jobs', () => {

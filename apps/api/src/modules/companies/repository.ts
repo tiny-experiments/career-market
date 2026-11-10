@@ -1,7 +1,13 @@
 import { sql as ksql } from 'kysely';
 import type { Database } from '../../database/client.ts';
 import type { CompaniesPage, CompaniesQuery } from './domain.ts';
-import { countryName, familyInfo, skillLabel, titleCase } from '@cm/core/codes';
+import {
+  countryName,
+  familyInfo,
+  isNonTechnicalSkill,
+  skillLabel,
+  titleCase,
+} from '@cm/core/codes';
 import {
   companySeries,
   LEVEL_ORDER,
@@ -410,7 +416,9 @@ function facetsOf(row: CompanyFacetRow, slugs: Map<string, string>): CompanyFace
     label,
     count: f.count,
   });
-  const skills: CompanySkillCount[] = row.skills.map((s) => ({
+  const skills: CompanySkillCount[] = row.skills
+    .filter((s) => !isNonTechnicalSkill(s.value))
+    .map((s) => ({
     ...count(s, skillLabel(s.value)),
     slug: slugs.get(s.value) ?? null,
     domain: skillDomain(s.value),
@@ -458,6 +466,7 @@ function profileBlock(profile: {
     id: g.id,
     label: g.label,
     items: profile.skills
+      .filter((s) => !isNonTechnicalSkill(s.value))
       .filter((s) =>
         (g.namespaces as readonly string[]).includes(
           s.value.split(':')[0] ?? '',

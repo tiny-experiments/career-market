@@ -1,4 +1,10 @@
-import { countryName, familyInfo, FAMILIES, skillLabel } from '@cm/core/codes';
+import {
+  countryName,
+  familyInfo,
+  FAMILIES,
+  NON_TECHNICAL_SKILLS,
+  skillLabel,
+} from '@cm/core/codes';
 import {
   addDays,
   daysBetween,
@@ -183,7 +189,9 @@ export async function professionPage(
   const stateOf = new Map(companyStates.map((c) => [c.company_id, c.state]));
   const skills = await sql<{ skill: string; open: number }[]>`
     select skill, open from skill_daily
-    where date = ${asOf} and family = ${family} and country = '*' order by open desc limit ${TOP_SKILLS}`;
+    where date = ${asOf} and family = ${family} and country = '*'
+      and skill not in ${sql([...NON_TECHNICAL_SKILLS])}
+    order by open desc limit ${TOP_SKILLS}`;
   const skillBase = weekBase(asOf);
   const skillBaseRows = await sql<{ skill: string; open: number }[]>`
     select skill, open from skill_daily

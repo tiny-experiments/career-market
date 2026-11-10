@@ -2,7 +2,12 @@ import { SlidersHorizontal, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState, Chip, ErrorState } from "@/components/common";
 import { Pager } from "@/components/data";
-import { JobFiltersRail, JobsPulseStrip, JobsTable } from "@/components/jobs";
+import {
+  JobFiltersRail,
+  JobsPulseStrip,
+  JobsQuickFilters,
+  JobsTable,
+} from "@/components/jobs";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -163,6 +168,7 @@ export function JobsPage() {
             </div>
           </div>
 
+          <JobsQuickFilters filters={filters} />
           <Card className="gap-0 overflow-hidden py-0">
             {jobs.error !== null && jobs.data === null ? (
               <ErrorState

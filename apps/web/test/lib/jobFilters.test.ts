@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { JobFacet } from "@/lib/api";
-import { countryName, facetsOf, filterChips, toggled } from "@/lib/jobFilters";
+import {
+  countryName,
+  facetsOf,
+  filterChips,
+  quickFilterPatch,
+  quickFiltersOn,
+  toggled,
+} from "@/lib/jobFilters";
 
 const params = (value: string) => new URLSearchParams(value);
 const FACETS: JobFacet[] = [
@@ -80,5 +87,27 @@ describe("filterChips", () => {
     expect(filterChips(params("posted=45d"), FACETS)[0]?.label).toBe(
       "Posted in 45 days",
     );
+  });
+});
+
+describe("quick filters", () => {
+  it("reads the rail's own filters", () => {
+    expect(quickFiltersOn(params("posted=1d&mode=remote&pay=listed"))).toEqual([
+      "today",
+      "remote",
+      "pay",
+    ]);
+    expect(quickFiltersOn(params("posted=1"))).toEqual(["today"]);
+    expect(quickFiltersOn(params("posted=7d&mode=remote,hybrid"))).toEqual([]);
+  });
+
+  it("changes only the filter that moved", () => {
+    expect(quickFilterPatch(params("mode=remote"), ["remote", "pay"])).toEqual({
+      pay: "listed",
+    });
+    expect(
+      quickFilterPatch(params("posted=1d&mode=remote"), ["remote"]),
+    ).toEqual({ posted: null });
+    expect(quickFilterPatch(params(""), ["today"])).toEqual({ posted: "1d" });
   });
 });

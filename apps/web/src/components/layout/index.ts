@@ -10,7 +10,6 @@ export {
   type SearchResult,
 } from "./SearchBox";
 export { SiteHeader } from "./SiteHeader";
-export { SubBar, type SubBarProps } from "./SubBar";
 export { ThemeToggle } from "./ThemeToggle";
 export {
   TickerStrip,

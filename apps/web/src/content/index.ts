@@ -6,6 +6,8 @@
  */
 export {
   DIRECTORY_COPY,
+  hiringLess,
+  hiringMore,
   lastDays,
   latestJobsNaming,
   openRolesAt,
@@ -37,7 +39,7 @@ export {
   type MetricKey,
   type SignalState,
 } from "./metrics";
-export { MARKET_COPY, professionsGrowing } from "./market";
+export { MARKET_COPY, daysOld } from "./market";
 export {
   APPLY,
   COMPARISON,
@@ -95,3 +97,11 @@ export {
   type ErrorKey,
   type StateCopy,
 } from "./states";
+export {
+  COMPANY_FILTERS,
+  FILTER_LABEL,
+  JOB_QUICK_FILTERS,
+  PROFESSION_FILTERS,
+  SKILL_FILTERS,
+  type FilterCopy,
+} from "./filters";
