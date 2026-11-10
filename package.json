@@ -17,6 +17,7 @@
     "web:build": "pnpm --filter @cm/web run build",
     "web:preview": "pnpm --filter @cm/web run preview",
     "web:check-ui": "pnpm --filter @cm/web run check:ui",
+    "web:test-phone": "pnpm --filter @cm/web run test:phone",
     "web-next:dev": "pnpm --filter @cm/web-next run dev",
     "web-next:build": "pnpm --filter @cm/web-next run build",
     "web-next:start": "pnpm --filter @cm/web-next run start",
