@@ -102,6 +102,9 @@
   --spacing-nav: 3.5rem;
   --spacing-row: 3.25rem;
   --spacing-row-compact: 2.5rem;
+  /* A Market card's list never shows fewer than five rows (useCardPages). */
+  --spacing-rows-min: calc(var(--spacing-row) * 5);
+  --spacing-rows-min-compact: calc(var(--spacing-row-compact) * 5);
   --spacing-control: 2rem;
   --spacing-rail: 20rem;
   --spacing-chrome: 4.375rem;
