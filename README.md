@@ -140,8 +140,8 @@ takes the cleaned name that covers the most open roles ("Chubb External" becomes
 tenant's default site `CX` when names tie. Sites that name no one ("Candidate Experience site", "Page
 not found", "Campus") never name a company, and when they hold more roles than the named sites the
 company stays unnamed. Any other directory name only takes its site's spelling of the same name ("Kpmg"
-becomes KPMG). Where a site states only an abbreviation, a sub-brand or Oracle's default, a hand-checked
-`company_name_override` row names it instead. A company we can only call by a hiring-platform code
+becomes KPMG). Where a site's own name is a sub-brand or a label but its name or logo text states the employer, a
+hand-checked `company_name_override` row names it instead; a tenant whose sites never state it stays unnamed. A company we can only call by a hiring-platform code
 (`named = false`) stays listed and searchable, but every sort of the Companies table lists it after the
 named companies.
 
