@@ -137,9 +137,9 @@ the name each of the company's Oracle careers sites states (`og:site_name`, else
 sites come from its job links), keeps it in `company_site_name`, reads it again after `LOGO_RECHECK_DAYS`,
 and takes the cleaned name that covers the most open roles ("Chubb External" becomes Chubb). Where a
 site states only an abbreviation or Oracle's default "Candidate Experience site", a hand-checked
-`company_name_override` row names it instead. A company we
-can only call by a hiring-platform code (`named = false`) stays listed and searchable, but every sort of
-the Companies table lists it after the named companies.
+`company_name_override` row names it instead. A company we can only call by a hiring-platform code
+(`named = false`) stays listed and searchable, but every sort of the Companies table lists it after the
+named companies.
 
 ### Checks
 
