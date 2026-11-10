@@ -4,6 +4,9 @@ import { rowsThatFit } from "@/lib/paging";
 /** The fewest rows a Market card's list shows; `--spacing-rows-min` matches it. */
 export const CARD_MIN_ROWS = 5;
 
+/** Tailwind's `lg`: from here the list's box fills the card (see `index.css`). */
+const DESKTOP = "(min-width: 64rem)";
+
 export interface CardPages {
   /** The list's box: it fills the card on desktop and is measured for rows. */
   readonly listRef: RefObject<HTMLDivElement | null>;
@@ -33,7 +36,14 @@ export function useCardPages(total: number): CardPages {
   useLayoutEffect(() => {
     const element = listRef.current;
     if (!element) return;
+    const desktop = window.matchMedia(DESKTOP);
     const measure = () => {
+      // Below `lg` the box is only as tall as its rows, so measuring it would
+      // keep a page size taken on desktop.
+      if (!desktop.matches) {
+        setPageSize(CARD_MIN_ROWS);
+        return;
+      }
       const row = element.querySelector("li");
       setPageSize(
         rowsThatFit(
@@ -44,10 +54,16 @@ export function useCardPages(total: number): CardPages {
       );
     };
     measure();
-    if (typeof ResizeObserver === "undefined") return;
+    desktop.addEventListener("change", measure);
+    if (typeof ResizeObserver === "undefined") {
+      return () => desktop.removeEventListener("change", measure);
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      desktop.removeEventListener("change", measure);
+    };
   }, [hasRows]);
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
