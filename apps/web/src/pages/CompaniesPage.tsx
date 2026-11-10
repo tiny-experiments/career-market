@@ -3,10 +3,27 @@ import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { CompaniesMarketRow, CompaniesTable } from "@/components/companies";
 import { EmptyState, PageSkeleton, ResourceView } from "@/components/common";
-import { ListSearch, Pager, type SortDirection } from "@/components/data";
+import {
+  ListSearch,
+  Pager,
+  TableFilter,
+  type SortDirection,
+} from "@/components/data";
 import { PageContainer, PageHeader } from "@/components/layout";
-import { DIRECTORY_COPY, EMPTY, ERROR, PAGES } from "@/content";
-import { useListSort, usePagedList, useResource } from "@/hooks";
+import {
+  COMPANY_FILTERS,
+  DIRECTORY_COPY,
+  EMPTY,
+  ERROR,
+  FILTER_LABEL,
+  PAGES,
+} from "@/content";
+import {
+  useListSort,
+  usePagedList,
+  useResource,
+  useTableFilter,
+} from "@/hooks";
 import { companiesList, companySignals } from "@/lib/api";
 import { companiesFiltersFrom } from "@/lib/listFilters";
 import { cn } from "@/lib/utils";
@@ -14,6 +31,7 @@ import { cn } from "@/lib/utils";
 const DEFAULT_SORT = { key: "open", direction: "desc" as SortDirection };
 const naturalDirection = (key: string): SortDirection =>
   key === "name" ? "asc" : "desc";
+const SIGNAL_FILTERS = COMPANY_FILTERS.map((option) => option.value);
 
 export function CompaniesPage() {
   const [params] = useSearchParams();
@@ -21,6 +39,7 @@ export function CompaniesPage() {
   const companies = usePagedList(companiesList, filters);
   const overview = useResource(companySignals());
   const { sort, onSort } = useListSort(DEFAULT_SORT, naturalDirection);
+  const [signal, setSignal] = useTableFilter("signal", SIGNAL_FILTERS, "all");
 
   const hrefFor = useCallback(
     (page: number) => {
@@ -41,7 +60,14 @@ export function CompaniesPage() {
       />
       <CompaniesMarketRow overview={overview.data} />
       <section className="flex flex-col gap-4">
-        <div className="flex justify-end">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+          <TableFilter
+            label={FILTER_LABEL.companies}
+            options={COMPANY_FILTERS}
+            value={signal}
+            onChange={setSignal}
+            className="min-w-0 flex-1"
+          />
           <ListSearch label={DIRECTORY_COPY.searchCompanies} />
         </div>
         <ResourceView

@@ -46,6 +46,16 @@ export const DIRECTORY_COPY = {
   skillCompaniesCaption: "Companies hiring for this skill",
 } as const;
 
+/** "753 hiring more": the ramping side of the hiring-signals bar. */
+export function hiringMore(count: string): string {
+  return `${count} hiring more`;
+}
+
+/** "468 hiring less": the cooling and freezing side. */
+export function hiringLess(count: string): string {
+  return `${count} hiring less`;
+}
+
 /** "#12 by open roles". */
 export function rankByOpenRoles(rank: string): string {
   return `#${rank} by open roles`;

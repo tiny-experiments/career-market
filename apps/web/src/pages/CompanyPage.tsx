@@ -24,6 +24,7 @@ import {
   DIRECTORY_COPY,
   EMPTY,
   ERROR,
+  daysOld,
   METRICS,
   NO_FIGURE,
   openRolesAt,
@@ -134,13 +135,13 @@ function CompanyHeader({ page }: { readonly page: CompanyPayload }) {
               hint={{ text: METRICS.companyPay.text }}
             />
             <StatCard
-              label={METRICS.typicalTimeOpen.title}
+              label={METRICS.typicalAge.title}
               value={
                 facets.medianDaysOpen === null
                   ? NO_FIGURE
-                  : formatDays(facets.medianDaysOpen)
+                  : daysOld(formatDays(facets.medianDaysOpen))
               }
-              hint={{ text: METRICS.typicalTimeOpen.text }}
+              hint={{ text: METRICS.typicalAge.text }}
             />
             <StatCard
               label={METRICS.topProfession.title}

@@ -1,8 +1,16 @@
 import type { SortDirection } from "@/components/data/DataTable";
 import type { SkillIndexRow } from "@/lib/api";
 
-/** The Skills page's tabs, as `?view=`. */
+/** The Skills table's filters, as `?view=`. */
 export type SkillView = "all" | "growing" | "best-paid" | "paired" | "remote";
+
+export const SKILL_VIEWS: readonly SkillView[] = [
+  "all",
+  "growing",
+  "best-paid",
+  "paired",
+  "remote",
+];
 export type SkillSortKey =
   "open" | "label" | "change7d" | "change30d" | "pay" | "remote" | "pair";
 
@@ -25,13 +33,7 @@ const VIEW_SORT: Record<SkillView, SkillSortKey> = {
 };
 
 export function skillViewFrom(search: URLSearchParams): SkillView {
-  const view = search.get("view");
-  return view === "growing" ||
-    view === "best-paid" ||
-    view === "paired" ||
-    view === "remote"
-    ? view
-    : "all";
+  return SKILL_VIEWS.find((view) => view === search.get("view")) ?? "all";
 }
 
 export function viewSort(view: SkillView): {

@@ -9,7 +9,6 @@ export const cn = createCn({
       container: ["page"],
       spacing: [
         "nav",
-        "subbar",
         "row",
         "row-compact",
         "control",

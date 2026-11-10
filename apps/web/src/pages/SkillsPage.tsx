@@ -2,24 +2,31 @@ import { Search } from "lucide-react";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { EmptyState, PageSkeleton, ResourceView } from "@/components/common";
-import { ListSearch } from "@/components/data";
+import { ListSearch, TableFilter } from "@/components/data";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { SkillsMarketRow, SkillsTable } from "@/components/skills";
-import { DIRECTORY_COPY, EMPTY, ERROR, PAGES } from "@/content";
-import { useListSort, useResource } from "@/hooks";
+import {
+  DIRECTORY_COPY,
+  EMPTY,
+  ERROR,
+  FILTER_LABEL,
+  PAGES,
+  SKILL_FILTERS,
+} from "@/content";
+import { useListSort, useResource, useTableFilter } from "@/hooks";
 import { skillsIndex, type SkillIndexRow } from "@/lib/api";
 import {
   filterSkills,
   naturalSkillDirection,
   SKILL_SORT_KEYS,
-  skillViewFrom,
+  SKILL_VIEWS,
   sortSkills,
   viewSort,
   type SkillSortKey,
   type SkillView,
 } from "@/lib/skillViews";
 
-/** The tabs narrow the list to the skills that carry the view's figure. */
+/** A filter narrows the list to the skills that carry its figure. */
 function inView(rows: readonly SkillIndexRow[], view: SkillView) {
   switch (view) {
     case "all":
@@ -35,9 +42,12 @@ function inView(rows: readonly SkillIndexRow[], view: SkillView) {
   }
 }
 
+/** A filter change starts the table from the filter's own order again. */
+const RESET = ["sort", "dir"] as const;
+
 function SkillsBody({ skills }: { readonly skills: readonly SkillIndexRow[] }) {
   const [params] = useSearchParams();
-  const view = skillViewFrom(params);
+  const [view, setView] = useTableFilter("view", SKILL_VIEWS, "all", RESET);
   const { sort, onSort } = useListSort(viewSort(view), naturalSkillDirection);
   const key = SKILL_SORT_KEYS.includes(sort.key as SkillSortKey)
     ? (sort.key as SkillSortKey)
@@ -60,7 +70,14 @@ function SkillsBody({ skills }: { readonly skills: readonly SkillIndexRow[] }) {
     <>
       <SkillsMarketRow skills={skills} />
       <section className="flex flex-col gap-4">
-        <div className="flex justify-end">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+          <TableFilter
+            label={FILTER_LABEL.skills}
+            options={SKILL_FILTERS}
+            value={view}
+            onChange={setView}
+            className="min-w-0 flex-1"
+          />
           <ListSearch label={DIRECTORY_COPY.searchSkills} />
         </div>
         {rows.length === 0 ? (

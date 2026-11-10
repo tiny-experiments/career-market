@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
   Delta,
-  Gauge,
   KpiTile,
   Logo,
   MarketCard,
   RankedList,
+  Sparkline,
 } from "@/components/data";
 import { TickerStrip } from "@/components/layout";
 import { formatCount } from "@/lib/format";
@@ -42,7 +42,7 @@ export function MarketSection() {
 
       <Example
         title="Market cards"
-        note="Status with a gauge and KPI tiles; a ranked list with a pager; a signal breakdown with its leaders."
+        note="Status with its trend line and KPI tiles; a ranked list with a pager; a signal breakdown with its leaders."
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <MarketCard title="Market status" to="/">
@@ -51,7 +51,7 @@ export function MarketSection() {
                 <span className="inline-flex items-center gap-1.5 text-eyebrow font-semibold text-muted-foreground">
                   Open roles
                 </span>
-                <Gauge value={0.68} tone="up" />
+                <Sparkline values={PROFESSIONS[0]?.trend ?? []} />
                 <span className="text-xl font-extrabold">262,845</span>
                 <Delta
                   value={0.013}
@@ -77,10 +77,10 @@ export function MarketSection() {
                 }}
               />
               <KpiTile
-                label="Typical time open"
-                value="38 days"
+                label="Typical open role"
+                value="38 days old"
                 hint={{
-                  text: "How long the middle role stays open before it closes.",
+                  text: "How long ago the typical open role was first posted: half are newer, half older.",
                 }}
               />
               <KpiTile

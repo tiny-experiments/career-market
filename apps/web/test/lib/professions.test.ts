@@ -3,7 +3,7 @@ import {
   bestPaidProfessions,
   coolingProfessions,
   gainingProfessions,
-  marketBreadth,
+  professionsInView,
   professionHref,
   professionRegionFrom,
   professionViewFrom,
@@ -85,8 +85,14 @@ describe("ordering", () => {
     expect(families(bestPaidProfessions(rows))).toEqual(["c", "a"]);
   });
 
-  it("counts breadth only over professions with a comparison", () => {
-    expect(marketBreadth(rows)).toEqual({ up: 1, total: 2, share: 0.5 });
-    expect(marketBreadth([]).share).toBe(0);
+  it("keeps only the rows a filter is about", () => {
+    expect(families(professionsInView(rows, "gaining"))).toEqual(["a"]);
+    expect(families(professionsInView(rows, "cooling"))).toEqual(["b"]);
+    expect(families(professionsInView(rows, "best-paid")).sort()).toEqual([
+      "a",
+      "c",
+    ]);
+    expect(professionsInView(rows, "overview")).toHaveLength(rows.length);
+    expect(professionsInView(rows, "new")).toHaveLength(rows.length);
   });
 });

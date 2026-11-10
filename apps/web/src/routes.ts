@@ -26,14 +26,7 @@ import {
   pageFrom,
 } from "@/lib/listFilters";
 import { professionRegionFrom } from "@/lib/professions";
-import {
-  COMPANIES_TABS,
-  JOBS_TABS,
-  MARKET_TABS,
-  PROFESSIONS_TABS,
-  SKILLS_TABS,
-  type RouteHandle,
-} from "@/lib/nav";
+import type { RouteHandle } from "@/lib/nav";
 
 export interface PageRouteMatch {
   readonly params: Params;
@@ -55,13 +48,9 @@ export const SEARCH_PAGE_LIMIT = 10;
 /** How many of a company's roles its page shows before "see all". */
 export const COMPANY_JOBS_PREVIEW = 25;
 
-const handleFor = (
-  key: PageKey,
-  subBar?: RouteHandle["subBar"],
-): RouteHandle => ({
+const handleFor = (key: PageKey): RouteHandle => ({
   title: PAGES[key].title,
   meta: PAGES[key].meta,
-  ...(subBar ? { subBar } : {}),
 });
 
 /**
@@ -72,14 +61,14 @@ const handleFor = (
 export const pageRoutes: readonly PageRoute[] = [
   {
     path: "/",
-    handle: handleFor("market", MARKET_TABS),
+    handle: handleFor("market"),
     page: () =>
       import("@/pages/MarketPage").then((m) => ({ Component: m.MarketPage })),
     data: () => [marketOverview(), professionsIndex()],
   },
   {
     path: "/professions",
-    handle: handleFor("professions", PROFESSIONS_TABS),
+    handle: handleFor("professions"),
     page: () =>
       import("@/pages/ProfessionsPage").then((m) => ({
         Component: m.ProfessionsPage,
@@ -97,7 +86,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/companies",
-    handle: handleFor("companies", COMPANIES_TABS),
+    handle: handleFor("companies"),
     page: () =>
       import("@/pages/CompaniesPage").then((m) => ({
         Component: m.CompaniesPage,
@@ -128,7 +117,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/skills",
-    handle: handleFor("skills", SKILLS_TABS),
+    handle: handleFor("skills"),
     page: () =>
       import("@/pages/SkillsPage").then((m) => ({ Component: m.SkillsPage })),
     data: () => [skillsIndex()],
@@ -142,7 +131,7 @@ export const pageRoutes: readonly PageRoute[] = [
   },
   {
     path: "/jobs",
-    handle: handleFor("jobs", JOBS_TABS),
+    handle: handleFor("jobs"),
     page: () =>
       import("@/pages/JobsPage").then((m) => ({ Component: m.JobsPage })),
     data: ({ search }) => [

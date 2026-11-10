@@ -10,6 +10,7 @@ export {
   SimilarRolesPanel,
 } from "./JobRail";
 export { JobsPulseStrip } from "./JobsPulseStrip";
+export { JobsQuickFilters } from "./JobsQuickFilters";
 export { JobsTable } from "./JobsTable";
 export { JobView } from "./JobView";
 export { TypicalWindowBar } from "./TypicalWindowBar";

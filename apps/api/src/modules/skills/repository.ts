@@ -1,4 +1,10 @@
-import { familyInfo, isTileSkill, skillLabel } from '@cm/core/codes';
+import {
+  familyInfo,
+  isNonTechnicalSkill,
+  NON_TECHNICAL_SKILLS,
+  isTileSkill,
+  skillLabel,
+} from '@cm/core/codes';
 import { fullWindow } from '@cm/core/changes';
 import { addDays, daysBetween, type IsoDay, type Range } from '@cm/core/dates';
 import type { Queries as Sql } from '../../database/client.ts';
@@ -125,7 +131,8 @@ export async function skillPage(
     from skill_summary s join skill_tracked t on t.skill = s.skill and t.date = ${latest}
     where s.slug = ${slug} or split_part(s.skill, ':', 2) = ${slug}
     order by (s.slug = ${slug}) desc, s.date desc, s.open_total desc limit 1`;
-  if (!row || !row.primary_family) return null;
+  if (!row || !row.primary_family || isNonTechnicalSkill(row.skill))
+    return null;
   const D = row.date;
   const id = row.skill;
   const family = row.primary_family;
@@ -398,7 +405,7 @@ function salaryEffectOf(
 /** Every tracked skill, largest first: the list behind /skills. */
 export async function skillIndex(sql: Sql): Promise<SkillIndexPayload> {
   const D = await latestSkillDay(sql);
-  const rows = await sql<
+  const tracked = await sql<
     {
       skill: string;
       slug: string;
@@ -422,6 +429,7 @@ export async function skillIndex(sql: Sql): Promise<SkillIndexPayload> {
       order by s.skill, s.date desc
     ) latest
     order by open_total desc, skill`;
+  const rows = tracked.filter((r) => !isNonTechnicalSkill(r.skill));
   const subjects = rows.map((r) => `skillseries:${r.skill}`);
   const ids = rows.map((r) => r.skill);
   const sparkFrom = addDays(D, -(SPARK_DAYS - 1));
@@ -446,6 +454,7 @@ export async function skillIndex(sql: Sql): Promise<SkillIndexPayload> {
         sql<{ skill: string; other: string; open: number }[]>`
           select distinct on (skill) skill, other, open from skill_pair_daily
           where date = ${D} and skill in ${sql(ids)}
+            and other not in ${sql([...NON_TECHNICAL_SKILLS])}
           order by skill, open desc, other`,
       ])
     : [[], [], [], [], []];

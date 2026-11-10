@@ -157,3 +157,42 @@ export const FILTER_PARAMS = [
   "pay",
   "currency",
 ] as const;
+
+/** The one-click filters on the Jobs table; each is also a filter in the rail. */
+export type QuickFilter = "today" | "remote" | "pay";
+
+const QUICK_FILTER_ON: Record<
+  QuickFilter,
+  (params: URLSearchParams) => boolean
+> = {
+  today: (params) => /^1d?$/.test(params.get("posted") ?? ""),
+  remote: (params) => params.get("mode") === "remote",
+  pay: (params) => params.get("pay") === "listed",
+};
+
+const QUICK_FILTER_PATCH: Record<QuickFilter, (on: boolean) => FilterPatch> = {
+  today: (on) => ({ posted: on ? "1d" : null }),
+  remote: (on) => ({ mode: on ? "remote" : null }),
+  pay: (on) => ({ pay: on ? "listed" : null }),
+};
+
+export const QUICK_FILTERS: readonly QuickFilter[] = ["today", "remote", "pay"];
+
+/** The quick filters the address has on. */
+export function quickFiltersOn(params: URLSearchParams): QuickFilter[] {
+  return QUICK_FILTERS.filter((filter) => QUICK_FILTER_ON[filter](params));
+}
+
+/** The change that turns the quick filters to exactly `on`, leaving the ones that did not move alone. */
+export function quickFilterPatch(
+  params: URLSearchParams,
+  on: readonly string[],
+): FilterPatch {
+  const patch: Record<string, string | null> = {};
+  for (const filter of QUICK_FILTERS) {
+    const wanted = on.includes(filter);
+    if (wanted !== QUICK_FILTER_ON[filter](params))
+      Object.assign(patch, QUICK_FILTER_PATCH[filter](wanted));
+  }
+  return patch;
+}

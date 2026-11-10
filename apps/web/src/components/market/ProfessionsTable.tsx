@@ -17,6 +17,8 @@ import { ChangeCell } from "./ChangeCell";
 
 export interface ProfessionsTableProps {
   readonly rows: readonly ProfessionRow[];
+  /** The rows the # column ranks against; a filter keeps each row's place in the whole list. */
+  readonly rankFrom?: readonly ProfessionRow[];
   readonly view: ProfessionView;
   /** Scoped to a region: columns only known worldwide step aside. */
   readonly regional?: boolean;
@@ -32,10 +34,11 @@ const dash = <span className="text-subtle">{NO_FIGURE}</span>;
 
 /**
  * The market's main table: every profession, full width, the whole row a link.
- * A view picks the opening order; a column header can still re-sort it.
+ * A filter picks the rows and the opening order; a column header can still re-sort it.
  */
 export function ProfessionsTable({
   rows,
+  rankFrom = rows,
   view,
   regional = false,
 }: ProfessionsTableProps) {
@@ -47,11 +50,11 @@ export function ProfessionsTable({
 
   const rankOf = useMemo(() => {
     const ranks = new Map<string, number>();
-    sortProfessions(rows, "open", "desc").forEach((row, index) =>
+    sortProfessions(rankFrom, "open", "desc").forEach((row, index) =>
       ranks.set(row.family, index + 1),
     );
     return ranks;
-  }, [rows]);
+  }, [rankFrom]);
 
   const sorted = useMemo(
     () => sortProfessions(rows, sort.key, sort.direction),

@@ -48,11 +48,7 @@ export const METRICS = {
   },
   hiringIndex: {
     title: "Tech Hiring Index",
-    text: "Every tech role open right now; the dial shows how many professions have more open roles than a week ago.",
-  },
-  professionsGrowing: {
-    title: "Professions growing",
-    text: "How many professions have more open roles than a week ago.",
+    text: "Every tech role open right now, across all professions.",
   },
   dailyFlow: {
     title: "Opened and closed",
@@ -118,9 +114,9 @@ export const METRICS = {
   },
 
   // Time
-  typicalTimeOpen: {
-    title: "Typical time open",
-    text: "Half of the open roles have been up for less than this.",
+  typicalAge: {
+    title: "Typical open role",
+    text: "How long ago the typical open role was first posted: half are newer, half older.",
   },
   daysOpen: {
     title: "Days open",

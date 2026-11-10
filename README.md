@@ -22,7 +22,7 @@ krill.kurso.sh                       apps/worker   (plain SQL migrations)    app
   `/v1/companies/{id}`, per-family facets and job lists, and writes a back-cast, work mode, pay band, top
   companies with signals and the latest roles per profession. For the Skill pages (`/skills/<skill>`) it also reads
   `/v1/facets` (companies, paired skills, posted-day cuts), `/v1/companies/{id}` and `/v1/jobs` for the
-  `BUILDER_SKILL_PAGES` largest skills (default 60) and writes each skill's demand series, companies,
+  `BUILDER_SKILL_PAGES` largest skills (default 60; regulations and compliance items such as GDPR are never treated as skills) and writes each skill's demand series, companies,
   paired skills, salary effect and latest roles. Every krill response is parsed with zod. Every table can
   be rebuilt from krill, except the day-by-day skill counts: krill serves no skill history, so those rows
   accumulate from the first build onward and earlier days are estimated by the back-cast. Between builds a

@@ -10,3 +10,4 @@ export {
   useSlidingIndicator,
   type IndicatorPosition,
 } from "./useSlidingIndicator";
+export { useTableFilter } from "./useTableFilter";

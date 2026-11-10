@@ -1,3 +1,4 @@
+import { NON_TECHNICAL_SKILLS } from '@cm/core/codes';
 import type { Queries as Sql } from '../../database/client.ts';
 import {
   companyHref,
@@ -77,7 +78,7 @@ export async function search(
           lower(coalesce(display_name, '') || ' ' || name || ' ' || slug) as keywords
         from company where updated_on = ${build.asOf}
       ) entries
-      where true
+      where not (kind = 'skill' and id in ${sql([...NON_TECHNICAL_SKILLS])})
         and (lower(label) like ${`%${esc}%`} escape '\\' or keywords like ${`%${esc}%`} escape '\\')
     ) ranked where rank <= ${perGroup}
     order by kind, rank`;

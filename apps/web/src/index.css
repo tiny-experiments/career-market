@@ -100,13 +100,12 @@
   --container-page: 120rem;
   --spacing-gutter: 1.5rem;
   --spacing-nav: 3.5rem;
-  --spacing-subbar: 2.875rem;
   --spacing-row: 3.25rem;
   --spacing-row-compact: 2.5rem;
   --spacing-control: 2rem;
   --spacing-rail: 20rem;
-  --spacing-chrome: 7.25rem;
-  --spacing-rail-h: calc(100vh - 8.25rem);
+  --spacing-chrome: 4.375rem;
+  --spacing-rail-h: calc(100vh - 5.375rem);
   --spacing-spark: 7.5rem;
   --spacing-spark-h: 2.125rem;
 }

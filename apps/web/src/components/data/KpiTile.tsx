@@ -9,15 +9,21 @@ export interface KpiTileProps {
   /** A ratio against the comparison the hint names. */
   readonly change?: number;
   readonly hint?: { readonly text: string; readonly formula?: string };
+  /** A few words under the figure saying what it counts: "newly posted roles". */
+  readonly caption?: string;
+  /** A small picture under the figure. */
+  readonly children?: ReactNode;
   readonly className?: string;
 }
 
-/** A small fact inside a market card: label on top, bold figure, the change beside it. */
+/** A small fact inside a market card: label on top, bold figure, the change beside it, an optional caption or picture under it. */
 export function KpiTile({
   label,
   value,
   change,
   hint,
+  caption,
+  children,
   className,
 }: KpiTileProps) {
   return (
@@ -42,6 +48,10 @@ export function KpiTile({
         {value}
         {change === undefined ? null : <Delta value={change} size="sm" />}
       </span>
+      {caption ? (
+        <span className="text-eyebrow text-muted-foreground">{caption}</span>
+      ) : null}
+      {children}
     </div>
   );
 }

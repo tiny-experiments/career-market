@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router";
 import { PageSkeleton, ResourceView } from "@/components/common";
 import { PageContainer, PageHeader } from "@/components/layout";
-import { ProfessionListCard, ProfessionsTable } from "@/components/market";
+import { ProfessionListCard, ProfessionsBoard } from "@/components/market";
 import {
   Select,
   SelectContent,
@@ -19,7 +19,6 @@ import {
   gainingProfessions,
   PROFESSION_REGIONS,
   professionRegionFrom,
-  professionViewFrom,
 } from "@/lib/professions";
 
 const WORLDWIDE = "worldwide";
@@ -27,7 +26,6 @@ const WORLDWIDE = "worldwide";
 export function ProfessionsPage() {
   const [search, setSearch] = useSearchParams();
   const region = professionRegionFrom(search);
-  const view = professionViewFrom(search);
   const professions = useResource(professionsIndex(region));
 
   const chooseRegion = (next: string) =>
@@ -103,10 +101,9 @@ export function ProfessionsPage() {
                 empty={MARKET_COPY.noPay}
               />
             </div>
-            <ProfessionsTable
-              key={`${view}:${region ?? ""}`}
+            <ProfessionsBoard
+              key={region ?? ""}
               rows={rows}
-              view={view}
               regional={region !== undefined}
             />
           </>
