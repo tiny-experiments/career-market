@@ -89,11 +89,11 @@ previous total. A company drops out of the comparison when any day after the
 base restarts its series by the company pages' rule (`isBoardEvent`: a board
 added, fetched in bulk or dropped, roles back from zero, or open roles that
 moved well beyond the day's openings and closings because krill re-counted
-them), because that day moves roles that were already open elsewhere. Without this, boards attached to
-existing companies mid-week read the week to 10 Nov 2026 as +14.9% while open
-roles rose about 1%. Newly discovered employers still contribute to the headline
-role count. `GROWTH_MODE=raw` includes the full endpoint totals. A complete
-seven-day baseline from the last bootstrap day on is required; no shorter
+them), because that day moves roles that were already open elsewhere. Without
+this, boards attached to existing companies mid-week read the week to 10 Nov
+2026 as +14.9% while open roles rose about 1%. Newly discovered employers
+still contribute to the headline role count. `GROWTH_MODE=raw` includes the
+full endpoint totals. A complete seven-day baseline from the last bootstrap day on is required; no shorter
 interval is labeled as a week. Other existing compute functions retain their
 established series and segment behavior.
 
