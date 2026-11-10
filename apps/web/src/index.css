@@ -106,6 +106,8 @@
   --spacing-rows-min: calc(var(--spacing-row) * 5);
   --spacing-rows-min-compact: calc(var(--spacing-row-compact) * 5);
   --spacing-control: 2rem;
+  /* The smallest thing a finger should have to hit (UI-RULEBOOK.md §7, `touch-target`). */
+  --spacing-touch: 2.5rem;
   --spacing-rail: 20rem;
   --spacing-chrome: 4.375rem;
   --spacing-rail-h: calc(100vh - 5.375rem);
@@ -306,6 +308,26 @@
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/*
+ * A touch screen gets at least a 40 px hit area on a smaller control, centred
+ * on it and invisible, so nothing moves and a mouse sees no change. The
+ * control must be positioned (`relative`); `::before` is used because
+ * stretched row links and the underline tabs already own `::after`.
+ */
+@utility touch-target {
+  @media (pointer: coarse) {
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, var(--spacing-touch));
+      height: max(100%, var(--spacing-touch));
+      translate: -50% -50%;
+    }
   }
 }
 

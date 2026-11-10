@@ -104,6 +104,8 @@ export function SearchBox({
         <Kbd className="ml-auto hidden md:inline-flex">/</Kbd>
       </Button>
       <CommandDialog
+        // On a phone the dialog sits at the top, above the keyboard.
+        className="max-md:top-4"
         open={open}
         onOpenChange={setOpen}
         title="Search"

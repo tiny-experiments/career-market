@@ -1,9 +1,13 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
-/** On a phone a row of chips stays on one line that scrolls sideways, edge to edge. */
+/**
+ * On a phone a row of chips stays on one line that scrolls sideways, edge to
+ * edge. The 4 px above and below give the chips' touch areas room inside the
+ * scroller, which would otherwise clip them.
+ */
 export const PHONE_CHIP_ROW =
-  "max-md:-mx-gutter max-md:w-auto max-md:flex-nowrap max-md:overflow-x-auto max-md:px-gutter max-md:scrollbar-none";
+  "max-md:-mx-gutter max-md:-my-1 max-md:w-auto max-md:flex-nowrap max-md:overflow-x-auto max-md:px-gutter max-md:py-1 max-md:scrollbar-none";
 
 export interface TableFilterOption<T extends string> {
   readonly value: T;

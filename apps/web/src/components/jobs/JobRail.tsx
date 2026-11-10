@@ -39,7 +39,7 @@ function PanelLink({
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-1 text-small font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+      className="relative touch-target inline-flex items-center gap-1 text-small font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
     >
       {children}
       <ChevronRight className="size-3.5" aria-hidden />

@@ -34,26 +34,29 @@ function CompanyLine({ page }: { readonly page: JobPagePayload }) {
   const trend = page.context.companyTrend;
   const name = <span className="text-sm font-bold">{company.name}</span>;
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex items-center gap-3">
       <Logo name={company.name} domain={company.domain} size="md" />
-      {company.slug ? (
-        <Link
-          to={`/companies/${company.slug}`}
-          className="outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {name}
-        </Link>
-      ) : (
-        name
-      )}
-      {trend.available ? (
-        <span className="text-small text-muted-foreground">
-          {openRoles(trend.open)}
-        </span>
-      ) : null}
-      {trend.available && trend.signal ? (
-        <SignalBadge signal={trend.signal.toLowerCase() as Signal} />
-      ) : null}
+      {/* What wraps on a phone lines up under the name, not under the logo. */}
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        {company.slug ? (
+          <Link
+            to={`/companies/${company.slug}`}
+            className="relative touch-target outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {name}
+          </Link>
+        ) : (
+          name
+        )}
+        {trend.available ? (
+          <span className="text-small text-muted-foreground">
+            {openRoles(trend.open)}
+          </span>
+        ) : null}
+        {trend.available && trend.signal ? (
+          <SignalBadge signal={trend.signal.toLowerCase() as Signal} />
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -96,13 +99,19 @@ function JobActions({ job }: { readonly job: JobPagePayload["job"] }) {
     });
   };
   return (
-    <div className="flex items-center gap-2">
+    // On a phone the apply button takes the whole row first and its label
+    // wraps, so a long employer name never pushes the page sideways.
+    <div className="flex items-center gap-2 max-md:flex-col-reverse max-md:items-stretch">
       <Button variant="ghost" size="lg" onClick={copy}>
         <Link2 aria-hidden />
         {JOB_PAGE.copyLink}
       </Button>
       {job.applyUrl === null ? null : (
-        <Button asChild size="lg">
+        <Button
+          asChild
+          size="lg"
+          className="max-md:h-auto max-md:min-h-touch max-md:py-2 max-md:text-center max-md:whitespace-normal"
+        >
           <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
             {applyAt(job.company.name)}
             <ArrowUpRight aria-hidden />

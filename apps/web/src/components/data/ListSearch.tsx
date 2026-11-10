@@ -18,12 +18,15 @@ export function ListSearch({
 }) {
   const [value, setValue] = useListSearch();
   return (
-    <InputGroup className={cn("h-control w-full sm:w-72", className)}>
+    <InputGroup
+      className={cn("h-control w-full max-md:h-touch sm:w-72", className)}
+    >
       <InputGroupAddon>
         <Search aria-hidden />
       </InputGroupAddon>
       <InputGroupInput
         type="search"
+        className="max-md:h-full"
         aria-label={label}
         placeholder={label}
         value={value}

@@ -7,6 +7,10 @@ import type { JobRow } from "@/lib/jobRows";
 
 const DASH = "—";
 
+/** What kind of role a row is: its profession, or its work mode when it has none. */
+const kindOf = (row: JobRow): string =>
+  row.familyName ?? (row.workMode ? workModeLabel(row.workMode) : "");
+
 const COLUMNS: readonly Column<JobRow>[] = [
   {
     key: "job",
@@ -19,9 +23,12 @@ const COLUMNS: readonly Column<JobRow>[] = [
         </span>
         <span className="flex min-w-0 items-center gap-1.5 text-xs font-normal text-muted-foreground">
           <span className="truncate">
-            <span className="md:hidden">{row.companyName} · </span>
-            {row.familyName ??
-              (row.workMode ? workModeLabel(row.workMode) : "")}
+            <span className="md:hidden">
+              {row.companyName}
+              {/* No dangling dot when there is nothing after the company. */}
+              {kindOf(row) ? " · " : ""}
+            </span>
+            {kindOf(row)}
           </span>
           {row.repostCount > 0 ? (
             <Badge variant="warn" className="h-4 px-1.5">

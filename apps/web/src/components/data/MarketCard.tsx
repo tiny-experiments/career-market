@@ -38,7 +38,7 @@ export function MarketCard({
       <div className="flex items-center justify-between gap-3 px-4">
         <Link
           to={to}
-          className="group/door inline-flex items-center gap-1 rounded-sm text-h2 font-bold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+          className="group/door relative touch-target inline-flex items-center gap-1 rounded-sm text-h2 font-bold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
         >
           {title}
           <ChevronRight

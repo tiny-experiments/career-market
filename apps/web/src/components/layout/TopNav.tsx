@@ -36,7 +36,7 @@ export function TopNav() {
     <div className="flex h-nav items-center gap-4 px-gutter">
       <Link
         to="/"
-        className="shrink-0 rounded-md"
+        className="relative touch-target shrink-0 rounded-md"
         aria-label="Career Market home"
       >
         <BrandLockup />
