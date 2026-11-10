@@ -40,3 +40,18 @@ export function resolveTheme(
   if (choice !== "system") return choice;
   return deviceIsDark ? "dark" : "light";
 }
+
+/**
+ * Drops a stored value that is not a menu choice. next-themes would apply it
+ * as the html class verbatim, leaving neither light nor dark on the page.
+ */
+export function discardUnknownStoredTheme(storage: Storage): void {
+  try {
+    const stored = storage.getItem(THEME_STORAGE_KEY);
+    if (stored !== null && !THEME_CHOICES.includes(stored as ThemeChoice)) {
+      storage.removeItem(THEME_STORAGE_KEY);
+    }
+  } catch {
+    // Storage is blocked; next-themes copes with that itself.
+  }
+}

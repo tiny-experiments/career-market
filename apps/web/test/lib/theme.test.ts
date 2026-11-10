@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { THEME_STORAGE_KEY, parseThemeChoice, resolveTheme } from "@/lib/theme";
+import {
+  THEME_STORAGE_KEY,
+  discardUnknownStoredTheme,
+  parseThemeChoice,
+  resolveTheme,
+} from "@/lib/theme";
 import { stubDeviceTheme } from "../support/mediaQuery";
 import indexHtml from "../../index.html?raw";
 
@@ -22,6 +27,33 @@ describe("resolveTheme", () => {
     expect(parseThemeChoice("sepia")).toBe("system");
     expect(resolveTheme("sepia", false)).toBe("light");
     expect(resolveTheme("", true)).toBe("dark");
+  });
+});
+
+describe("discardUnknownStoredTheme", () => {
+  afterEach(() => localStorage.clear());
+
+  it("removes a stored value that is not a menu choice", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "banana");
+    discardUnknownStoredTheme(localStorage);
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it("keeps a stored menu choice", () => {
+    for (const choice of ["light", "dark", "system"]) {
+      localStorage.setItem(THEME_STORAGE_KEY, choice);
+      discardUnknownStoredTheme(localStorage);
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(choice);
+    }
+  });
+
+  it("does not throw when storage is blocked", () => {
+    const blocked = {
+      getItem: () => {
+        throw new Error("blocked");
+      },
+    } as unknown as Storage;
+    expect(() => discardUnknownStoredTheme(blocked)).not.toThrow();
   });
 });
 
