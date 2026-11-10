@@ -559,6 +559,19 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         count: 100,
       });
     });
+    it('fills a quiet company-day with 0 so the company spark has one value per day ending on the job day', async () => {
+      const setup = createSql(url!, { max: 1 });
+      try {
+        await setup`insert into company_daily (date,company_id,family,open,new,closed) values ('2026-11-05','acme','*',70,4,0)`;
+        const res = await request(app).get(`/api/jobs/${job.id}`).expect(200);
+        expect(res.body.context.companyTrend.spark).toEqual([
+          70, 0, 0, 90, 100,
+        ]);
+      } finally {
+        await setup`delete from company_daily where company_id = 'acme' and date = '2026-11-05'`;
+        await setup.end();
+      }
+    });
     it('returns plain source errors rather than internal upstream details', async () => {
       list.mockRejectedValueOnce(new Error('private upstream error'));
       const res = await request(app).get('/api/jobs').expect(503);
