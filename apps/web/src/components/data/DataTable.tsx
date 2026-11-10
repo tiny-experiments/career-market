@@ -228,8 +228,9 @@ export function DataTable<Row>({
                     onRowHover ? () => onRowHover(null) : undefined
                   }
                   className={cn(
-                    "relative h-row transition-colors",
-                    href && "hover:bg-accent has-[a:focus-visible]:bg-accent",
+                    "h-row transition-colors",
+                    href &&
+                      "hover:bg-accent has-[a:focus-visible]:bg-accent has-[a:focus-visible]:outline-2 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-ring",
                   )}
                 >
                   {columns.map((column) => {
@@ -240,6 +241,11 @@ export function DataTable<Row>({
                         key={column.key}
                         className={cn(
                           "px-3 font-medium",
+                          // Each cell bounds its own link cover. iOS 17 Safari
+                          // ignores `position: relative` on a row, so a cover
+                          // sized to the row spreads over the whole table and
+                          // the last row's link takes every tap.
+                          href !== undefined && "relative",
                           EDGE[inset],
                           alignClass(column),
                           column.from && FROM[column.from],
@@ -249,7 +255,7 @@ export function DataTable<Row>({
                         {carriesLink ? (
                           <Link
                             to={href}
-                            className="outline-none after:absolute after:inset-0 after:rounded-sm focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+                            className="outline-none after:absolute after:inset-0"
                           >
                             {column.cell(row, index)}
                             {phoneLine(column, row)}
@@ -258,6 +264,16 @@ export function DataTable<Row>({
                           <>
                             {column.cell(row, index)}
                             {phoneLine(column, row)}
+                            {href === undefined ? null : (
+                              // The rest of the row's cells open the same page; the
+                              // first link alone is named and reached by Tab.
+                              <Link
+                                to={href}
+                                tabIndex={-1}
+                                aria-hidden
+                                className="absolute inset-0"
+                              />
+                            )}
                           </>
                         )}
                       </TableCell>
