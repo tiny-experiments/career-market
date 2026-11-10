@@ -58,16 +58,17 @@ Rules:
 
 ## 4. Layout
 
-| Token                   | Value    | Class               | Use                                             |
-| ----------------------- | -------- | ------------------- | ----------------------------------------------- |
-| `--container-page`      | 1920 px  | `max-w-page`        | the fluid page column                           |
-| `--spacing-gutter`      | 24 px    | `px-gutter`         | page gutters at every width                     |
-| `--spacing-nav`         | 56 px    | `h-nav`             | the top bar                                     |
-| `--spacing-row`         | 52 px    | `h-row`             | a table row                                     |
-| `--spacing-row-compact` | 40 px    | `h-row-compact`     | a list row inside a card                        |
-| `--spacing-control`     | 32 px    | `h-control`         | every toolbar control (buttons, selects, chips) |
-| `--spacing-rail`        | 320 px   | `w-rail`            | a detail page's sticky side rail                |
-| `--spacing-spark`       | 120 × 34 | `w-spark h-spark-h` | a sparkline                                     |
+| Token                   | Value    | Class                         | Use                                                                      |
+| ----------------------- | -------- | ----------------------------- | ------------------------------------------------------------------------ |
+| `--container-page`      | 1920 px  | `max-w-page`                  | the fluid page column                                                    |
+| `--spacing-gutter`      | 24 px    | `px-gutter`                   | page gutters at every width                                              |
+| `--spacing-nav`         | 56 px    | `h-nav`                       | the top bar                                                              |
+| `--spacing-row`         | 52 px    | `h-row`                       | a table row                                                              |
+| `--spacing-row-compact` | 40 px    | `h-row-compact`               | a list row inside a card                                                 |
+| `--spacing-rows-min`    | 5 rows   | `min-h-rows-min` (`-compact`) | a Market card's list on desktop: at least five rows, then as many as fit |
+| `--spacing-control`     | 32 px    | `h-control`                   | every toolbar control (buttons, selects, chips)                          |
+| `--spacing-rail`        | 320 px   | `w-rail`                      | a detail page's sticky side rail                                         |
+| `--spacing-spark`       | 120 × 34 | `w-spark h-spark-h`           | a sparkline                                                              |
 
 - **Fluid to 1920 px.** No 1600 px cap, no centred narrow column. Tables run edge to edge of the column (`-mx-gutter` when inside a padded container).
 - **One level of navigation** (`SiteHeader`): the five sections. There is no sub-navigation anywhere. A section's views are filters on the table they change (`TableFilter`), placed directly on that table.
@@ -139,32 +140,32 @@ apps/web/src/
 
 ### When to use which
 
-| Need                                            | Use                                                                   |
-| ----------------------------------------------- | --------------------------------------------------------------------- |
-| Move between the five sections                  | `TopNav` (from `SECTIONS`); never add a sixth                         |
+| Need                                             | Use                                                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Move between the five sections                   | `TopNav` (from `SECTIONS`); never add a sixth                                                                                        |
 | Filter a section's main table (growing, remote…) | `TableFilter` on the table, labels in plain words, one line saying what it shows; the choice is a query parameter (`useTableFilter`) |
-| Tabs inside a page (Chart · Companies · Skills) | `Tabs` with `TabsList variant="underline"`                            |
-| A chart's range (1W 1M 3M 1Y All)               | `RangeTabs` (segmented)                                               |
-| Toggle several filters above a table            | `Chip` row, or `ToggleGroup variant="chip"`; the chosen chip is the one blue tint |
-| A filter rail's controls                        | `Input`, `Select`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Switch`  |
-| A change that may not exist yet in a table cell | `ChangeCell` (the figure, or a quiet dash)                            |
-| A ranked list of things with their change       | `DataTable` (full width, 52 px rows) or `RankedList` inside a card    |
-| Many pages of rows                              | `Pager`, 50 a page, every control a link                              |
-| A home-page door into a section                 | `MarketCard` (header is the link, optional pager)                     |
-| A section of a detail page                      | `Panel`                                                               |
-| A full-width table on a detail page             | `TablePanel` around a `DataTable`                                     |
-| The parts of something, with a bar each         | `BreakdownList`                                                       |
-| A fact on a detail page's rail                  | `StatCard`                                                            |
-| A small fact inside a market card               | `KpiTile`                                                             |
-| A change                                        | `Delta` (text in a cell, pill beside a headline)                      |
-| A company's hiring signal                       | `SignalBadge`                                                         |
-| A share of a whole                              | `ShareBar` under the percentage; `SegmentBar` for parts               |
-| Explain what a figure means                     | `MetricHoverCard` (the only explanation surface)                      |
-| Name an icon                                    | `Tooltip`                                                             |
-| A company, skill or profession mark             | `Logo` (round for companies, square for the rest)                     |
-| Nothing to show / something broke / loading     | `EmptyState` / `ErrorState` / `Skeleton` rows                         |
-| A job's read                                    | `VerdictCard` first, one `Button size="lg"` to apply                  |
-| A list of jobs anywhere on the site             | `JobsTable`, fed through `lib/jobRows`                                |
+| Tabs inside a page (Chart · Companies · Skills)  | `Tabs` with `TabsList variant="underline"`                                                                                           |
+| A chart's range (1W 1M 3M 1Y All)                | `RangeTabs` (segmented)                                                                                                              |
+| Toggle several filters above a table             | `Chip` row, or `ToggleGroup variant="chip"`; the chosen chip is the one blue tint                                                    |
+| A filter rail's controls                         | `Input`, `Select`, `Checkbox`, `RadioGroup`, `ToggleGroup`, `Switch`                                                                 |
+| A change that may not exist yet in a table cell  | `ChangeCell` (the figure, or a quiet dash)                                                                                           |
+| A ranked list of things with their change        | `DataTable` (full width, 52 px rows) or `RankedList` inside a card                                                                   |
+| Many pages of rows                               | `Pager`, 50 a page, every control a link                                                                                             |
+| A home-page door into a section                  | `MarketCard` (header is the link, optional pager)                                                                                    |
+| A section of a detail page                       | `Panel`                                                                                                                              |
+| A full-width table on a detail page              | `TablePanel` around a `DataTable`                                                                                                    |
+| The parts of something, with a bar each          | `BreakdownList`                                                                                                                      |
+| A fact on a detail page's rail                   | `StatCard`                                                                                                                           |
+| A small fact inside a market card                | `KpiTile`                                                                                                                            |
+| A change                                         | `Delta` (text in a cell, pill beside a headline)                                                                                     |
+| A company's hiring signal                        | `SignalBadge`                                                                                                                        |
+| A share of a whole                               | `ShareBar` under the percentage; `SegmentBar` for parts                                                                              |
+| Explain what a figure means                      | `MetricHoverCard` (the only explanation surface)                                                                                     |
+| Name an icon                                     | `Tooltip`                                                                                                                            |
+| A company, skill or profession mark              | `Logo` (round for companies, square for the rest)                                                                                    |
+| Nothing to show / something broke / loading      | `EmptyState` / `ErrorState` / `Skeleton` rows                                                                                        |
+| A job's read                                     | `VerdictCard` first, one `Button size="lg"` to apply                                                                                 |
+| A list of jobs anywhere on the site              | `JobsTable`, fed through `lib/jobRows`                                                                                               |
 
 ## 8. Using shadcn
 

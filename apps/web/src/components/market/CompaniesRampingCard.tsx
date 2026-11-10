@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router";
 import { MetricHoverCard } from "@/components/common/MetricHoverCard";
 import { Logo } from "@/components/data/Logo";
@@ -6,12 +5,11 @@ import { MarketCard } from "@/components/data/MarketCard";
 import { RankedList } from "@/components/data/RankedList";
 import type { Signal } from "@/components/data/SignalBadge";
 import { Sparkline } from "@/components/data/Sparkline";
+import { useCardPages } from "@/hooks";
 import type { MarketOverview } from "@/lib/api";
 import { formatCount } from "@/lib/format";
 import { MARKET_COPY, METRICS, SIGNALS as SIGNAL_COPY } from "@/content";
 import { cn } from "@/lib/utils";
-
-const PAGE_SIZE = 5;
 
 const SIGNALS: readonly {
   readonly signal: Signal;
@@ -34,23 +32,16 @@ export function CompaniesRampingCard({
 }: {
   readonly market: MarketOverview;
 }) {
-  const [page, setPage] = useState(1);
   const rows = market.companiesRamping.available
     ? market.companiesRamping.rows
     : [];
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const start = (page - 1) * PAGE_SIZE;
+  const { listRef, start, end, pager } = useCardPages(rows.length);
 
   return (
     <MarketCard
       title={MARKET_COPY.companiesRamping}
       to="/companies?signal=ramping"
-      pager={{
-        page,
-        pageCount,
-        onPrev: () => setPage((p) => Math.max(1, p - 1)),
-        onNext: () => setPage((p) => Math.min(pageCount, p + 1)),
-      }}
+      pager={pager}
     >
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {SIGNALS.map(({ signal, label, tone }) => (
@@ -83,24 +74,29 @@ export function CompaniesRampingCard({
           {MARKET_COPY.noneRamping}
         </p>
       ) : (
-        <RankedList
-          items={rows.slice(start, start + PAGE_SIZE).map((row, index) => ({
-            rank: start + index + 1,
-            logo: <Logo name={row.name} domain={row.domain} size="sm" />,
-            name: row.name,
-            value: formatCount(row.open),
-            trend: (
-              <Sparkline
-                values={row.spark}
-                width={64}
-                height={24}
-                className="hidden xl:block"
-              />
-            ),
-            to: `/companies/${row.slug}`,
-            ...(row.change ? { change: row.change.value } : {}),
-          }))}
-        />
+        <div
+          ref={listRef}
+          className="flex-1 lg:min-h-rows-min-compact lg:contain-size"
+        >
+          <RankedList
+            items={rows.slice(start, end).map((row, index) => ({
+              rank: start + index + 1,
+              logo: <Logo name={row.name} domain={row.domain} size="sm" />,
+              name: row.name,
+              value: formatCount(row.open),
+              trend: (
+                <Sparkline
+                  values={row.spark}
+                  width={64}
+                  height={24}
+                  className="hidden xl:block"
+                />
+              ),
+              to: `/companies/${row.slug}`,
+              ...(row.change ? { change: row.change.value } : {}),
+            }))}
+          />
+        </div>
       )}
     </MarketCard>
   );

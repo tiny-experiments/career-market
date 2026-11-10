@@ -17,3 +17,17 @@ export function pageWindow(page: number, pageCount: number): (number | null)[] {
   });
   return out;
 }
+
+/**
+ * How many rows of `rowHeight` fit in `height`, never fewer than `min`.
+ * Half a pixel of slack absorbs sub-pixel layout, so ten 52 px rows still
+ * fit in 519.6 px.
+ */
+export function rowsThatFit(
+  height: number,
+  rowHeight: number,
+  min: number,
+): number {
+  if (!(height > 0) || !(rowHeight > 0)) return min;
+  return Math.max(min, Math.floor((height + 0.5) / rowHeight));
+}
