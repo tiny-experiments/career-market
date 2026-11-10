@@ -67,6 +67,7 @@ Rules:
 | `--spacing-row-compact` | 40 px    | `h-row-compact`               | a list row inside a card                                                 |
 | `--spacing-rows-min`    | 5 rows   | `min-h-rows-min` (`-compact`) | a Market card's list on desktop: at least five rows, then as many as fit |
 | `--spacing-control`     | 32 px    | `h-control`                   | every toolbar control (buttons, selects, chips)                          |
+| `--spacing-touch`       | 40 px    | `touch-target`, `h-touch`     | the smallest touch area; see §7                                          |
 | `--spacing-rail`        | 320 px   | `w-rail`                      | a detail page's sticky side rail                                         |
 | `--spacing-spark`       | 120 × 34 | `w-spark h-spark-h`           | a sparkline                                                              |
 
@@ -75,7 +76,7 @@ Rules:
 - **Active navigation is ink plus a 2 px underline that slides** (`UnderlineIndicator`). No filled pills anywhere in navigation.
 - **Two surface levels, never three.** A card on the page; flat tinted tiles inside the card. Never a card inside a card inside a card.
 - Detail pages: header with the facts rail, a full-width chart panel, then three panels on one row, then full-width tables.
-- Works at 400 px and at 1920 px. Columns that do not fit hide below a breakpoint (`Column.from`); the body never scrolls sideways.
+- Works at 360 px and at 1920 px. Columns that do not fit hide below a breakpoint (`Column.from`); the body never scrolls sideways. A long name wraps or truncates, and a button whose label carries a name (the apply button) wraps on a phone instead of pushing the page wider. `pnpm web:test-phone` holds every page to this at 360, 375, 390 and 414 px in both themes.
 - **A phone gets mini versions, not stacked cards.** Below `md` (`useIsMobile`), a page's market cards turn into one sideways row of `MiniStat` tiles and one of `MiniList` short lists (`MiniRow`, snapping tile by tile), filter chips stay on one line that scrolls, and the table starts on the first screen. A table row on a phone is rank, logo, name with its code under it, and the figure with the week's change under it (`Column.phoneLine`, `Column.phoneHeader`). A detail page's stat rail is the same `MiniRow` with its desktop grid as `className`. From `md` up nothing changes.
 
 ## 5. Shape and elevation
@@ -135,6 +136,7 @@ apps/web/src/
 - **`asChild`** for composition (`<Button asChild><Link/></Button>`).
 - Every reusable component accepts `className` and merges it with `cn()`.
 - Interactive elements have a visible focus ring (the primary ring), an accessible name that contains their visible text, and a hit area of at least 24 px (`MetricHoverCard`'s (i) grows its own with a negative margin).
+- **On a touch screen every control is at least 40 px to hit.** `touch-target` (in `index.css`) adds an invisible 40 px `::before` centred on a smaller control under `pointer: coarse`, so nothing moves and a mouse sees no change; the control must be `relative`. `Button`, `Toggle`, `TabsTrigger`, `SelectTrigger` and `MetricHoverCard` carry it already; add it to a small text link. Stacked rows on a phone are tall enough on their own (`h-row-compact`), and a chip row that scrolls keeps 4 px above and below so the touch areas are not clipped (`PHONE_CHIP_ROW`).
 - Never nest one control in another: a hover trigger sits beside a link, not inside it.
 - `index.css` ends with a `prefers-reduced-motion` rule that settles every transition and animation at once; nothing needs its own.
 - **Never write `cursor-pointer` by hand.** The base rule in `index.css` gives the hand to every enabled control by role.
@@ -175,7 +177,7 @@ apps/web/src/
 shadcn owns **behaviour**: overlays, focus, keyboard, portals, form controls. We own the market pieces that are plain markup and SVG: tables' row links, sparklines, charts, the ticker.
 
 - Vendored files import `cn` from `@/lib/utils`, never from the `cn` package directly: only ours knows the type and layout tokens.
-- `shadcn add --overwrite` clobbers local edits. Patched for this repo: `card.tsx` (`shadow-card`, bold `CardTitle`), `hover-card.tsx` (320 wide, 14 px padding, arrow, instant), `tabs.tsx` (`underline` list variant), `badge.tsx` (`up` `down` `flat` `warn` `code` variants and a `md` size), `button.tsx` (`chip` variant), `progress.tsx` (`indicatorClassName`), `sonner.tsx` (strict TS), `toggle.tsx` (`chip` variant). Re-add any of them and re-apply.
+- `shadcn add --overwrite` clobbers local edits. Patched for this repo: `card.tsx` (`shadow-card`, bold `CardTitle`), `hover-card.tsx` (320 wide, 14 px padding, arrow, instant), `tabs.tsx` (`underline` list variant), `badge.tsx` (`up` `down` `flat` `warn` `code` variants and a `md` size), `button.tsx` (`chip` variant, `relative touch-target`), `progress.tsx` (`indicatorClassName`), `sonner.tsx` (strict TS), `toggle.tsx` (`chip` variant, `relative touch-target`), `tabs.tsx` and `select.tsx` triggers (`touch-target`). Re-add any of them and re-apply.
 - Arbitrary values inside `components/ui` are shadcn's own and are allow-listed in `scripts/check-ui.allowlist.json`; ours are not.
 - shadcn Charts (Recharts) are not used: sparklines, area and segment charts are hand-drawn SVG (`lib/charts.ts`), smaller and under our control.
 
@@ -204,7 +206,7 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 
 - [ ] Dark and light both checked, on `/design` (`pnpm web:dev`) if a component is new
 - [ ] No hex, no palette names, no arbitrary values, no provider names (`check:ui` clean)
-- [ ] Works at 400 px and at 1920 px; no sideways scroll
+- [ ] Works at 360 px and at 1920 px; no sideways scroll (`pnpm web:test-phone`); every control 40 px to hit on a touch screen
 - [ ] Keyboard reachable, focus visible, every control named
 - [ ] Loading, empty and error states exist
 - [ ] Figures through `lib/format.ts`; changes through `Delta`; explanations through `MetricHoverCard`
@@ -226,3 +228,4 @@ The feedback that shaped these rules: "1.3% since November 3" sounds machine-wri
 - **2026-11-10** — Every trend chart reads its day and value on hover or tap: `ChartTooltip` and `useChartScrub` are shared by `AreaChart`, `Sparkline` and the market flow bars; `AreaChart` gains a value axis; sparklines are dated from the site's day (`useDataDay`, `daysEndingOn` and `datedSeries` in `lib/charts.ts`). Before and after shots are in `docs/screenshots/charts-1`.
 - **2026-11-10** — Theme follows the visitor's device by default (live when the device switches); the `ThemeToggle` menu has Light, Dark and System, and only an explicit Light or Dark pick is stored. Rule 5 no longer calls dark the default.
 - **2026-11-10** — Mobile: below `md` the cards turn into mini versions (`MiniStat`, `MiniList`, `MiniRow`, `useIsMobile`) on Market, Professions, Companies, Skills, Jobs and the job page; detail stat rails slide sideways; filter chips stay on one scrolling line; table rows are rank, logo, name over code, figure over the week's change (`Column.phoneLine`, `phoneHeader`); 16 px gutters on a phone. Tablet and desktop unchanged.
+- **2026-11-10** — Phone QA: the job page's apply button no longer pushes the page sideways (it takes the row and wraps on a phone); `touch-target` and `--spacing-touch` give every small control a 40 px touch area; detail titles keep their code beside or under the name; `pnpm web:test-phone` (Playwright, recorded API fixtures, in CI) fails when any page is wider than a 360, 375, 390 or 414 px screen. Before and after shots are in `docs/screenshots/mobile-qa-1`.
