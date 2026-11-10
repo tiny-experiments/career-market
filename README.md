@@ -109,8 +109,9 @@ Peers are not in v1 and show a coming-soon state.
 
 - Openings are krill's "new" for a company: roles first seen that day. krill's bootstrap days (2-3 Nov)
   and board events (a day with at least 50 openings that are 10% of the previous day's open roles, or at
-  least 50 closings that are 25%: a board fetched for the first time, added or dropped) are left out of
-  every flow and change. A board event restarts the company's series, the chart marks each excluded day
+  least 50 closings that are 25%: a board fetched for the first time, added or dropped; or open roles that moved
+  by at least 10 and 25% more than that day's openings and closings explain, as when krill merged the same Oracle
+  requisition listed on several careers sites into one job on 10 Nov 2026) are left out of every flow and change. A board event restarts the company's series, the chart marks each excluded day
   as "board change excluded", and when the latest day is one the signal reads "Unclear: board change on
   <date>" instead of STEADY. krill has no per-company board status yet, so a real mass layoff looks the same.
 - The signal (RAMPING, STEADY, COOLING, FREEZING) looks at the last 30 comparable days (fewer while history

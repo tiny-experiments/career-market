@@ -3,7 +3,7 @@ import type { Sql } from '@cm/core/db';
 import type { Logger } from '@cm/core/logger';
 import type { Change } from '@cm/core/types';
 import { chainIndexFromRows, type IndexRow } from '../compute/skillIndex.ts';
-import { rebase, shareAdjustedIndex } from '../compute/chainIndex.ts';
+import { rebase, shareAdjustedIndex, sliceBasisChangeDays } from '../compute/chainIndex.ts';
 import { computeChange, type ValuePoint } from '../compute/changes.ts';
 import { compareSalaries } from '../compute/skillSalary.ts';
 import {
@@ -148,10 +148,14 @@ export async function computeSkillPages(tx: Sql, T: IsoDay, log: Logger): Promis
   const ids = skills.map((s) => s.skill);
 
   const indexRows = await tx<IndexRow[]>`
-    select date, open, link, matched_open, matched_previous_open, index_value from market_daily
+    select date, open, new, closed, new_known, link, matched_open, matched_previous_open, index_value from market_daily
     where not estimated and date <= ${T} order by date`;
   const index = chainIndexFromRows(indexRows, isBootstrapDay);
   const marketOpen = new Map(indexRows.map((r) => [r.date, r.open]));
+  // Skill counts are kept on their build day; a day krill later re-counted holds the share flat.
+  const skillTotals = await tx<{ date: IsoDay; open: number }[]>`
+    select date, sum(open)::int as open from skill_daily where country = '*' and date <= ${T} group by date`;
+  const hold = sliceBasisChangeDays(new Map(skillTotals.map((r) => [r.date, r.open])), marketOpen);
 
   const buckets = await tx<StoredBucket[]>`select age_from, age_to, hazard from survival_curve where snapshot_date = ${T}`;
   const survival = buckets.length ? survivalFromBuckets(buckets) : null;
@@ -182,7 +186,7 @@ export async function computeSkillPages(tx: Sql, T: IsoDay, log: Logger): Promis
         const m = marketOpen.get(date);
         if (m && m > 0) share.set(date, open / m);
       }
-      const observed = rebase(shareAdjustedIndex(index, share), today);
+      const observed = rebase(shareAdjustedIndex(index, share, hold), today);
       const firstObserved = [...observed.keys()].sort()[0] ?? T;
 
       const scopeCuts = scopeRows(cutsBySkill.get(s.skill) ?? [], scope);
@@ -220,7 +224,7 @@ export async function computeSkillPages(tx: Sql, T: IsoDay, log: Logger): Promis
         const m = marketOpen.get(r.date);
         if (m && m > 0) share.set(r.date, r.open / m);
       }
-      const points: ValuePoint[] = shareAdjustedIndex(index, share).map((x) => ({ date: x.date, value: x.value, estimated: false }));
+      const points: ValuePoint[] = shareAdjustedIndex(index, share, hold).map((x) => ({ date: x.date, value: x.value, estimated: false }));
       const [skill, key] = id.split('\u0000') as [string, string];
       pushChange(changeRows, T, `${kind}:${skill}:${key}`, computeChange(points, T, '1M'));
     }

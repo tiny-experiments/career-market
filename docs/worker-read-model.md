@@ -87,14 +87,39 @@ change. It sums counts for companies represented in both endpoint snapshots
 that kept the same boards all week, then divides the current total by the
 previous total. A company drops out of the comparison when any day after the
 base restarts its series by the company pages' rule (`isBoardEvent`: a board
-added, fetched in bulk or dropped, or roles back from zero), because that day
-moves roles that were already open elsewhere. Without this, boards attached to
+added, fetched in bulk or dropped, roles back from zero, or open roles that
+moved well beyond the day's openings and closings because krill re-counted
+them), because that day moves roles that were already open elsewhere. Without this, boards attached to
 existing companies mid-week read the week to 10 Nov 2026 as +14.9% while open
 roles rose about 1%. Newly discovered employers still contribute to the headline
 role count. `GROWTH_MODE=raw` includes the full endpoint totals. A complete
 seven-day baseline from the last bootstrap day on is required; no shorter
 interval is labeled as a week. Other existing compute functions retain their
 established series and segment behavior.
+
+## Counting changes
+
+krill sometimes re-counts open roles without opening or closing them: on
+10 Nov 2026 it merged about 29,900 duplicate Oracle records (one requisition
+listed on several careers sites of a tenant) into their canonical jobs, and it
+keeps earlier daily totals as they were. Every series then steps down for one
+day, which is an identity correction, not hiring.
+
+- Market and professions: `countingChangeDays` marks a day whose market total
+  or matched-board panel moved more than 2% (total) or 5% (panel) beyond that
+  day's openings and closings; a normal day stays within 0.3% and 2%. The chain
+  index holds that day flat like a bootstrap day, so the open-roles line and
+  every market and profession change rebase the earlier history onto the
+  corrected count, and profession shares hold across it.
+- Skills: skill counts are kept on their build day and cannot be refetched, so
+  after a re-count they disagree with the refetched market total until the next
+  build. `sliceBasisChangeDays` holds a skill's share on any day the skills'
+  combined share of open roles jumps by 5% or more.
+- Companies: `isBoardEvent` treats open roles that moved by at least 10 and 25%
+  beyond the day's openings and closings as a board event, so the company's
+  series restarts there (company changes, signals, Cooling and Ramping fastest,
+  Companies ramping, the headline week, profession top companies and the Job
+  page's company trend). Companies left with no open roles leave every list.
 
 ## Description coverage
 

@@ -6,7 +6,7 @@ import type { AgeCut } from '../compute/ageDistribution.ts';
 import { medianAge } from '../compute/ageDistribution.ts';
 import { backcast, type SurvivalFit } from '../compute/backcast.ts';
 import { computeChange, type ValuePoint } from '../compute/changes.ts';
-import { companyChange, companySignal, isCoverageJump, type CompanyDay } from '../compute/companySignal.ts';
+import { companyChange, companySignal, isCoverageChange, type CompanyDay } from '../compute/companySignal.ts';
 import { salaryBand } from '../compute/salaryBand.ts';
 import type { KrillJobItem } from '../krill/schemas.ts';
 import { POSTED_EVER, type ProfessionInputs } from './pull.ts';
@@ -144,7 +144,7 @@ export async function computeProfessions(
         .filter((r) => r.family === family)
         .map((r) => ({ date: r.date, open: r.open, new: r.new, closed: r.closed }));
       const ch = companyChange(days, T);
-      const jump = isCoverageJump(ch?.change ?? null);
+      const jump = isCoverageChange(ch);
       companyRows.push({
         date: T,
         family,

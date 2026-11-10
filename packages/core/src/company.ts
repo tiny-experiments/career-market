@@ -204,14 +204,31 @@ export interface CompanySeries {
   segmentStart: IsoDay | null;
 }
 
-/** A day this large against the day before is a board event (a board added, fetched in bulk, or dropped), not hiring. */
-export const BOARD_EVENT = { minRoles: 50, newShare: 0.1, closedShare: 0.25 } as const;
+/**
+ * A day this large against the day before is a board event (a board added, fetched in bulk, or dropped), not hiring.
+ * `unexplained` covers open roles that moved without being opened or closed: krill re-counted the company,
+ * as when it merged the same Oracle requisition listed on several careers sites into one job (10 Nov 2026).
+ * Open roles follow yesterday's open plus openings minus closings to within a few roles on a normal day.
+ */
+export const BOARD_EVENT = {
+  minRoles: 50,
+  newShare: 0.1,
+  closedShare: 0.25,
+  unexplained: { minRoles: 10, share: 0.25 },
+} as const;
+
+/** Open roles that moved on this day without being opened or closed (negative when roles left). */
+export function unexplainedMove(r: DayRow, prevOpen: number): number {
+  return r.open - (prevOpen + r.new - r.closed);
+}
 
 export function isBoardEvent(r: DayRow, prevOpen: number): boolean {
   if (prevOpen <= 0) return false;
+  const gap = Math.abs(unexplainedMove(r, prevOpen));
   return (
     (r.new >= BOARD_EVENT.minRoles && r.new >= BOARD_EVENT.newShare * prevOpen) ||
-    (r.closed >= BOARD_EVENT.minRoles && r.closed >= BOARD_EVENT.closedShare * prevOpen)
+    (r.closed >= BOARD_EVENT.minRoles && r.closed >= BOARD_EVENT.closedShare * prevOpen) ||
+    (gap >= BOARD_EVENT.unexplained.minRoles && gap >= BOARD_EVENT.unexplained.share * prevOpen)
   );
 }
 
@@ -220,8 +237,8 @@ export function isBoardEvent(r: DayRow, prevOpen: number): boolean {
  * `to`. krill sends no row for a quiet company-day, so a missing day means 0.
  * A segment restarts whenever open roles go from 0 to something, or a day is a
  * board event (see isBoardEvent): a board fetched for the first time, or one that
- * came back or was dropped, moves hundreds of roles at once, and that day is not
- * hiring.
+ * came back or was dropped, moves hundreds of roles at once, and roles krill
+ * re-counted move without being opened or closed; that day is not hiring.
  */
 export function companySeries(rows: readonly DayRow[], to: IsoDay, from: IsoDay = FIRST_OBSERVED_DAY): CompanySeries {
   const byDate = new Map(rows.map((r) => [r.date, r]));

@@ -23,7 +23,7 @@ import type { Change } from '@cm/core/types';
 import type { AgeCut } from './compute/ageDistribution.ts';
 import { medianAge } from './compute/ageDistribution.ts';
 import { backcast, fitSurvival, type ClosingDay, type SurvivalFit } from './compute/backcast.ts';
-import { chainIndex, rebase, shareAdjustedIndex, type IndexPoint } from './compute/chainIndex.ts';
+import { chainIndex, countingChangeDays, rebase, shareAdjustedIndex, sliceBasisChangeDays, type IndexPoint } from './compute/chainIndex.ts';
 import { computeChange, type ValuePoint } from './compute/changes.ts';
 import { writeNotes } from './compute/notes.ts';
 import { planCompanyDays, pullCompanies, type CompanyPlan, type CompanyPull } from './companies/pull.ts';
@@ -267,9 +267,12 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
   if (!todayRow) throw new Error(`krill /v1/stats/daily has no row for the snapshot day ${T}`);
   const openT = todayRow.open;
 
-  // 1. Chain-linked index on matched boards, rebased onto today's boards.
+  // 1. Chain-linked index on matched boards, rebased onto today's boards. A day krill
+  //    re-counted its roles (merged duplicates) is held flat, so the history before it
+  //    is rebased onto the corrected count instead of reading as a drop.
   const panel = new Map(p.panel.map((x) => [x.date, x] as const));
-  const index = chainIndex(market.map((m) => m.date), panel);
+  const counting = countingChangeDays(market.map((m) => ({ ...panel.get(m.date), ...m })));
+  const index = chainIndex(market.map((m) => m.date), panel, counting);
   const indexByDate = new Map(index.map((i) => [i.date, i]));
   const rebased = rebase(index, openT);
 
@@ -389,10 +392,11 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
     where country = '*' and date <= ${T} group by date, skill order by date`;
   const todaySkills = skillRows.filter((r) => r.date === T).sort((a, b) => b.open - a.open).slice(0, TRACKED_SKILLS);
   const skillsByDay = groupBy(skillRows, (r) => r.skill);
+  const skillHold = sliceBasisChangeDays(sumBy(skillRows), new Map(market.map((m) => [m.date, m.open])));
   for (const s of todaySkills) {
     const rows = skillsByDay.get(s.skill) ?? [];
     const share = new Map(rows.filter((r) => marketOpen(r.date) > 0).map((r) => [r.date, r.open / marketOpen(r.date)]));
-    const series = shareAdjustedIndex(index, share).map((x) => ({ date: x.date, value: x.value, estimated: false }));
+    const series = shareAdjustedIndex(index, share, skillHold).map((x) => ({ date: x.date, value: x.value, estimated: false }));
     pushChanges(changeRows, T, `skill:${s.skill}`, changesFor(series, T));
   }
 
@@ -444,6 +448,8 @@ async function computeAndWrite(tx: Sql, p: Pulled, log: Logger): Promise<Record<
 
   const stats = {
     observedDays: market.length,
+    countingChangeDays: [...counting].sort(),
+    skillBasisChangeDays: [...skillHold].sort(),
     groupedDaysRefreshed: p.grouped.size,
     failedFamilies: p.failedFamilies,
     cuts: p.cuts.length,
@@ -563,6 +569,13 @@ function groupBy<T, K>(rows: readonly T[], key: (r: T) => K): Map<K, T[]> {
     if (list) list.push(r);
     else out.set(k, [r]);
   }
+  return out;
+}
+
+/** Open roles per day, summed over every row of the day. */
+function sumBy(rows: readonly { date: IsoDay; open: number }[]): Map<IsoDay, number> {
+  const out = new Map<IsoDay, number>();
+  for (const r of rows) out.set(r.date, (out.get(r.date) ?? 0) + r.open);
   return out;
 }
 

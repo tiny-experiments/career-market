@@ -37,6 +37,7 @@ import {
   type TypicalWindow,
 } from '@cm/core/job';
 import type { KrillJob, KrillJobDetail } from '@cm/core/krillJob';
+import { companySeries } from '@cm/core/company';
 import type { Change, Unavailable } from '@cm/core/types';
 import type { JobsPulseCounts, JobsRepository } from './domain.ts';
 import { latestBuild } from '../../database/readModel.ts';
@@ -436,6 +437,7 @@ async function companyFor(
   trend: CompanyTrend | Unavailable;
 }> {
   const to = asOf ?? job.lastSeenAt;
+  const from = addDays(to, -(SPARK_DAYS + 5));
   const [company] = await deps.sql<
     {
       domain: string | null;
@@ -449,11 +451,14 @@ async function companyFor(
     { date: IsoDay; open: number; new: number; closed: number }[]
   >`
     select date, open, new, closed from company_daily where company_id = ${job.company.id}
-      and family = '*' and new is not null and date >= ${addDays(to, -(SPARK_DAYS + 5))} and date <= ${to} order by date`;
+      and family = '*' and new is not null and date >= ${from} and date <= ${to} order by date`;
   const domain = company?.domain ?? null;
   const name = company?.name ?? null;
   const slug = company?.slug ?? null;
-  const usable = items.filter((i) => i.date > FIRST_COMPARABLE_BASE);
+  // Only the current segment: a board event or a re-count (as when duplicate records were merged) moves roles that were not hired or closed.
+  const start = companySeries(items, to, from).segmentStart;
+  const usableFrom = start && start > FIRST_COMPARABLE_BASE ? start : FIRST_COMPARABLE_BASE;
+  const usable = items.filter((i) => i.date > usableFrom);
   const open =
     company?.openJobs ?? usable.at(-1)?.open ?? items.at(-1)?.open ?? null;
   if (open === null)
