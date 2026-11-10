@@ -83,12 +83,18 @@ start times and server rate-limit holds. Anonymous workers stay below 50/minute.
 ## Growth
 
 `GROWTH_MODE=like-for-like` is the default for the market headline week-on-week
-change. It sums counts for companies represented in both endpoint snapshots,
-then divides the current total by the previous total. Newly discovered employers
-still contribute to the headline role count. `GROWTH_MODE=raw` includes the full
-endpoint totals. A complete seven-day baseline is required; no shorter interval
-is labeled as a week. Other existing compute functions retain their established
-series and segment behavior.
+change. It sums counts for companies represented in both endpoint snapshots
+that kept the same boards all week, then divides the current total by the
+previous total. A company drops out of the comparison when any day after the
+base restarts its series by the company pages' rule (`isBoardEvent`: a board
+added, fetched in bulk or dropped, or roles back from zero), because that day
+moves roles that were already open elsewhere. Without this, boards attached to
+existing companies mid-week read the week to 10 Nov 2026 as +14.9% while open
+roles rose about 1%. Newly discovered employers still contribute to the headline
+role count. `GROWTH_MODE=raw` includes the full endpoint totals. A complete
+seven-day baseline from the last bootstrap day on is required; no shorter
+interval is labeled as a week. Other existing compute functions retain their
+established series and segment behavior.
 
 ## Description coverage
 
