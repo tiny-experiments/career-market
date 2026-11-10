@@ -150,18 +150,18 @@ export interface CompanySignal {
   window_from: string;
 }
 
-export interface CompanySiteNameHold {
-  company_id: string;
-  note: Generated<string>;
-  updated_at: Generated<Timestamp>;
-}
-
 export interface CompanySiteName {
   checked_at: Timestamp | null;
   company_id: string;
   jobs: Generated<number>;
   site_name: string | null;
   site_url: string;
+}
+
+export interface CompanySiteNameHold {
+  company_id: string;
+  note: Generated<string>;
+  updated_at: Generated<Timestamp>;
 }
 
 export interface CompanySliceDaily {
