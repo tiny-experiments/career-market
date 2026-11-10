@@ -115,7 +115,7 @@ function ThemeColumn({ theme }: { readonly theme: "light" | "dark" }) {
       )}
     >
       <p className="text-eyebrow font-semibold text-muted-foreground">
-        {theme === "dark" ? "Dark (default)" : "Light"}
+        {theme === "dark" ? "Dark" : "Light"}
       </p>
       <SwatchGrid items={SURFACES} />
       <SwatchGrid items={INK} />

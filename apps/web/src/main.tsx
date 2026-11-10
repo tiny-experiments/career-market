@@ -3,13 +3,20 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import "./index.css";
+import { THEME_STORAGE_KEY, discardUnknownStoredTheme } from "./lib/theme.ts";
 import { createAppRouter } from "./router.tsx";
 
+discardUnknownStoredTheme(localStorage);
 const router = createAppRouter();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      storageKey={THEME_STORAGE_KEY}
+    >
       <RouterProvider router={router} />
     </ThemeProvider>
   </StrictMode>,
