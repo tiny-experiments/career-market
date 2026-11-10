@@ -207,11 +207,19 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('refreshSiteNames (dedicated tes
     expect(result.afterLoss).toEqual([{ display_name: 'fa-eqzh-saasfaprod1', named: false }]);
   });
 
-  it('keeps the tenants on hold unnamed until the owner confirms them', async () => {
-    const held = await sql<{ company_id: string }[]>`select company_id from company_site_name_hold order by company_id`;
-    expect(held.map((r) => r.company_id)).toEqual(['co_a91d11f55d17nz6t', 'co_k5bzv7gc5xma0nh2', 'co_prwgwcnwvpr5565s', 'co_vzmmz2sr1pgftzf5']);
-    const overridden = await sql`select 1 from company_name_override where company_id in (select company_id from company_site_name_hold)`;
-    expect(overridden).toHaveLength(0);
+  it('names the four confirmed tenants and releases their hold', async () => {
+    const held = await sql`select 1 from company_site_name_hold where company_id in ('co_a91d11f55d17nz6t','co_k5bzv7gc5xma0nh2','co_prwgwcnwvpr5565s','co_vzmmz2sr1pgftzf5')`;
+    expect(held).toHaveLength(0);
+    const rows = await sql<{ company_id: string; name: string; domain: string }[]>`
+      select o.company_id, o.name, d.domain from company_name_override o
+      join company_domain_override d using (company_id)
+      where o.company_id in ('co_a91d11f55d17nz6t','co_k5bzv7gc5xma0nh2','co_prwgwcnwvpr5565s','co_vzmmz2sr1pgftzf5') order by o.company_id`;
+    expect(rows).toEqual([
+      { company_id: 'co_a91d11f55d17nz6t', name: 'Transguard Group', domain: 'transguardgroup.com' },
+      { company_id: 'co_k5bzv7gc5xma0nh2', name: 'Ascendion', domain: 'ascendion.com' },
+      { company_id: 'co_prwgwcnwvpr5565s', name: 'DeKalb County Government', domain: 'dekalbcountyga.gov' },
+      { company_id: 'co_vzmmz2sr1pgftzf5', name: 'LCS', domain: 'lcsnet.com' },
+    ]);
   });
 
   it('names fa-eqzh-saasfaprod1 Avient Corporation by hand', async () => {
