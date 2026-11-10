@@ -10,6 +10,7 @@ import { KrillApi } from './krill/api.ts';
 import { KrillClient } from './krill/client.ts';
 import { createBrandSearch, createLogoProbe } from './logos/contextDev.ts';
 import { resolveCompanyDomains, type LogoDeps } from './logos/resolve.ts';
+import { createSitePage } from './logos/siteNames.ts';
 
 const USAGE = `career-market worker
 
@@ -21,7 +22,8 @@ const USAGE = `career-market worker
                        --assume-exported  build though krill has not marked the
                                 day's export as written; check it exists first
   sweep                apply the persisted change feed cursor
-  logos [--limit N]    resolve company website domains for logos; N caps paid
+  logos [--limit N]    resolve company website domains for logos and name companies
+                       known only by an Oracle tenant code; N caps paid
                        lookups in this run (the daily budget still applies)
   watch                poll krill /v1/meta every BUILDER_POLL_MINUTES and
                        build each new snapshot day`;
@@ -59,6 +61,7 @@ async function main(argv: string[]): Promise<number> {
       settings: { ...config.logos, lookupsPerRun, checksPerRun: Math.max(config.logos.checksPerRun, lookupsPerRun) },
       brandSearch: config.logos.apiKey ? createBrandSearch(config.logos.apiKey) : undefined,
       logoProbe: config.logos.publicClientId ? createLogoProbe(config.logos.publicClientId, config.logos.checkReferer) : undefined,
+      sitePage: createSitePage(),
     });
 
     if (command === 'logos') {

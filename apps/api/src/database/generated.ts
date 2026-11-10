@@ -150,6 +150,14 @@ export interface CompanySignal {
   window_from: string;
 }
 
+export interface CompanySiteName {
+  checked_at: Timestamp | null;
+  company_id: string;
+  jobs: Generated<number>;
+  site_name: string | null;
+  site_url: string;
+}
+
 export interface CompanySliceDaily {
   closed: number;
   company_id: string;
@@ -567,6 +575,7 @@ export interface DB {
   company_profile: CompanyProfile;
   company_ref: CompanyRef;
   company_signal: CompanySignal;
+  company_site_name: CompanySiteName;
   company_slice_daily: CompanySliceDaily;
   family_age_cut: FamilyAgeCut;
   family_daily: FamilyDaily;

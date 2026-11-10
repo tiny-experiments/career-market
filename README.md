@@ -131,7 +131,13 @@ is withheld, so the page draws our monogram tile. The browser needs `VITE_CONTEX
 the worker needs `CONTEXT_DEV_PUBLIC_CLIENT_ID` and, for paid lookups, `CONTEXT_DEV_API_KEY`.
 
 The same pass names each company (`company.display_name`): a row in `company_name_override` wins, then
-the directory's name cleaned of careers-page wording and checked against the resolved site. A company we
+the directory's name cleaned of careers-page wording and checked against the resolved site. When the
+directory holds only an Oracle Recruiting tenant code (`fa-eqzh-saasfaprod1`, `Eeho`), the pass reads
+the name each of the company's Oracle careers sites states (`og:site_name`, else the page title; the
+sites come from its job links), keeps it in `company_site_name`, reads it again after `LOGO_RECHECK_DAYS`,
+and takes the cleaned name that covers the most open roles ("Chubb External" becomes Chubb). Where a
+site states only an abbreviation or Oracle's default "Candidate Experience site", a hand-checked
+`company_name_override` row names it instead. A company we
 can only call by a hiring-platform code (`named = false`) stays listed and searchable, but every sort of
 the Companies table lists it after the named companies.
 

@@ -95,6 +95,46 @@ export function cleanCareerTitle(raw: string): string {
   }
 }
 
+// What an Oracle Recruiting site adds around the employer in its site name: "Candidate Experience
+// Site Polyglass", "Chubb External", "EXL Talent Acquisition Team", "Linamar Career Site - New".
+const SITE_PREFIX = /^(?:candidate\s+experience\s+site\b\s*[-:]?\s*|careers?\s*[-|:]\s*|careers?\s+at\s+|sitio\s+de\s+oportunidades(?:\s+de)?\s+empleo\s+)/i;
+const SITE_SUFFIX = new RegExp(
+  String.raw`(?:_(?:en|fr)|\s*\((?:us|uk)\)|(?<=[A-Za-z]{2})\.|,?\s+(?:inc|llc|ltd|limited)\.?|(?:\s*[-|:]\s*|\s+)(?:` +
+    [
+      String.raw`new|careers?|jobs?|global|international|united\s+states`,
+      String.raw`(?:external|global|us|uk|early)?\s*(?:careers?|jobs?)\s+(?:site|portal|center|centre|page)(?:\s+(?:us|uk))?`,
+      String.raw`(?:external|global|early)?\s*careers?(?:\s+(?:french|global))?`,
+      String.raw`candidate\s+experience|talent\s+acquisition(?:\s+team)?|(?:e-)?recruitment(?:\s+(?:team|system))?|human\s+resources`,
+      String.raw`job\s+listings|staff\s+positions|support\s+staff\s+openings|external`,
+    ].join('|') +
+    '))$',
+  'i',
+);
+/** Site names that name no one: Oracle's default, and one-word labels. */
+const SITE_GENERIC = /^(?:candidate\s+experience(?:\s+site)?|site\s+kandidaatervaring|global|join|careers?|jobs?|new|external|)$/i;
+
+/**
+ * The employer an Oracle Recruiting careers site names, cleaned of what the site adds
+ * around it, or null when the site names no one ("Candidate Experience site").
+ */
+export function cleanSiteName(raw: string): string | null {
+  let name = raw.replace(/\\'/g, "'").replace(/\s+/g, ' ').trim();
+  for (;;) {
+    const next = name.replace(SITE_PREFIX, '').replace(SITE_SUFFIX, '').trim();
+    if (next === name || !next) break;
+    name = next;
+  }
+  // "Verisk Careers | Verisk": the brand repeated after a separator.
+  const halves = name.split(/\s*\|\s*/);
+  if (halves.length === 2 && halves[1] && halves[0]!.toLowerCase().startsWith(halves[1].toLowerCase())) name = halves[1];
+  return SITE_GENERIC.test(name) || TENANT.test(name) ? null : name;
+}
+
+/** True when all we hold for a company is a hiring-platform code, not a name. */
+export function isCodeName(raw: string): boolean {
+  return !companyDisplay(raw, null).named;
+}
+
 function fromDomain(domain: string, lowercaseSource: boolean): string {
   const label = domain.split('.')[0] ?? domain;
   if (label.length <= 3 && lowercaseSource) return label.toUpperCase();
@@ -109,13 +149,16 @@ export interface CompanyDisplay {
 
 /**
  * The best name we can show for a company, and whether it is really a name. A
- * hand-checked name (read off the company's own careers page) wins over the rest.
+ * hand-checked name (read off the company's own careers page) wins over the rest; a
+ * company known only by a hiring-platform code takes the name its careers site states.
  */
-export function companyDisplay(raw: string, domain: string | null, checked?: string | null): CompanyDisplay {
+export function companyDisplay(raw: string, domain: string | null, checked?: string | null, site?: string | null): CompanyDisplay {
   const manual = checked?.trim();
   if (manual) return { name: manual, named: true };
   const known = domain ? KNOWN_BRANDS[domain] : undefined;
   if (known) return { name: known, named: true };
+  const stated = site?.trim();
+  if (stated && isCodeName(raw)) return { name: stated, named: true };
 
   const cleaned = cleanCareerTitle(raw);
   const tenant = TENANT.test(cleaned);
