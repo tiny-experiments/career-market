@@ -107,6 +107,13 @@ export interface CompanyFacet {
   work_modes: Generated<Json>;
 }
 
+export interface CompanyNameOverride {
+  company_id: string;
+  name: string;
+  note: Generated<string>;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface CompanyOpenCount {
   company_id: string;
   open: number;
@@ -555,6 +562,7 @@ export interface DB {
   company_domain: CompanyDomain;
   company_domain_override: CompanyDomainOverride;
   company_facet: CompanyFacet;
+  company_name_override: CompanyNameOverride;
   company_open_count: CompanyOpenCount;
   company_profile: CompanyProfile;
   company_ref: CompanyRef;

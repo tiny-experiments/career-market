@@ -6,6 +6,9 @@ describe('cleanCareerTitle', () => {
     ['Working at L3Harris Technologies', 'L3Harris Technologies'],
     ['Careers at EY: search jobs', 'EY'],
     ['Search Jobs at TE Connectivity', 'TE Connectivity'],
+    ['Careers | Farm Credit Services of America', 'Farm Credit Services of America'],
+    ['Jobs: Acme Robotics', 'Acme Robotics'],
+    ['Careers: Join the team at Western Power', 'Western Power'],
     ['Emerson Career Site', 'Emerson'],
     ['BNY External Career Site', 'BNY'],
     ['Ford Global Career Site', 'Ford'],
@@ -66,6 +69,20 @@ describe('companyDisplay', () => {
 
   it('accepts a real multi-word name without a site', () => {
     expect(companyDisplay('Bluelight Consulting', null)).toEqual({ name: 'Bluelight Consulting', named: true });
+  });
+
+  it.each([['MultiCare'], ['EverAI']])('accepts a camel-case name without a site: %s', (raw) => {
+    expect(companyDisplay(raw, null)).toEqual({ name: raw, named: true });
+  });
+
+  it('takes a hand-checked name over everything else', () => {
+    expect(companyDisplay('Eeho', null, 'Oracle')).toEqual({ name: 'Oracle', named: true });
+    expect(companyDisplay('Careers at EY: search jobs', 'ey.com', 'Ernst & Young')).toEqual({ name: 'Ernst & Young', named: true });
+  });
+
+  it('ignores a blank hand-checked name', () => {
+    expect(companyDisplay('Eeho', null, '  ')).toEqual({ name: 'Eeho', named: false });
+    expect(companyDisplay('Eeho', null, null)).toEqual({ name: 'Eeho', named: false });
   });
 
   it('never trusts a tenant code even with a site', () => {

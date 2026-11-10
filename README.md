@@ -130,6 +130,11 @@ first, within `LOGO_DAILY_CREDITS` and `LOGO_DAILY_CHECKS`. A domain with no rea
 is withheld, so the page draws our monogram tile. The browser needs `VITE_CONTEXT_DEV_PUBLIC_CLIENT_ID`;
 the worker needs `CONTEXT_DEV_PUBLIC_CLIENT_ID` and, for paid lookups, `CONTEXT_DEV_API_KEY`.
 
+The same pass names each company (`company.display_name`): a row in `company_name_override` wins, then
+the directory's name cleaned of careers-page wording and checked against the resolved site. A company we
+can only call by a hiring-platform code (`named = false`) stays listed and searchable, but every sort of
+the Companies table lists it after the named companies.
+
 ### Checks
 
 ```sh

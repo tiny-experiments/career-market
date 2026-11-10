@@ -2,15 +2,22 @@ import { companyDisplay } from '@cm/core/companyName';
 import type { Sql } from '@cm/core/db';
 
 /**
- * Names every company from its directory name and resolved domain, and copies
- * the result to the tables that hold a company's name. Runs after the domains
- * are published, so a newly resolved site improves the name at once.
+ * Names every company from its hand-checked name, or else its directory name and
+ * resolved domain, and copies the result to the tables that hold a company's name.
+ * Runs after the domains are published, so a newly resolved site improves the name
+ * at once. A site whose logo is only a placeholder still names the company: the
+ * placeholder says nothing about whose site it is.
  */
 export async function applyCompanyNames(tx: Sql): Promise<void> {
-  const rows = await tx<{ company_id: string; name: string; domain: string | null; display_name: string | null; named: boolean | null }[]>`
-    select company_id, name, domain, display_name, named from company`;
+  const rows = await tx<
+    { company_id: string; name: string; domain: string | null; checked: string | null; display_name: string | null; named: boolean | null }[]
+  >`
+    select c.company_id, c.name, coalesce(c.domain, d.domain) as domain, o.name as checked, c.display_name, c.named
+    from company c
+    left join company_domain d using (company_id)
+    left join company_name_override o using (company_id)`;
   const changed = rows.flatMap((row) => {
-    const display = companyDisplay(row.name, row.domain);
+    const display = companyDisplay(row.name, row.domain, row.checked);
     return display.name === row.display_name && display.named === row.named ? [] : [{ id: row.company_id, ...display }];
   });
   for (let i = 0; i < changed.length; i += 2000) {

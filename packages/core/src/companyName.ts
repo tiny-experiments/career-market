@@ -72,7 +72,7 @@ const KNOWN_BRANDS: Readonly<Record<string, string>> = {
   'x.ai': 'xAI',
 };
 
-const PREFIX = /^(?:(?:careers?|jobs?|work(?:ing)?|search\s+jobs|join\s+us)\s+(?:at|with)\s+)/i;
+const PREFIX = /^(?:(?:careers?|jobs?|work(?:ing)?|search\s+jobs|join\s+(?:us|the\s+team))\s+(?:at|with)\s+|(?:careers?|jobs?)\s*[:|]\s*)+/i;
 const AFTER_SEPARATOR = /\s*[:|]\s*.*(?:search\s+jobs|jobs?|careers?)[^:|]*$/i;
 const PARENTHETICAL = /\s*\([^)]*\)\s*$/;
 const HIRING_SUFFIX =
@@ -107,8 +107,13 @@ export interface CompanyDisplay {
   named: boolean;
 }
 
-/** The best name we can show for a company, and whether it is really a name. */
-export function companyDisplay(raw: string, domain: string | null): CompanyDisplay {
+/**
+ * The best name we can show for a company, and whether it is really a name. A
+ * hand-checked name (read off the company's own careers page) wins over the rest.
+ */
+export function companyDisplay(raw: string, domain: string | null, checked?: string | null): CompanyDisplay {
+  const manual = checked?.trim();
+  if (manual) return { name: manual, named: true };
   const known = domain ? KNOWN_BRANDS[domain] : undefined;
   if (known) return { name: known, named: true };
 
@@ -128,5 +133,6 @@ export function companyDisplay(raw: string, domain: string | null): CompanyDispl
     return { name: cleaned, named: true };
   }
   if (domain) return { name: fromDomain(domain, true), named: true };
-  return { name: cleaned, named: !tenant && !generic && !oneWord };
+  // Without a site one word is trusted only in camel case ("MultiCare"): platform codes never are.
+  return { name: cleaned, named: !tenant && !generic && (!oneWord || /[a-z][A-Z]/.test(cleaned)) };
 }
