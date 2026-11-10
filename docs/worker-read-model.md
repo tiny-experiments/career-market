@@ -115,7 +115,7 @@ day, which is an identity correction, not hiring.
   after a re-count they disagree with the refetched market total until the next
   build. `sliceBasisChangeDays` holds a skill's share on any day the skills'
   combined share of open roles jumps by 5% or more.
-- Companies: `isBoardEvent` treats open roles that moved by at least 10 and 25%
+- Companies: `isBoardEvent` treats open roles that moved by at least 10 and 10%
   beyond the day's openings and closings as a board event, so the company's
   series restarts there (company changes, signals, Cooling and Ramping fastest,
   Companies ramping, the headline week, profession top companies and the Job

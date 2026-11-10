@@ -124,6 +124,8 @@ describe('companies whose duplicates were merged', () => {
     // Ordinary days keep counting: open roles follow openings and closings.
     const next = tenant.find((r) => r.date === addDays(MERGE_DAY, 1)) as CompanyDayRow;
     expect(isBoardEvent(next, day.open)).toBe(false);
+    // A tenant that lost 13% of its records to the merge (282 to 245, nothing closed).
+    expect(isBoardEvent({ date: MERGE_DAY, open: 245, new: 0, closed: 0 }, 282)).toBe(true);
     // A few roles off on a normal day is not a re-count.
     expect(isBoardEvent({ date: MERGE_DAY, open: 2160, new: 3, closed: 10 }, 2166)).toBe(false);
   });

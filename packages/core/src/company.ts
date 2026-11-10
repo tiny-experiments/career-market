@@ -208,13 +208,13 @@ export interface CompanySeries {
  * A day this large against the day before is a board event (a board added, fetched in bulk, or dropped), not hiring.
  * `unexplained` covers open roles that moved without being opened or closed: krill re-counted the company,
  * as when it merged the same Oracle requisition listed on several careers sites into one job (10 Nov 2026).
- * Open roles follow yesterday's open plus openings minus closings to within a few roles on a normal day.
+ * Open roles follow yesterday's open plus openings minus closings exactly on a normal day.
  */
 export const BOARD_EVENT = {
   minRoles: 50,
   newShare: 0.1,
   closedShare: 0.25,
-  unexplained: { minRoles: 10, share: 0.25 },
+  unexplained: { minRoles: 10, share: 0.1 },
 } as const;
 
 /** Open roles that moved on this day without being opened or closed (negative when roles left). */
