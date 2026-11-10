@@ -335,6 +335,9 @@ export async function companyDirectory(
   } as const;
   const rows = await base
     .selectAll('c')
+    // A company we can only list by a hiring-platform code never leads the table:
+    // every sort lists the named companies first, then the codes in the same order.
+    .orderBy(ksql`coalesce(c.named, true)`, (ob) => ob.desc())
     .orderBy(order[query.sort], (ob) =>
       (query.dir === 'asc' ? ob.asc() : ob.desc()).nullsLast(),
     )

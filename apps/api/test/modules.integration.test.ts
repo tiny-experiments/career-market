@@ -343,6 +343,17 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         .expect(200);
       expect(detail.body.company.name).toBe('Named');
     });
+    it('lists a company known only by a code after every named company, in any sort', async () => {
+      const byOpen = await request(app).get('/api/companies').expect(200);
+      const openSlugs = byOpen.body.items.map((i: { slug: string }) => i.slug);
+      expect(openSlugs.slice(0, 2)).toEqual(['careers-at-named', 'acme']);
+      expect(openSlugs.at(-1)).toBe('code');
+      expect(byOpen.body.total).toBe(6);
+      const byName = await request(app).get('/api/companies?sort=name&dir=asc').expect(200);
+      expect(byName.body.items.at(-1).slug).toBe('code');
+      const byNameDesc = await request(app).get('/api/companies?sort=name&dir=desc').expect(200);
+      expect(byNameDesc.body.items.at(-1).slug).toBe('code');
+    });
     it('sorts by 30-day change and leaves out companies with no open roles', async () => {
       const res = await request(app)
         .get('/api/companies?sort=change30d&dir=asc')
@@ -354,7 +365,8 @@ describe.skipIf(!url)('public module integration (real Postgres)', () => {
         .get('/api/companies?sort=change1w&dir=desc')
         .expect(200);
       const weekSlugs = week.body.items.map((i: { slug: string }) => i.slug);
-      expect(weekSlugs.slice(0, 3)).toEqual(['code', 'careers-at-named', 'acme']);
+      expect(weekSlugs.slice(0, 2)).toEqual(['careers-at-named', 'acme']);
+      expect(weekSlugs.at(-1)).toBe('code');
       const weekAsc = await request(app)
         .get('/api/companies?sort=change1w&dir=asc')
         .expect(200);
