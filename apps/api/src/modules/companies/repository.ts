@@ -137,6 +137,14 @@ interface CompanyRow {
   updated_on: IsoDay;
 }
 
+/*
+ * Company changes live in market_change under 'cpage:<company id>'. The movers
+ * below join on the id cut out of the subject (substr from 7, after 'cpage:'),
+ * never on 'cpage:' || company_id: the cut lets Postgres fetch each company by
+ * its key, while the concatenation scanned every company once per change row
+ * whenever the planner misjudged the build's freshly written rows (11 s each).
+ */
+
 /** Largest movers over one week among companies big enough to rank. */
 export async function companiesRamping(
   sql: Sql,
@@ -152,8 +160,9 @@ export async function companiesRamping(
     })[]
   >`
     select c.*, m.change, m.base_date, m.partial, m.estimated
-    from company c join market_change m on m.subject = 'cpage:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
-    where c.updated_on = ${asOf} and c.open >= ${MIN_RAMPING_OPEN} and m.change > 0
+    from market_change m join company c on c.company_id = substr(m.subject, 7)
+    where m.as_of = ${asOf} and m.range = '1W' and m.subject like 'cpage:%'
+      and c.updated_on = ${asOf} and c.open >= ${MIN_RAMPING_OPEN} and m.change > 0
       and coalesce(c.named, c.domain is not null)
       and (c.open - c.open / (1 + m.change)) >= ${MIN_RAMPING_DELTA}
     order by m.change desc limit ${limit}`;
@@ -199,8 +208,9 @@ async function movers(
     })[]
   >`
     select c.*, m.change, m.base_date, m.partial, m.estimated
-    from company c join market_change m on m.subject = 'cpage:' || c.company_id and m.as_of = ${asOf} and m.range = '1W'
-    where c.updated_on = ${asOf} and c.open >= ${MIN_MOVER_OPEN} and c.domain is not null
+    from market_change m join company c on c.company_id = substr(m.subject, 7)
+    where m.as_of = ${asOf} and m.range = '1W' and m.subject like 'cpage:%'
+      and c.updated_on = ${asOf} and c.open >= ${MIN_MOVER_OPEN} and c.domain is not null
       and coalesce(c.named, true)
       and m.change * ${sign}::int > 0 and m.base_date <= ${addDays(asOf, -MIN_FULL_DAYS['1W'])}
       and abs(c.open - c.open / (1 + m.change)) >= ${MIN_RAMPING_DELTA}
